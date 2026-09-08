@@ -26,7 +26,7 @@ export function KioskReturnPage() {
   const [error,        setError]      = useState<string | null>(null)
   const [isLoading,    setIsLoading]  = useState(false)
 
-  const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-xl px-8 py-5 min-h-[80px] transition-all active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2'
+  const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-xl px-8 py-5 min-h-[80px] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2'
 
   async function handleStudentScan(code: string) {
     setIsLoading(true); setError(null)
@@ -131,7 +131,7 @@ export function KioskReturnPage() {
 
       {/* ─── Step 1: Scan Student ─── */}
       {step === 'scan-student' && !isLoading && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6">
+        <div key="scan-student" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6">
           <div className="text-center">
             <div className="w-20 h-20 bg-emerald-100 rounded-3xl flex items-center justify-center mx-auto mb-4 text-emerald-600 shadow-sm">
               <RotateCcw size={40} />
@@ -152,7 +152,7 @@ export function KioskReturnPage() {
 
       {/* ─── Step 2: Select Loan ─── */}
       {step === 'select-loan' && student && !isLoading && (
-        <div className="flex-1 flex flex-col gap-6 max-w-2xl mx-auto w-full">
+        <div key="select-loan" className="animate-kiosk-step flex-1 flex flex-col gap-6 max-w-2xl mx-auto w-full">
           <div className="text-center">
             <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-6 py-2.5 mb-3 shadow-sm">
               <CheckCircle2 size={20} className="text-emerald-600" />
@@ -172,7 +172,7 @@ export function KioskReturnPage() {
                 <button
                   key={loan.id}
                   onClick={() => { setSelectedLoan(loan); setStep('photo') }}
-                  className={`w-full text-left bg-white hover:border-emerald-400 active:scale-[0.98] rounded-2xl p-6 transition-all border-2 shadow-md cursor-pointer ${
+                  className={`w-full text-left bg-white hover:border-emerald-400 active:scale-[0.98] rounded-2xl p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md border-2 shadow-sm cursor-pointer ${
                     isLate ? 'border-rose-300 bg-rose-50/40' : 'border-slate-200'
                   }`}
                 >
@@ -202,7 +202,7 @@ export function KioskReturnPage() {
 
       {/* ─── Step 3: Photo ─── */}
       {step === 'photo' && selectedLoan && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6">
+        <div key="photo" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6">
           <div className="text-center">
             <h2 className="text-slate-900 text-3xl font-extrabold tracking-tight">Dokumentasi Pengembalian</h2>
             <div className="inline-block bg-white border border-slate-200 rounded-xl px-5 py-2 mt-2 shadow-sm">
@@ -235,7 +235,7 @@ export function KioskReturnPage() {
 
       {/* ─── Step 4: Confirm ─── */}
       {step === 'confirm' && student && selectedLoan && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
+        <div key="confirm" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
           {new Date(selectedLoan.due_at) < new Date() && (
             <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
               <div className="flex items-center gap-3">

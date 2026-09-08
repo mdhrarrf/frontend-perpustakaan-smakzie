@@ -67,7 +67,7 @@ export function KioskBorrowClass() {
     onError:   (err) => setError(getErrorMessage(err)),
   })
 
-  const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-xl px-8 py-5 min-h-[80px] transition-all active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2'
+  const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-xl px-8 py-5 min-h-[80px] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/40 to-indigo-50/40 flex flex-col p-8 text-slate-900">
@@ -93,7 +93,7 @@ export function KioskBorrowClass() {
       )}
 
       {step === 'class-info' && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
+        <div key="class-info" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
           <div className="text-center">
             <h2 className="text-slate-900 text-3xl font-extrabold tracking-tight">Informasi Kelas & Guru</h2>
             <p className="text-slate-600 text-base mt-1 font-medium">Masukkan data rombel kelas yang meminjam buku</p>
@@ -138,7 +138,7 @@ export function KioskBorrowClass() {
       )}
 
       {step === 'scan-books' && (
-        <div className="flex-1 flex flex-col gap-6 max-w-2xl mx-auto w-full">
+        <div key="scan-books" className="animate-kiosk-step flex-1 flex flex-col gap-6 max-w-2xl mx-auto w-full">
           <div className="text-center">
             <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-6 py-2 mb-2 shadow-sm text-sm font-bold text-slate-700">
               Kelas {classInfo.class_name} · Guru: {classInfo.teacher_name}
@@ -188,7 +188,7 @@ export function KioskBorrowClass() {
       )}
 
       {step === 'photo' && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6">
+        <div key="photo" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6">
           <div className="text-center">
             <h2 className="text-slate-900 text-3xl font-extrabold tracking-tight">Dokumentasi Foto Guru</h2>
             <p className="text-slate-600 text-base mt-1 font-medium">Foto guru atau perwakilan yang mengambil buku</p>
@@ -204,7 +204,7 @@ export function KioskBorrowClass() {
       )}
 
       {step === 'confirm' && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
+        <div key="confirm" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
           <div className="bg-white rounded-3xl p-8 w-full space-y-4 border border-slate-200/80 shadow-xl shadow-slate-200/50">
             <h2 className="text-2xl font-extrabold text-slate-900 text-center mb-4 tracking-tight">Konfirmasi Peminjaman Kelas</h2>
             <div className="flex justify-between py-2 border-b border-slate-100"><span className="text-slate-500 font-medium">Kelas</span><span className="text-slate-900 font-bold">{classInfo.class_name}</span></div>

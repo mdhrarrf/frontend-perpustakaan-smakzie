@@ -135,7 +135,7 @@ export function KioskBorrowIndividual() {
     onError:   (err) => setError(getErrorMessage(err)),
   })
 
-  const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-xl px-8 py-5 min-h-[80px] transition-all active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2'
+  const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-xl px-8 py-5 min-h-[80px] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2'
 
   // Helper: nama buku dari active loan
   const activeLoanBookTitle = activeLoan?.items?.[0]?.book?.judul
@@ -194,7 +194,7 @@ export function KioskBorrowIndividual() {
 
       {/* ─── Step: Scan Student ─── */}
       {step === 'scan-student' && !isLoading && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6">
+        <div key="scan-student" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6">
           <div className="text-center">
             <span className="inline-block bg-indigo-50 text-indigo-700 text-sm font-bold uppercase tracking-wider px-4 py-1 rounded-full mb-2 border border-indigo-200/60">
               Langkah 1 dari 4
@@ -210,7 +210,7 @@ export function KioskBorrowIndividual() {
 
       {/* ─── Step: Active Loan Warning ─── */}
       {step === 'active-loan-warning' && !isLoading && student && activeLoan && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
+        <div key="active-loan-warning" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
           {/* Badge siswa */}
           <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-5 py-2.5 shadow-sm">
             <CheckCircle2 size={20} className="text-emerald-600" />
@@ -279,7 +279,7 @@ export function KioskBorrowIndividual() {
 
       {/* ─── Step: Scan Book ─── */}
       {step === 'scan-book' && !isLoading && student && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6">
+        <div key="scan-book" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6">
           <div className="text-center">
             <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-5 py-2.5 mb-3 shadow-sm">
               <CheckCircle2 size={20} className="text-emerald-600" />
@@ -301,7 +301,7 @@ export function KioskBorrowIndividual() {
 
       {/* ─── Step: Pick Duration ─── */}
       {step === 'pick-duration' && !isLoading && student && book && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
+        <div key="pick-duration" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
           <div className="text-center">
             <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-5 py-2.5 mb-3 shadow-sm">
               <CheckCircle2 size={20} className="text-emerald-600" />
@@ -361,7 +361,7 @@ export function KioskBorrowIndividual() {
 
       {/* ─── Step: Photo ─── */}
       {step === 'photo' && book && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6">
+        <div key="photo" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6">
           <div className="text-center">
             <span className="inline-block bg-indigo-50 text-indigo-700 text-sm font-bold uppercase tracking-wider px-4 py-1 rounded-full mb-2 border border-indigo-200/60">
               Langkah 4 dari 4
@@ -384,7 +384,7 @@ export function KioskBorrowIndividual() {
 
       {/* ─── Step: Confirm ─── */}
       {step === 'confirm' && student && book && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
+        <div key="confirm" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
           <div className="bg-white rounded-3xl p-8 w-full space-y-4 border border-slate-200/80 shadow-xl shadow-slate-200/50">
             <h2 className="text-2xl font-extrabold text-slate-900 text-center mb-4 tracking-tight">Konfirmasi Peminjaman</h2>
             {[
