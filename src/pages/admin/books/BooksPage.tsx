@@ -6,6 +6,7 @@ import { Card, CardHeader, CardBody, EmptyState } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { BookStatusBadge } from '@/components/ui/Badge'
+import { Pagination } from '@/components/ui/Pagination'
 import { formatCurrency, formatDate } from '@/utils'
 import { BookOpen, Plus, Search, Filter, Trash2, Edit } from 'lucide-react'
 import { getErrorMessage } from '@/api/client'
@@ -157,16 +158,17 @@ export function AdminBooksPage() {
               </table>
             </div>
             {/* Pagination */}
-            {meta && meta.last_page > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100">
-                <p className="text-sm text-slate-500">
-                  Menampilkan {meta.from}–{meta.to} dari {meta.total} buku
-                </p>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Sebelumnya</Button>
-                  <Button size="sm" variant="outline" disabled={page >= meta.last_page} onClick={() => setPage(p => p + 1)}>Berikutnya</Button>
-                </div>
-              </div>
+            {meta && (
+              <Pagination
+                currentPage={meta.current_page}
+                lastPage={meta.last_page}
+                total={meta.total}
+                from={meta.from}
+                to={meta.to}
+                perPage={meta.per_page}
+                onPageChange={setPage}
+                itemLabel="buku"
+              />
             )}
           </>
         )}

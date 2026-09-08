@@ -4,6 +4,7 @@ import { Card, CardBody } from '@/components/ui/Card'
 import { formatDateTime } from '@/utils'
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
+import { Pagination } from '@/components/ui/Pagination'
 
 export function AdminAuditLogsPage() {
   const [page, setPage] = useState(1)
@@ -54,14 +55,17 @@ export function AdminAuditLogsPage() {
                 ))}
               </tbody>
             </table>
-            {meta && meta.last_page > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100">
-                <p className="text-sm text-slate-500">Total: {meta.total} log</p>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Sebelumnya</Button>
-                  <Button size="sm" variant="outline" disabled={page >= meta.last_page} onClick={() => setPage(p => p + 1)}>Berikutnya</Button>
-                </div>
-              </div>
+            {meta && (
+              <Pagination
+                currentPage={meta.current_page}
+                lastPage={meta.last_page}
+                total={meta.total}
+                from={meta.from}
+                to={meta.to}
+                perPage={meta.per_page}
+                onPageChange={setPage}
+                itemLabel="log"
+              />
             )}
           </div>
         )}

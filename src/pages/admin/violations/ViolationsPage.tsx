@@ -5,6 +5,7 @@ import { Card, CardBody, EmptyState } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { ViolationStatusBadge } from '@/components/ui/Badge'
+import { Pagination } from '@/components/ui/Pagination'
 import { formatDate } from '@/utils'
 import { AlertTriangle, Search } from 'lucide-react'
 
@@ -30,7 +31,7 @@ export function AdminViolationsPage() {
 
       <div className="flex gap-3">
         {['active','expired','resolved'].map((s) => (
-          <Button key={s} size="sm" variant={status === s ? 'primary' : 'outline'} onClick={() => setStatus(s)}>
+          <Button key={s} size="sm" variant={status === s ? 'primary' : 'outline'} onClick={() => { setStatus(s); setPage(1) }}>
             {s === 'active' ? 'Aktif' : s === 'expired' ? 'Kadaluarsa' : 'Selesai'}
           </Button>
         ))}
@@ -74,6 +75,18 @@ export function AdminViolationsPage() {
               </tbody>
             </table>
           </div>
+        )}
+        {meta && (
+          <Pagination
+            currentPage={meta.current_page}
+            lastPage={meta.last_page}
+            total={meta.total}
+            from={meta.from}
+            to={meta.to}
+            perPage={meta.per_page}
+            onPageChange={setPage}
+            itemLabel="pelanggaran"
+          />
         )}
       </Card>
     </div>
