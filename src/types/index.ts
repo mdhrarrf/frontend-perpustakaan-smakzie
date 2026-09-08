@@ -76,6 +76,24 @@ export interface Student {
 }
 
 // ─────────────────────────────────────────────
+// Teacher & Subject
+// ─────────────────────────────────────────────
+export interface Subject {
+  id: number
+  kode: string
+  nama: string
+  kelompok?: string
+}
+
+export interface Teacher {
+  id: number
+  nip: string | null
+  nama: string
+  jenis_kelamin: 'L' | 'P'
+  subjects: Subject[]
+}
+
+// ─────────────────────────────────────────────
 // Loan
 // ─────────────────────────────────────────────
 export type LoanType   = 'individual' | 'class'
