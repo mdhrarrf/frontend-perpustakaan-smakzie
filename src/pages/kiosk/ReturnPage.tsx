@@ -46,19 +46,35 @@ export function KioskReturnPage() {
     finally { setIsLoading(false) }
   }
 
+  // Helper: ambil judul buku dari loan item (support SLiMS books yang book = null)
+  function getLoanBookTitle(loan: Loan | null): string {
+    if (!loan) return '—'
+    const item = loan.items?.[0] as any
+    return item?.book?.judul ?? item?.book_title_snapshot ?? `Buku [${item?.id ?? '?'}]`
+  }
+
   const returnMutation = useMutation({
     mutationFn: () => loanService.processReturn(selectedLoan!.id, {
       return_photo: photoPath ?? undefined,
     }),
     onSuccess: (result) => navigate('/kiosk/success', {
       state: {
-        type:     result.is_late ? 'return_late' : 'return',
-        late_days: result.late_days,
+        type:        result.is_late ? 'return_late' : 'return',
+        late_days:   result.late_days,
         penalty_end: result.violation?.penalty_end_date,
-        book_title: selectedLoan?.items?.[0]?.book?.judul,
+        book_title:  getLoanBookTitle(selectedLoan),
       }
     }),
-    onError: (err) => setError(getErrorMessage(err)),
+    onError: (err) => {
+      const msg = getErrorMessage(err)
+      // Jika buku sudah dikembalikan → reset otomatis ke awal
+      if (msg.toLowerCase().includes('dikembalikan') || msg.toLowerCase().includes('returned')) {
+        reset()
+        setError('Buku ini sudah tercatat dikembalikan. Silakan scan kartu pelajar kembali untuk melihat peminjaman aktif.')
+      } else {
+        setError(msg)
+      }
+    },
   })
 
   function reset() {
@@ -134,6 +150,9 @@ export function KioskReturnPage() {
           <div className="space-y-4 max-w-2xl mx-auto w-full">
             {activeLoans.map((loan) => {
               const isLate = loan.status === 'overdue' || new Date(loan.due_at) < new Date()
+              const bookTitle = getLoanBookTitle(loan)
+              const item = loan.items?.[0] as any
+              const bookAuthor = item?.book?.penulis ?? item?.book_author_snapshot ?? null
               return (
                 <button
                   key={loan.id}
@@ -142,8 +161,8 @@ export function KioskReturnPage() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <p className="text-white text-xl font-semibold">{loan.items?.[0]?.book?.judul ?? '—'}</p>
-                      <p className="text-slate-400 mt-1">{loan.items?.[0]?.book?.penulis}</p>
+                      <p className="text-white text-xl font-semibold">{bookTitle}</p>
+                      {bookAuthor && <p className="text-slate-400 mt-1">{bookAuthor}</p>}
                       <div className="flex items-center gap-4 mt-3 text-sm">
                         <span className="text-slate-400">Dipinjam: {formatDate(loan.borrowed_at)}</span>
                         <span className={isLate ? 'text-red-400 font-medium' : 'text-slate-400'}>
@@ -219,7 +238,7 @@ export function KioskReturnPage() {
             {[
               { label: 'Nama',   value: student.nama },
               { label: 'NIS',    value: student.nis },
-              { label: 'Buku',   value: selectedLoan.items?.[0]?.book?.judul ?? '—' },
+              { label: 'Buku',   value: getLoanBookTitle(selectedLoan) },
               { label: 'Jatuh Tempo', value: formatDate(selectedLoan.due_at) },
             ].map(({ label, value }) => (
               <div key={label} className="flex justify-between items-start gap-4">
