@@ -99,8 +99,7 @@ export function KioskReturnPage() {
           <ArrowLeft size={24} />
         </button>
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 flex items-center gap-3 tracking-tight">
-            <RotateCcw className="text-emerald-600" size={28} />
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
             Pengembalian Buku Mandiri
           </h1>
           <p className="text-slate-500 text-sm font-medium">Layanan mandiri pengembalian buku perpustakaan</p>
