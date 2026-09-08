@@ -189,7 +189,7 @@ export function KioskReturnPage() {
           <div className="text-center">
             <p className="text-white text-2xl font-bold mb-2">Dokumentasi Pengembalian</p>
             <div className="inline-block bg-slate-800 rounded-xl px-5 py-2 mt-1">
-              <p className="text-white font-medium">{selectedLoan.items?.[0]?.book?.judul}</p>
+              <p className="text-white font-medium">{getLoanBookTitle(selectedLoan)}</p>
             </div>
             <p className="text-slate-400 text-lg mt-3">Foto akan diambil otomatis dalam 5 detik</p>
           </div>
