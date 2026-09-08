@@ -13,8 +13,8 @@ export function AdminAuditLogsPage() {
     queryFn: () => auditService.list({ page }),
   })
 
-  const logs = data?.data?.data ?? []
-  const meta = data?.data
+  const logs = (data?.data as any)?.data ?? []
+  const meta = (data?.data as any)?.meta ?? data?.data
 
   const actionColors: Record<string, string> = {
     create: 'text-green-600', update: 'text-blue-600',
@@ -57,12 +57,8 @@ export function AdminAuditLogsPage() {
             </table>
             {meta && (
               <Pagination
-                currentPage={meta.current_page}
-                lastPage={meta.last_page}
-                total={meta.total}
-                from={meta.from}
-                to={meta.to}
-                perPage={meta.per_page}
+                meta={meta}
+                currentPage={page}
                 onPageChange={setPage}
                 itemLabel="log"
               />

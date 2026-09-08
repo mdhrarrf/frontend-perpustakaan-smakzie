@@ -19,8 +19,8 @@ export function AdminViolationsPage() {
     queryFn: () => violationService.list({ status, page }),
   })
 
-  const violations = data?.data?.data ?? []
-  const meta       = data?.data
+  const violations = (data?.data as any)?.data ?? []
+  const meta       = (data?.data as any)?.meta ?? data?.data
 
   return (
     <div className="space-y-5">
@@ -78,12 +78,8 @@ export function AdminViolationsPage() {
         )}
         {meta && (
           <Pagination
-            currentPage={meta.current_page}
-            lastPage={meta.last_page}
-            total={meta.total}
-            from={meta.from}
-            to={meta.to}
-            perPage={meta.per_page}
+            meta={meta}
+            currentPage={page}
             onPageChange={setPage}
             itemLabel="pelanggaran"
           />

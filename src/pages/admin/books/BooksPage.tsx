@@ -33,8 +33,8 @@ export function AdminBooksPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-books'] }),
   })
 
-  const books = data?.data?.data ?? []
-  const meta  = data?.data
+  const books = (data?.data as any)?.data ?? []
+  const meta  = (data?.data as any)?.meta ?? data?.data
 
   return (
     <div className="space-y-5">
@@ -160,12 +160,8 @@ export function AdminBooksPage() {
             {/* Pagination */}
             {meta && (
               <Pagination
-                currentPage={meta.current_page}
-                lastPage={meta.last_page}
-                total={meta.total}
-                from={meta.from}
-                to={meta.to}
-                perPage={meta.per_page}
+                meta={meta}
+                currentPage={page}
                 onPageChange={setPage}
                 itemLabel="buku"
               />

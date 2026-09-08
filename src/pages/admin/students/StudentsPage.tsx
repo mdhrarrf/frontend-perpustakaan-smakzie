@@ -103,8 +103,8 @@ export function AdminStudentsPage() {
     queryFn: () => studentService.list({ q, kelas, page }),
   })
 
-  const students: Student[] = data?.data?.data ?? []
-  const meta = data?.data
+  const students: Student[] = (data?.data as any)?.data ?? []
+  const meta = (data?.data as any)?.meta ?? data?.data
 
   return (
     <div className="space-y-5">
@@ -200,12 +200,8 @@ export function AdminStudentsPage() {
             </div>
             {meta && (
               <Pagination
-                currentPage={meta.current_page}
-                lastPage={meta.last_page}
-                total={meta.total}
-                from={meta.from}
-                to={meta.to}
-                perPage={meta.per_page}
+                meta={meta}
+                currentPage={page}
                 onPageChange={setPage}
                 itemLabel="siswa"
               />

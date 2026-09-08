@@ -23,8 +23,8 @@ export function AdminLoansPage() {
     queryFn: () => loanService.list({ q, status, loan_type: type, date_from: dateFrom, date_to: dateTo, page }),
   })
 
-  const loans = data?.data?.data ?? []
-  const meta  = data?.data
+  const loans = (data?.data as any)?.data ?? []
+  const meta  = (data?.data as any)?.meta ?? data?.data
 
   return (
     <div className="space-y-5">
@@ -109,12 +109,8 @@ export function AdminLoansPage() {
             </div>
             {meta && (
               <Pagination
-                currentPage={meta.current_page}
-                lastPage={meta.last_page}
-                total={meta.total}
-                from={meta.from}
-                to={meta.to}
-                perPage={meta.per_page}
+                meta={meta}
+                currentPage={page}
                 onPageChange={setPage}
                 itemLabel="transaksi"
               />
