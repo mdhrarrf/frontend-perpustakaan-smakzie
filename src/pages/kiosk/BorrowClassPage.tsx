@@ -146,6 +146,42 @@ export function KioskBorrowClass() {
     }
   }
 
+  // Ubah kuantitas buku melalui input angka keyboard
+  function handleQuantityChange(bookId: number, val: string) {
+    if (val === '') {
+      setBooks((p) => p.map((x) => x.book.id === bookId ? { ...x, quantity: 0 } : x))
+      return
+    }
+    const q = parseInt(val, 10)
+    if (isNaN(q) || q < 1) return
+    setBooks((p) => p.map((x) => {
+      if (x.book.id === bookId) {
+        const maxStock = x.book.jumlah_tersedia && x.book.jumlah_tersedia > 0 ? x.book.jumlah_tersedia : 999
+        return { ...x, quantity: Math.min(q, maxStock) }
+      }
+      return x
+    }))
+  }
+
+  // Jika input ditinggalkan kosong atau 0, kembalikan ke minimal 1
+  function handleQuantityBlur(bookId: number, currentQty: number) {
+    if (!currentQty || currentQty < 1) {
+      setBooks((p) => p.map((x) => x.book.id === bookId ? { ...x, quantity: 1 } : x))
+    }
+  }
+
+  // Tambah / kurangi kuantitas dengan tombol (+ / - / shortcut)
+  function handleAddQuantity(bookId: number, delta: number) {
+    setBooks((p) => p.map((x) => {
+      if (x.book.id === bookId) {
+        const newQty = Math.max(1, (x.quantity || 0) + delta)
+        const maxStock = x.book.jumlah_tersedia && x.book.jumlah_tersedia > 0 ? x.book.jumlah_tersedia : 999
+        return { ...x, quantity: Math.min(newQty, maxStock) }
+      }
+      return x
+    }))
+  }
+
   // ─── Submit Peminjaman Kelas ───
   const borrowMutation = useMutation({
     mutationFn: async () => {
@@ -607,28 +643,61 @@ export function KioskBorrowClass() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {/* Quick Presets untuk Peminjaman Rombel Kelas */}
+                        <div className="hidden sm:flex items-center gap-1 mr-1">
+                          {[10, 20, 30].map((delta) => (
+                            <button
+                              key={delta}
+                              type="button"
+                              onClick={() => handleAddQuantity(book.id, delta)}
+                              className="text-xs bg-violet-50 hover:bg-violet-100 text-violet-700 font-bold px-2 py-1 rounded-lg border border-violet-200 transition-colors cursor-pointer"
+                              title={`Tambah ${delta} buku`}
+                            >
+                              +{delta}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Tombol Kurang */}
                         <button
                           type="button"
-                          onClick={() => setBooks((p) => p.map((x) => x.book.id === book.id && x.quantity > 1 ? { ...x, quantity: x.quantity - 1 } : x))}
-                          className="w-8 h-8 rounded-lg bg-white hover:bg-slate-200 text-slate-800 flex items-center justify-center text-base font-bold border border-slate-200 cursor-pointer"
+                          onClick={() => handleAddQuantity(book.id, -1)}
+                          disabled={quantity <= 1}
+                          className="w-9 h-9 rounded-xl bg-white hover:bg-slate-100 disabled:opacity-30 text-slate-800 flex items-center justify-center border border-slate-200 cursor-pointer shadow-xs transition-colors"
                         >
-                          <Minus size={14} />
+                          <Minus size={15} />
                         </button>
-                        <span className="text-slate-900 text-base font-black w-7 text-center tabular-nums">{quantity}</span>
+
+                        {/* Input Angka Keyboard */}
+                        <input
+                          type="number"
+                          min="1"
+                          max={book.jumlah_tersedia || 999}
+                          value={quantity === 0 ? '' : quantity}
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) => handleQuantityChange(book.id, e.target.value)}
+                          onBlur={() => handleQuantityBlur(book.id, quantity)}
+                          className="w-16 h-9 text-center font-black text-base text-slate-900 bg-white border-2 border-violet-300 focus:border-violet-600 focus:ring-2 focus:ring-violet-200 rounded-xl shadow-inner tabular-nums focus:outline-none"
+                        />
+
+                        {/* Tombol Tambah */}
                         <button
                           type="button"
-                          onClick={() => setBooks((p) => p.map((x) => x.book.id === book.id ? { ...x, quantity: x.quantity + 1 } : x))}
-                          className="w-8 h-8 rounded-lg bg-white hover:bg-slate-200 text-slate-800 flex items-center justify-center text-base font-bold border border-slate-200 cursor-pointer"
+                          onClick={() => handleAddQuantity(book.id, 1)}
+                          className="w-9 h-9 rounded-xl bg-white hover:bg-slate-100 text-slate-800 flex items-center justify-center border border-slate-200 cursor-pointer shadow-xs transition-colors"
                         >
-                          <Plus size={14} />
+                          <Plus size={15} />
                         </button>
+
+                        {/* Tombol Hapus */}
                         <button
                           type="button"
                           onClick={() => setBooks((p) => p.filter((x) => x.book.id !== book.id))}
-                          className="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center border border-rose-200 cursor-pointer ml-1"
+                          className="w-9 h-9 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center border border-rose-200 cursor-pointer ml-1 shadow-xs transition-colors"
+                          title="Hapus buku"
                         >
-                          <X size={14} />
+                          <X size={16} />
                         </button>
                       </div>
                     </div>
