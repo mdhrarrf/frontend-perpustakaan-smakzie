@@ -3,7 +3,20 @@ import type { ApiResponse, PaginatedResponse, Student, Violation, Loan } from '@
 
 const BASE = '/perpustakaan/students'
 
+export interface StudentClass {
+  id: number
+  nama: string
+  tingkat: 'X' | 'XI' | 'XII' | string
+  tingkat_num: number
+  jurusan?: string
+}
+
 export const studentService = {
+  async classes(): Promise<StudentClass[]> {
+    const { data } = await apiClient.get<ApiResponse<StudentClass[]>>(`${BASE}/classes`)
+    return data.data!
+  },
+
   async list(params: Record<string, unknown> = {}): Promise<ApiResponse<PaginatedResponse<Student>>> {
     const { data } = await apiClient.get(BASE, { params })
     return data

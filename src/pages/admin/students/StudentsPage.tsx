@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { studentService } from '@/api/student.service'
+import { studentService, type StudentClass } from '@/api/student.service'
 import { Card, CardHeader, CardBody, EmptyState } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -21,7 +21,7 @@ interface StudentFormData {
   status: string
 }
 
-function StudentFormModal({ student, onClose }: { student?: Student; onClose: () => void }) {
+function StudentFormModal({ student, onClose, classList }: { student?: Student; onClose: () => void; classList?: StudentClass[] }) {
   const qc = useQueryClient()
   const [error, setError] = useState<string | null>(null)
   const isEdit = !!student
@@ -62,7 +62,26 @@ function StudentFormModal({ student, onClose }: { student?: Student; onClose: ()
             <Input {...register('nis', { required: true })} label="NIS" required />
             <Input {...register('nisn')} label="NISN" />
             <Input {...register('nama', { required: true })} label="Nama Lengkap" required className="col-span-2" />
-            <Input {...register('kelas')} label="Kelas" placeholder="X-A" />
+            <div>
+              <label className="text-sm font-medium text-slate-700">Kelas</label>
+              <select
+                {...register('kelas')}
+                className="mt-1.5 w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">— Pilih Kelas —</option>
+                {['X', 'XI', 'XII'].map((t) => {
+                  const group = (classList ?? []).filter((c) => c.tingkat === t)
+                  if (group.length === 0) return null
+                  return (
+                    <optgroup key={t} label={`Tingkat ${t}`}>
+                      {group.map((c) => (
+                        <option key={c.id} value={c.nama}>{c.nama}</option>
+                      ))}
+                    </optgroup>
+                  )
+                })}
+              </select>
+            </div>
             <Input {...register('angkatan')} label="Angkatan" type="number" placeholder="2024" />
             <div>
               <label className="text-sm font-medium text-slate-700">Jenis Kelamin</label>
@@ -92,15 +111,26 @@ function StudentFormModal({ student, onClose }: { student?: Student; onClose: ()
 }
 
 export function AdminStudentsPage() {
-  const [q, setQ]       = useState('')
-  const [kelas, setKelas] = useState('')
-  const [page, setPage]  = useState(1)
+  const [q, setQ]             = useState('')
+  const [tingkat, setTingkat] = useState('')
+  const [kelas, setKelas]     = useState('')
+  const [page, setPage]       = useState(1)
   const [showForm, setShowForm]       = useState(false)
   const [editStudent, setEditStudent] = useState<Student | undefined>(undefined)
 
+  const { data: classList } = useQuery({
+    queryKey: ['student-classes'],
+    queryFn: studentService.classes,
+  })
+
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-students', { q, kelas, page }],
-    queryFn: () => studentService.list({ q, kelas, page }),
+    queryKey: ['admin-students', { q, tingkat, kelas, page }],
+    queryFn: () => studentService.list({ q, tingkat: tingkat || undefined, kelas: kelas || undefined, page }),
+  })
+
+  const availableClasses = (classList ?? []).filter((c) => {
+    if (!tingkat) return true
+    return c.tingkat === tingkat
   })
 
   const students: Student[] = (data?.data as any)?.data ?? []
@@ -111,6 +141,7 @@ export function AdminStudentsPage() {
       {(showForm || editStudent) && (
         <StudentFormModal
           student={editStudent}
+          classList={classList}
           onClose={() => { setShowForm(false); setEditStudent(undefined) }}
         />
       )}
@@ -125,8 +156,8 @@ export function AdminStudentsPage() {
 
       <Card>
         <CardBody>
-          <div className="flex gap-3">
-            <div className="flex-1">
+          <div className="flex flex-wrap gap-3">
+            <div className="flex-1 min-w-[200px]">
               <Input
                 placeholder="Cari nama, NIS, NISN..."
                 leftIcon={<Search size={15} />}
@@ -134,12 +165,51 @@ export function AdminStudentsPage() {
                 onChange={(e) => { setQ(e.target.value); setPage(1) }}
               />
             </div>
-            <Input
-              placeholder="Filter kelas"
+
+            {/* Dropdown Tingkat */}
+            <select
+              className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+              value={tingkat}
+              onChange={(e) => {
+                const val = e.target.value
+                setTingkat(val)
+                setKelas('')
+                setPage(1)
+              }}
+            >
+              <option value="">Semua Tingkat</option>
+              <option value="X">Tingkat X</option>
+              <option value="XI">Tingkat XI</option>
+              <option value="XII">Tingkat XII</option>
+            </select>
+
+            {/* Dropdown Kelas */}
+            <select
+              className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white min-w-[160px]"
               value={kelas}
               onChange={(e) => { setKelas(e.target.value); setPage(1) }}
-              className="w-32"
-            />
+            >
+              <option value="">
+                {tingkat ? `Semua Kelas ${tingkat}` : 'Semua Kelas'}
+              </option>
+              {tingkat ? (
+                availableClasses.map((c) => (
+                  <option key={c.id} value={c.nama}>{c.nama}</option>
+                ))
+              ) : (
+                ['X', 'XI', 'XII'].map((t) => {
+                  const group = (classList ?? []).filter((c) => c.tingkat === t)
+                  if (group.length === 0) return null
+                  return (
+                    <optgroup key={t} label={`Tingkat ${t}`}>
+                      {group.map((c) => (
+                        <option key={c.id} value={c.nama}>{c.nama}</option>
+                      ))}
+                    </optgroup>
+                  )
+                })
+              )}
+            </select>
           </div>
         </CardBody>
       </Card>
