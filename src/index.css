@@ -44,8 +44,8 @@
 @layer components {
   /* Kiosk fullscreen body */
   .kiosk-body {
-    background-color: #0f172a;
-    color: white;
+    background-color: #f8fafc;
+    color: #0f172a;
     overflow: hidden;
     user-select: none;
     height: 100dvh;

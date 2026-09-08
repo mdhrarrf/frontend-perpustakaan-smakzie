@@ -6,7 +6,8 @@ const BASE = '/perpustakaan/loans'
 export interface CreateLoanPayload {
   loan_type: 'individual' | 'class'
   student_id: number
-  book_id: number
+  book_id?: number           // Untuk buku lokal
+  slims_biblio_id?: number   // Untuk buku SLiMS
   due_at: string
   borrow_photo?: string
   station_id?: string

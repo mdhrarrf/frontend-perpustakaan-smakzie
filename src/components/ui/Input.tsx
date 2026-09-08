@@ -52,7 +52,7 @@ export const KioskInput = forwardRef<HTMLInputElement, InputProps>(
   ({ className, ...props }, ref) => (
     <Input
       ref={ref}
-      className={cn('text-2xl py-4 h-16 text-center tracking-widest', className)}
+      className={cn('text-2xl py-4 h-16 text-center tracking-wide placeholder:tracking-normal', className)}
       {...props}
     />
   )

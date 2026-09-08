@@ -136,7 +136,7 @@ export function WebcamCapture({
       )}
 
       {autoCapture && countdown !== null && (
-        <p className={cn('text-slate-400', kioskMode && 'text-xl')}>
+        <p className={cn('text-slate-600 font-medium', kioskMode && 'text-xl')}>
           Foto otomatis dalam {countdown} detik…
         </p>
       )}

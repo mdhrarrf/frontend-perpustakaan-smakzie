@@ -30,6 +30,12 @@ export const bookService = {
     return data.data!
   },
 
+  // Smart Scan: mengembalikan full response termasuk meta (registered, data_source)
+  async scanSmart(code: string): Promise<ApiResponse<Book> & { meta?: { registered: boolean; registration_type?: string; data_source?: string } }> {
+    const { data } = await apiClient.get<ApiResponse<Book>>(`${BASE}/scan`, { params: { code } })
+    return data as ApiResponse<Book> & { meta?: { registered: boolean; registration_type?: string; data_source?: string } }
+  },
+
   async create(formData: FormData): Promise<Book> {
     const { data } = await apiClient.post<ApiResponse<Book>>(BASE, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },

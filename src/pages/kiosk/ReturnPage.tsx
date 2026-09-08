@@ -9,7 +9,7 @@ import { WebcamCapture } from '@/components/kiosk/WebcamCapture'
 import { useKioskStore } from '@/store/kiosk.store'
 import { getErrorMessage } from '@/api/client'
 import { formatDateTime, formatDate } from '@/utils'
-import { ArrowLeft, AlertTriangle, CheckCircle2, Loader2, RotateCcw } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, CheckCircle2, Loader2, RotateCcw, BookOpen, Clock } from 'lucide-react'
 import type { Student, Loan } from '@/types'
 
 type Step = 'scan-student' | 'select-loan' | 'photo' | 'confirm'
@@ -26,7 +26,7 @@ export function KioskReturnPage() {
   const [error,        setError]      = useState<string | null>(null)
   const [isLoading,    setIsLoading]  = useState(false)
 
-  const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-xl px-8 py-5 min-h-[80px] transition-all active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-slate-900'
+  const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-xl px-8 py-5 min-h-[80px] transition-all active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2'
 
   async function handleStudentScan(code: string) {
     setIsLoading(true); setError(null)
@@ -34,17 +34,22 @@ export function KioskReturnPage() {
       const data = await studentService.search(code, 'barcode')
       const s = Array.isArray(data) ? data[0] : data
       setStudent(s)
+
       const loanData = await studentService.loans(s.id, { status: 'active,overdue' })
       const rawLoans = loanData.data?.data ?? []
       const loans = rawLoans.filter((l: Loan) => l.status === 'active' || l.status === 'overdue')
+
       if (loans.length === 0) {
         setError('Tidak ada peminjaman aktif. Anda tidak memiliki tanggungan buku yang sedang dipinjam.')
         return
       }
       setActiveLoans(loans)
       setStep('select-loan')
-    } catch { setError('Siswa tidak ditemukan. Pastikan kartu pelajar terbaca dengan benar.') }
-    finally { setIsLoading(false) }
+    } catch {
+      setError('Siswa tidak ditemukan. Pastikan kartu pelajar terbaca dengan benar.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   // Helper: ambil judul buku dari loan item (support SLiMS books yang book = null)
@@ -84,25 +89,33 @@ export function KioskReturnPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/40 to-emerald-50/40 flex flex-col p-8 text-slate-900">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <button onClick={() => navigate('/kiosk')} className="text-slate-400 hover:text-white transition-colors">
-          <ArrowLeft size={28} />
+        <button
+          onClick={() => navigate('/kiosk')}
+          className="p-3 bg-white hover:bg-slate-100 rounded-2xl border border-slate-200 text-slate-700 shadow-sm transition-all cursor-pointer"
+        >
+          <ArrowLeft size={24} />
         </button>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-          <RotateCcw className="text-teal-400" size={28} />
-          Pengembalian Buku Mandiri
-        </h1>
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900 flex items-center gap-3 tracking-tight">
+            <RotateCcw className="text-emerald-600" size={28} />
+            Pengembalian Buku Mandiri
+          </h1>
+          <p className="text-slate-500 text-sm font-medium">Layanan mandiri pengembalian buku perpustakaan</p>
+        </div>
       </div>
 
-      {/* Error */}
+      {/* Error Banner */}
       {error && (
-        <div className="flex items-start gap-3 bg-red-900/50 border border-red-700 rounded-2xl p-5 mb-6">
-          <AlertTriangle size={24} className="text-red-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-red-200 text-lg">{error}</p>
-            <button onClick={reset} className="text-red-400 hover:text-red-200 text-sm mt-2 underline">Coba lagi</button>
+        <div className="flex items-start gap-3 bg-rose-50 border border-rose-200 rounded-2xl p-5 mb-6 text-rose-900 shadow-sm">
+          <AlertTriangle size={24} className="text-rose-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-base font-semibold">{error}</p>
+            <button onClick={reset} className="text-rose-700 hover:text-rose-900 text-sm font-bold mt-2 underline cursor-pointer">
+              Coba lagi
+            </button>
           </div>
         </div>
       )}
@@ -110,22 +123,24 @@ export function KioskReturnPage() {
       {/* Loading */}
       {isLoading && (
         <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="text-teal-400 animate-spin" size={48} />
-            <p className="text-slate-300 text-xl">Memuat data...</p>
+          <div className="flex flex-col items-center gap-4 bg-white p-8 rounded-3xl border border-slate-200 shadow-xl">
+            <Loader2 className="text-emerald-600 animate-spin" size={48} />
+            <p className="text-slate-800 text-xl font-bold">Memuat data...</p>
           </div>
         </div>
       )}
 
-      {/* Step 1: Scan Student */}
+      {/* ─── Step 1: Scan Student ─── */}
       {step === 'scan-student' && !isLoading && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-8">
+        <div className="flex-1 flex flex-col items-center justify-center gap-6">
           <div className="text-center">
-            <RotateCcw size={64} className="text-teal-400 mx-auto mb-4" />
-            <p className="text-white text-3xl font-bold mb-2">Scan Kartu Pelajar</p>
-            <p className="text-slate-400 text-xl">Tempelkan kartu pelajar ke scanner atau ketik NIS</p>
+            <div className="w-20 h-20 bg-emerald-100 rounded-3xl flex items-center justify-center mx-auto mb-4 text-emerald-600 shadow-sm">
+              <RotateCcw size={40} />
+            </div>
+            <h2 className="text-slate-900 text-3xl font-extrabold tracking-tight">Scan Kartu Pelajar</h2>
+            <p className="text-slate-600 text-lg mt-1 font-medium">Tempelkan kartu pelajar ke scanner atau ketik NIS Anda</p>
           </div>
-          <div className="w-full max-w-lg">
+          <div className="w-full max-w-lg bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
             <BarcodeScanner
               onScan={handleStudentScan}
               placeholder="Scan kartu / ketik NIS + Enter"
@@ -136,19 +151,19 @@ export function KioskReturnPage() {
         </div>
       )}
 
-      {/* Step 2: Select Loan */}
+      {/* ─── Step 2: Select Loan ─── */}
       {step === 'select-loan' && student && !isLoading && (
-        <div className="flex-1 flex flex-col gap-6">
+        <div className="flex-1 flex flex-col gap-6 max-w-2xl mx-auto w-full">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 bg-teal-900/50 border border-teal-700 rounded-full px-6 py-2.5 mb-4">
-              <CheckCircle2 size={20} className="text-teal-400" />
-              <span className="text-teal-200 text-lg font-medium">{student.nama}</span>
+            <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-6 py-2.5 mb-3 shadow-sm">
+              <CheckCircle2 size={20} className="text-emerald-600" />
+              <span className="text-slate-800 text-base font-bold">{student.nama} ({student.nis})</span>
             </div>
-            <p className="text-white text-2xl font-bold">Pilih Buku yang Dikembalikan</p>
-            <p className="text-slate-400 text-lg mt-1">Ketuk buku yang ingin Anda kembalikan</p>
+            <h2 className="text-slate-900 text-3xl font-extrabold tracking-tight">Pilih Buku yang Dikembalikan</h2>
+            <p className="text-slate-600 text-base mt-1 font-medium">Ketuk buku yang sedang Anda bawa untuk dikembalikan</p>
           </div>
 
-          <div className="space-y-4 max-w-2xl mx-auto w-full">
+          <div className="space-y-4 w-full">
             {activeLoans.map((loan) => {
               const isLate = loan.status === 'overdue' || new Date(loan.due_at) < new Date()
               const bookTitle = getLoanBookTitle(loan)
@@ -158,21 +173,23 @@ export function KioskReturnPage() {
                 <button
                   key={loan.id}
                   onClick={() => { setSelectedLoan(loan); setStep('photo') }}
-                  className={`w-full text-left bg-slate-800 hover:bg-slate-700 active:scale-[0.98] rounded-2xl p-6 transition-all border-2 ${isLate ? 'border-red-700/60' : 'border-slate-700'}`}
+                  className={`w-full text-left bg-white hover:border-emerald-400 active:scale-[0.98] rounded-2xl p-6 transition-all border-2 shadow-md cursor-pointer ${
+                    isLate ? 'border-rose-300 bg-rose-50/40' : 'border-slate-200'
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <p className="text-white text-xl font-semibold">{bookTitle}</p>
-                      {bookAuthor && <p className="text-slate-400 mt-1">{bookAuthor}</p>}
+                      <p className="text-slate-900 text-xl font-bold">{bookTitle}</p>
+                      {bookAuthor && <p className="text-slate-500 mt-1 font-medium text-sm">{bookAuthor}</p>}
                       <div className="flex items-center gap-4 mt-3 text-sm">
-                        <span className="text-slate-400">Dipinjam: {formatDate(loan.borrowed_at)}</span>
-                        <span className={isLate ? 'text-red-400 font-medium' : 'text-slate-400'}>
+                        <span className="text-slate-500 font-medium">Dipinjam: {formatDate(loan.borrowed_at)}</span>
+                        <span className={isLate ? 'text-rose-600 font-bold' : 'text-slate-700 font-medium'}>
                           Jatuh Tempo: {formatDate(loan.due_at)}
                         </span>
                       </div>
                     </div>
                     {isLate && (
-                      <div className="flex-shrink-0 bg-red-900/50 text-red-400 rounded-xl px-4 py-2 text-sm font-bold border border-red-700/40">
+                      <div className="flex-shrink-0 bg-rose-100 text-rose-700 rounded-xl px-4 py-2 text-xs font-black border border-rose-200">
                         TERLAMBAT
                       </div>
                     )}
@@ -184,15 +201,15 @@ export function KioskReturnPage() {
         </div>
       )}
 
-      {/* Step 3: Photo */}
+      {/* ─── Step 3: Photo ─── */}
       {step === 'photo' && selectedLoan && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-8">
+        <div className="flex-1 flex flex-col items-center justify-center gap-6">
           <div className="text-center">
-            <p className="text-white text-2xl font-bold mb-2">Dokumentasi Pengembalian</p>
-            <div className="inline-block bg-slate-800 rounded-xl px-5 py-2 mt-1">
-              <p className="text-white font-medium">{getLoanBookTitle(selectedLoan)}</p>
+            <h2 className="text-slate-900 text-3xl font-extrabold tracking-tight">Dokumentasi Pengembalian</h2>
+            <div className="inline-block bg-white border border-slate-200 rounded-xl px-5 py-2 mt-2 shadow-sm">
+              <p className="text-slate-900 font-bold">{getLoanBookTitle(selectedLoan)}</p>
             </div>
-            <p className="text-slate-400 text-lg mt-3">Foto akan diambil otomatis dalam 5 detik</p>
+            <p className="text-slate-600 text-base mt-2 font-medium">Foto diambil otomatis dalam 5 detik</p>
           </div>
 
           <WebcamCapture
@@ -210,47 +227,47 @@ export function KioskReturnPage() {
 
           <button
             onClick={() => setStep('confirm')}
-            className="text-slate-500 hover:text-slate-300 text-lg transition-colors"
+            className="text-slate-600 hover:text-slate-900 text-base font-bold bg-white border border-slate-200 px-6 py-2.5 rounded-full shadow-sm transition-all"
           >
-            Lewati foto →
+            Lewati Foto →
           </button>
         </div>
       )}
 
-      {/* Step 4: Confirm */}
+      {/* ─── Step 4: Confirm ─── */}
       {step === 'confirm' && student && selectedLoan && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-8 max-w-xl mx-auto w-full">
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
           {new Date(selectedLoan.due_at) < new Date() && (
-            <div className="w-full bg-red-900/40 border border-red-700 rounded-2xl p-5">
+            <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
               <div className="flex items-center gap-3">
-                <AlertTriangle size={28} className="text-red-400 flex-shrink-0" />
+                <AlertTriangle size={28} className="text-amber-600 flex-shrink-0" />
                 <div>
-                  <p className="text-red-300 text-lg font-semibold">Pengembalian Terlambat</p>
-                  <p className="text-red-400 text-base mt-0.5">
-                    Sanksi keterlambatan akan dicatat untuk buku ini. Pelanggaran hanya berlaku untuk buku yang terlambat ini.
+                  <p className="text-amber-900 text-base font-bold">Pengembalian Melewati Batas Tempo</p>
+                  <p className="text-amber-800 text-sm mt-0.5 font-medium">
+                    Sanksi keterlambatan akan dicatat untuk buku ini sesuai dengan ketentuan perpustakaan.
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="bg-slate-800 rounded-3xl p-8 w-full space-y-4">
-            <h2 className="text-2xl font-bold text-white text-center mb-2">Konfirmasi Pengembalian</h2>
+          <div className="bg-white rounded-3xl p-8 w-full space-y-4 border border-slate-200/80 shadow-xl shadow-slate-200/50">
+            <h2 className="text-2xl font-extrabold text-slate-900 text-center mb-4 tracking-tight">Konfirmasi Pengembalian</h2>
             {[
-              { label: 'Nama',   value: student.nama },
-              { label: 'NIS',    value: student.nis },
-              { label: 'Buku',   value: getLoanBookTitle(selectedLoan) },
+              { label: 'Nama',        value: student.nama },
+              { label: 'NIS',         value: student.nis },
+              { label: 'Buku',        value: getLoanBookTitle(selectedLoan) },
               { label: 'Jatuh Tempo', value: formatDate(selectedLoan.due_at) },
             ].map(({ label, value }) => (
-              <div key={label} className="flex justify-between items-start gap-4">
-                <span className="text-slate-400 text-lg">{label}</span>
-                <span className="text-white text-lg font-medium text-right max-w-xs">{value}</span>
+              <div key={label} className="flex justify-between items-start gap-4 py-2 border-b border-slate-100 last:border-0">
+                <span className="text-slate-500 text-base font-medium">{label}</span>
+                <span className="text-slate-900 text-base font-bold text-right max-w-xs">{value}</span>
               </div>
             ))}
             {photoPath && (
-              <div className="flex justify-between">
-                <span className="text-slate-400 text-lg">Foto</span>
-                <span className="text-teal-400 text-lg">✓ Terlampir</span>
+              <div className="flex justify-between py-2">
+                <span className="text-slate-500 text-base font-medium">Foto</span>
+                <span className="text-emerald-600 text-base font-bold">✓ Terlampir</span>
               </div>
             )}
           </div>
@@ -258,14 +275,14 @@ export function KioskReturnPage() {
           <div className="flex gap-4 w-full">
             <button
               onClick={reset}
-              className={`${kBtn} flex-1 bg-slate-700 hover:bg-slate-600 text-white focus:ring-slate-500`}
+              className={`${kBtn} flex-1 bg-white hover:bg-slate-100 text-slate-700 border-2 border-slate-200 shadow-sm`}
             >
               <ArrowLeft size={24} /> Batal
             </button>
             <button
               onClick={() => returnMutation.mutate()}
               disabled={returnMutation.isPending}
-              className={`${kBtn} flex-1 bg-teal-600 hover:bg-teal-500 text-white focus:ring-teal-400`}
+              className={`${kBtn} flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/30`}
             >
               {returnMutation.isPending
                 ? <><Loader2 className="animate-spin" size={24} /> Memproses...</>

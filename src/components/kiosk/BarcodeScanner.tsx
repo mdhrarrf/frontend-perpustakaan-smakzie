@@ -58,9 +58,9 @@ export function BarcodeScanner({
     <div className={cn('flex flex-col gap-2', className)} onClick={handleAreaClick}>
       {kioskMode ? (
         <div className="flex flex-col items-center gap-4">
-          {label && <p className="text-slate-300 text-xl">{label}</p>}
+          {label && <p className="text-slate-700 text-xl font-medium">{label}</p>}
           <div className="flex items-center gap-4 w-full max-w-md">
-            <Scan className="text-primary-400 flex-shrink-0" size={32} />
+            <Scan className="text-primary-600 flex-shrink-0" size={32} />
             <KioskInput
               ref={inputRef}
               value={value}
@@ -68,7 +68,7 @@ export function BarcodeScanner({
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               autoComplete="off"
-              className="bg-slate-800 border-slate-600 text-white placeholder:text-slate-500 focus:border-primary-400"
+              className="bg-white border-2 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-primary-600 focus:ring-4 focus:ring-primary-100 shadow-sm rounded-2xl"
             />
           </div>
           <p className="text-slate-500 text-sm">Arahkan scanner ke kode QR/barcode atau ketik lalu tekan Enter</p>

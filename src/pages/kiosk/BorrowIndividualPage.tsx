@@ -135,7 +135,7 @@ export function KioskBorrowIndividual() {
     onError:   (err) => setError(getErrorMessage(err)),
   })
 
-  const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-xl px-8 py-5 min-h-[80px] transition-all active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-slate-900'
+  const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-xl px-8 py-5 min-h-[80px] transition-all active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2'
 
   // Helper: nama buku dari active loan
   const activeLoanBookTitle = activeLoan?.items?.[0]?.book?.judul
@@ -145,30 +145,36 @@ export function KioskBorrowIndividual() {
   const isOverdue = activeLoan?.status === 'overdue'
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/40 to-indigo-50/40 flex flex-col p-8 text-slate-900">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <button onClick={() => navigate('/kiosk/borrow')} className="text-slate-400 hover:text-white transition-colors">
-          <ArrowLeft size={28} />
+        <button
+          onClick={() => navigate('/kiosk/borrow')}
+          className="p-3 bg-white hover:bg-slate-100 rounded-2xl border border-slate-200 text-slate-700 shadow-sm transition-all cursor-pointer"
+        >
+          <ArrowLeft size={24} />
         </button>
-        <h1 className="text-2xl font-bold text-white">Peminjaman Individu</h1>
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Peminjaman Individu</h1>
+          <p className="text-slate-500 text-sm font-medium">Layanan mandiri peminjaman buku perpustakaan</p>
+        </div>
       </div>
 
-      {/* Error */}
+      {/* Error Banner */}
       {error && (
-        <div className="flex items-start gap-3 bg-red-900/50 border border-red-700 rounded-2xl p-5 mb-6">
-          <AlertTriangle size={24} className="text-red-400 flex-shrink-0 mt-0.5" />
-          <p className="text-red-200 text-lg">{error}</p>
+        <div className="flex items-start gap-3 bg-rose-50 border border-rose-200 rounded-2xl p-5 mb-6 text-rose-900 shadow-sm">
+          <AlertTriangle size={24} className="text-rose-600 flex-shrink-0 mt-0.5" />
+          <p className="text-base font-semibold">{error}</p>
         </div>
       )}
 
       {/* Loading */}
       {isLoading && (
         <div className="flex flex-col items-center justify-center gap-3 py-8">
-          <Loader2 className="text-primary-400 animate-spin" size={40} />
-          <p className="text-slate-300 text-xl">{loadingMessage}</p>
+          <Loader2 className="text-indigo-600 animate-spin" size={40} />
+          <p className="text-slate-800 text-xl font-bold">{loadingMessage}</p>
           {loadingMessage.includes('Mencari') && (
-            <p className="text-slate-500 text-sm text-center max-w-xs">
+            <p className="text-slate-500 text-sm text-center max-w-xs font-medium">
               Sistem sedang mencari data buku di internet secara otomatis...
             </p>
           )}
@@ -177,23 +183,26 @@ export function KioskBorrowIndividual() {
 
       {/* Smart Scan Notification */}
       {smartScanInfo?.registered && !isLoading && (
-        <div className="flex items-start gap-3 bg-blue-900/40 border border-blue-600 rounded-2xl p-5 mb-4">
-          <CheckCircle2 size={24} className="text-blue-400 flex-shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-2xl p-5 mb-4 text-blue-900 shadow-sm">
+          <CheckCircle2 size={24} className="text-blue-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-blue-200 font-semibold">✨ Buku Baru Otomatis Didaftarkan!</p>
-            <p className="text-blue-300 text-sm mt-1">{smartScanInfo.message}</p>
+            <p className="text-blue-950 font-bold">✨ Buku Baru Otomatis Didaftarkan!</p>
+            <p className="text-blue-700 text-sm mt-1 font-medium">{smartScanInfo.message}</p>
           </div>
         </div>
       )}
 
       {/* ─── Step: Scan Student ─── */}
       {step === 'scan-student' && !isLoading && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-8">
+        <div className="flex-1 flex flex-col items-center justify-center gap-6">
           <div className="text-center">
-            <p className="text-slate-300 text-2xl font-semibold mb-2">Langkah 1 dari 4</p>
-            <p className="text-slate-400 text-lg">Scan atau ketik NIS pada kartu pelajar Anda</p>
+            <span className="inline-block bg-indigo-50 text-indigo-700 text-sm font-bold uppercase tracking-wider px-4 py-1 rounded-full mb-2 border border-indigo-200/60">
+              Langkah 1 dari 4
+            </span>
+            <h2 className="text-slate-900 text-3xl font-extrabold tracking-tight">Identifikasi Kartu Pelajar</h2>
+            <p className="text-slate-600 text-lg mt-1 font-medium">Scan kartu pelajar Anda atau ketik NIS secara manual</p>
           </div>
-          <div className="w-full max-w-lg">
+          <div className="w-full max-w-lg bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
             <BarcodeScanner onScan={handleStudentScan} placeholder="Scan kartu / ketik NIS + Enter" kioskMode autoFocus />
           </div>
         </div>
@@ -203,64 +212,64 @@ export function KioskBorrowIndividual() {
       {step === 'active-loan-warning' && !isLoading && student && activeLoan && (
         <div className="flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
           {/* Badge siswa */}
-          <div className="inline-flex items-center gap-2 bg-slate-800 rounded-full px-5 py-2.5">
-            <CheckCircle2 size={20} className="text-green-400" />
-            <p className="text-slate-200 text-lg font-medium">{student.nama}</p>
+          <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-5 py-2.5 shadow-sm">
+            <CheckCircle2 size={20} className="text-emerald-600" />
+            <p className="text-slate-800 text-base font-bold">{student.nama}</p>
           </div>
 
-          {/* Peringatan */}
-          <div className={`w-full rounded-3xl p-8 border-2 ${isOverdue ? 'bg-red-900/40 border-red-500' : 'bg-amber-900/40 border-amber-500'}`}>
+          {/* Peringatan Card */}
+          <div className={`w-full rounded-3xl p-8 border-2 shadow-lg ${isOverdue ? 'bg-rose-50 border-rose-300' : 'bg-amber-50 border-amber-300'}`}>
             <div className="flex flex-col items-center gap-4 text-center">
-              <AlertCircle size={48} className={isOverdue ? 'text-red-400' : 'text-amber-400'} />
-              <h2 className={`text-2xl font-bold ${isOverdue ? 'text-red-300' : 'text-amber-300'}`}>
-                {isOverdue ? '⚠️ Buku Terlambat Dikembalikan!' : '📚 Masih Ada Buku Dipinjam'}
+              <AlertCircle size={48} className={isOverdue ? 'text-rose-600' : 'text-amber-600'} />
+              <h2 className={`text-2xl font-extrabold ${isOverdue ? 'text-rose-900' : 'text-amber-900'}`}>
+                {isOverdue ? '⚠️ Buku Terlambat Dikembalikan!' : '📚 Masih Ada Buku yang Dipinjam'}
               </h2>
-              <p className={`text-lg ${isOverdue ? 'text-red-200' : 'text-amber-200'}`}>
+              <p className={`text-base font-medium ${isOverdue ? 'text-rose-800' : 'text-amber-800'}`}>
                 {isOverdue
-                  ? 'Kamu masih memiliki buku yang TERLAMBAT dikembalikan. Kembalikan segera!'
-                  : 'Kamu masih memiliki buku yang belum dikembalikan. Kembalikan dulu sebelum meminjam buku baru.'
+                  ? 'Anda memiliki buku yang telah melewati batas jatuh tempo. Silakan kembalikan terlebih dahulu.'
+                  : 'Anda masih memiliki tanggungan buku yang belum dikembalikan. Kembalikan buku tersebut sebelum meminjam yang baru.'
                 }
               </p>
 
               {/* Detail buku yang dipinjam */}
-              <div className="bg-slate-800/80 rounded-2xl p-5 w-full mt-2 text-left space-y-3">
+              <div className="bg-white rounded-2xl p-5 w-full mt-2 text-left space-y-3 border border-slate-200/80 shadow-sm">
                 <div className="flex items-start gap-3">
-                  <BookOpen size={20} className="text-slate-400 flex-shrink-0 mt-0.5" />
+                  <BookOpen size={20} className="text-indigo-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-slate-400 text-sm">Buku yang dipinjam</p>
-                    <p className="text-white font-semibold text-lg">{activeLoanBookTitle}</p>
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Judul Buku</p>
+                    <p className="text-slate-900 font-bold text-lg">{activeLoanBookTitle}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Clock size={20} className="text-slate-400 flex-shrink-0" />
+                  <Clock size={20} className="text-amber-600 flex-shrink-0" />
                   <div>
-                    <p className="text-slate-400 text-sm">Jatuh tempo</p>
-                    <p className={`font-semibold text-lg ${isOverdue ? 'text-red-400' : 'text-amber-400'}`}>
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Jatuh Tempo</p>
+                    <p className={`font-bold text-base ${isOverdue ? 'text-rose-600' : 'text-amber-700'}`}>
                       {formatDate(activeLoan.due_at)}
-                      {isOverdue && <span className="ml-2 text-sm">({activeLoan.late_days} hari terlambat)</span>}
+                      {isOverdue && <span className="ml-2 text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-bold">Terlambat {activeLoan.late_days} hari</span>}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-slate-400 text-sm">No. Peminjaman:</span>
-                  <span className="text-slate-300 text-sm font-mono">{activeLoan.loan_number}</span>
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                  <span className="text-slate-400 text-xs font-medium">No. Peminjaman:</span>
+                  <span className="text-slate-700 text-xs font-mono font-semibold">{activeLoan.loan_number}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Tombol */}
+          {/* Tombol Aksi */}
           <div className="flex flex-col gap-3 w-full">
             <button
               onClick={() => navigate('/kiosk/return')}
-              className={`${kBtn} w-full ${isOverdue ? 'bg-red-700 hover:bg-red-600 focus:ring-red-500' : 'bg-amber-700 hover:bg-amber-600 focus:ring-amber-500'} text-white`}
+              className={`${kBtn} w-full ${isOverdue ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-200' : 'bg-amber-600 hover:bg-amber-700 shadow-amber-200'} text-white shadow-lg`}
             >
               <CheckCircle2 size={24} />
               Kembalikan Buku Dulu
             </button>
             <button
               onClick={() => { setActiveLoan(null); setStep('scan-student') }}
-              className="text-slate-500 hover:text-slate-300 text-lg transition-colors py-2"
+              className="w-full bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 py-4 rounded-2xl text-base font-bold shadow-sm transition-all"
             >
               ← Ganti Kartu Pelajar
             </button>
@@ -270,16 +279,21 @@ export function KioskBorrowIndividual() {
 
       {/* ─── Step: Scan Book ─── */}
       {step === 'scan-book' && !isLoading && student && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-8">
+        <div className="flex-1 flex flex-col items-center justify-center gap-6">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 bg-slate-800 rounded-full px-5 py-2.5 mb-4">
-              <CheckCircle2 size={20} className="text-green-400" />
-              <p className="text-slate-200 text-lg font-medium">{student.nama}</p>
+            <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-5 py-2.5 mb-3 shadow-sm">
+              <CheckCircle2 size={20} className="text-emerald-600" />
+              <p className="text-slate-800 text-base font-bold">{student.nama} ({student.nis})</p>
             </div>
-            <p className="text-slate-300 text-2xl font-semibold mb-2">Langkah 2 dari 4</p>
-            <p className="text-slate-400 text-lg">Scan QR/barcode buku yang ingin dipinjam</p>
+            <div>
+              <span className="inline-block bg-indigo-50 text-indigo-700 text-sm font-bold uppercase tracking-wider px-4 py-1 rounded-full mb-2 border border-indigo-200/60">
+                Langkah 2 dari 4
+              </span>
+              <h2 className="text-slate-900 text-3xl font-extrabold tracking-tight">Scan Buku</h2>
+              <p className="text-slate-600 text-lg mt-1 font-medium">Arahkan barcode pada buku ke scanner</p>
+            </div>
           </div>
-          <div className="w-full max-w-lg">
+          <div className="w-full max-w-lg bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
             <BarcodeScanner onScan={handleBookScan} placeholder="Scan QR/barcode buku + Enter" kioskMode autoFocus />
           </div>
         </div>
@@ -287,28 +301,30 @@ export function KioskBorrowIndividual() {
 
       {/* ─── Step: Pick Duration ─── */}
       {step === 'pick-duration' && !isLoading && student && book && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-8 max-w-lg mx-auto w-full">
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 bg-slate-800 rounded-full px-5 py-2.5 mb-4">
-              <CheckCircle2 size={20} className="text-green-400" />
-              <p className="text-slate-200 text-lg font-medium">{book.judul}</p>
+            <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-5 py-2.5 mb-3 shadow-sm">
+              <CheckCircle2 size={20} className="text-emerald-600" />
+              <p className="text-slate-800 text-base font-bold line-clamp-1">{book.judul}</p>
             </div>
-            <p className="text-slate-300 text-2xl font-semibold mb-2">Langkah 3 dari 4</p>
-            <p className="text-slate-400 text-lg">Berapa lama ingin meminjam?</p>
-            <p className="text-slate-500 text-sm mt-1">Maksimal {MAX_DUE_DAYS} hari</p>
+            <span className="inline-block bg-indigo-50 text-indigo-700 text-sm font-bold uppercase tracking-wider px-4 py-1 rounded-full mb-2 border border-indigo-200/60">
+              Langkah 3 dari 4
+            </span>
+            <h2 className="text-slate-900 text-3xl font-extrabold tracking-tight">Berapa Lama Meminjam?</h2>
+            <p className="text-slate-600 text-base mt-1 font-medium">Pilih durasi peminjaman (maksimal {MAX_DUE_DAYS} hari)</p>
           </div>
 
-          {/* Duration Picker */}
-          <div className="bg-slate-800 rounded-3xl p-8 w-full">
-            <div className="grid grid-cols-7 gap-2 mb-6">
+          {/* Duration Picker Card */}
+          <div className="bg-white rounded-3xl p-8 w-full border border-slate-200/80 shadow-xl shadow-slate-200/50">
+            <div className="grid grid-cols-7 gap-2.5 mb-6">
               {Array.from({ length: MAX_DUE_DAYS }, (_, i) => i + 1).map(day => (
                 <button
                   key={day}
                   onClick={() => setDueDays(day)}
-                  className={`aspect-square rounded-xl text-xl font-bold transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 ${
+                  className={`aspect-square rounded-2xl text-xl font-extrabold transition-all active:scale-95 focus:outline-none cursor-pointer ${
                     dueDays === day
-                      ? 'bg-primary-600 text-white focus:ring-primary-400 scale-105 shadow-lg shadow-primary-900'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600 focus:ring-slate-500'
+                      ? 'bg-indigo-600 text-white ring-4 ring-indigo-200 scale-105 shadow-lg shadow-indigo-600/30'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200/80 border border-slate-200'
                   }`}
                 >
                   {day}
@@ -316,12 +332,12 @@ export function KioskBorrowIndividual() {
               ))}
             </div>
 
-            <div className="text-center space-y-1">
-              <p className="text-white text-lg">
-                Meminjam selama <span className="text-primary-400 font-bold text-2xl">{dueDays}</span> hari
+            <div className="text-center bg-slate-50 rounded-2xl p-5 border border-slate-200/80 space-y-1">
+              <p className="text-slate-800 text-lg font-medium">
+                Lama pinjam: <span className="text-indigo-600 font-extrabold text-2xl">{dueDays}</span> Hari
               </p>
-              <p className="text-slate-400">
-                Jatuh tempo: <span className="text-amber-400 font-semibold">{formatDate(getDueAt().toISOString())}</span>
+              <p className="text-slate-500 text-sm">
+                Jatuh tempo: <span className="text-slate-900 font-bold">{formatDate(getDueAt().toISOString())}</span>
               </p>
             </div>
           </div>
@@ -329,13 +345,13 @@ export function KioskBorrowIndividual() {
           <div className="flex gap-4 w-full">
             <button
               onClick={() => setStep('scan-book')}
-              className={`${kBtn} flex-1 bg-slate-700 hover:bg-slate-600 text-white focus:ring-slate-500`}
+              className={`${kBtn} flex-1 bg-white hover:bg-slate-100 text-slate-700 border-2 border-slate-200 shadow-sm`}
             >
               <ArrowLeft size={24} /> Ganti Buku
             </button>
             <button
               onClick={() => setStep('photo')}
-              className={`${kBtn} flex-1 bg-primary-600 hover:bg-primary-500 text-white focus:ring-primary-400`}
+              className={`${kBtn} flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30`}
             >
               <CheckCircle2 size={24} /> Lanjutkan
             </button>
@@ -345,26 +361,32 @@ export function KioskBorrowIndividual() {
 
       {/* ─── Step: Photo ─── */}
       {step === 'photo' && book && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-8">
+        <div className="flex-1 flex flex-col items-center justify-center gap-6">
           <div className="text-center">
-            <p className="text-slate-300 text-2xl font-semibold mb-2">Langkah 4 dari 4</p>
-            <p className="text-slate-400 text-lg">Ambil foto untuk dokumentasi</p>
-            <div className="inline-block bg-slate-800 rounded-xl px-5 py-2 mt-3">
-              <p className="text-white font-medium">{book.judul}</p>
+            <span className="inline-block bg-indigo-50 text-indigo-700 text-sm font-bold uppercase tracking-wider px-4 py-1 rounded-full mb-2 border border-indigo-200/60">
+              Langkah 4 dari 4
+            </span>
+            <h2 className="text-slate-900 text-3xl font-extrabold tracking-tight">Dokumentasi Foto</h2>
+            <p className="text-slate-600 text-base mt-1 font-medium">Foto otomatis diambil untuk bukti peminjaman</p>
+            <div className="inline-block bg-white border border-slate-200 rounded-xl px-5 py-2 mt-3 shadow-sm">
+              <p className="text-slate-900 font-bold">{book.judul}</p>
             </div>
           </div>
           <WebcamCapture onCapture={handlePhotoCapture} autoCapture autoCaptureDelay={5} kioskMode />
-          <button onClick={() => setStep('confirm')} className="text-slate-500 hover:text-slate-300 text-lg transition-colors">
-            Lewati foto →
+          <button
+            onClick={() => setStep('confirm')}
+            className="text-slate-600 hover:text-slate-900 text-base font-bold bg-white border border-slate-200 px-6 py-2.5 rounded-full shadow-sm transition-all"
+          >
+            Lewati Foto →
           </button>
         </div>
       )}
 
       {/* ─── Step: Confirm ─── */}
       {step === 'confirm' && student && book && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-8 max-w-lg mx-auto w-full">
-          <div className="bg-slate-800 rounded-3xl p-8 w-full space-y-4">
-            <h2 className="text-2xl font-bold text-white text-center mb-2">Konfirmasi Peminjaman</h2>
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
+          <div className="bg-white rounded-3xl p-8 w-full space-y-4 border border-slate-200/80 shadow-xl shadow-slate-200/50">
+            <h2 className="text-2xl font-extrabold text-slate-900 text-center mb-4 tracking-tight">Konfirmasi Peminjaman</h2>
             {[
               { label: 'Peminjam',    value: `${student.nama} (${student.nis})` },
               { label: 'Kelas',       value: student.kelas ?? '—' },
@@ -373,18 +395,25 @@ export function KioskBorrowIndividual() {
               { label: 'Lama Pinjam', value: `${dueDays} hari` },
               { label: 'Jatuh Tempo', value: formatDate(getDueAt().toISOString()) + ' (23:59)' },
             ].map(({ label, value }) => (
-              <div key={label} className="flex justify-between items-start gap-4">
-                <span className="text-slate-400 text-lg">{label}</span>
-                <span className="text-white text-lg font-medium text-right">{value}</span>
+              <div key={label} className="flex justify-between items-start gap-4 py-2 border-b border-slate-100 last:border-0">
+                <span className="text-slate-500 text-base font-medium">{label}</span>
+                <span className="text-slate-900 text-base font-bold text-right">{value}</span>
               </div>
             ))}
           </div>
 
           <div className="flex gap-4 w-full">
-            <button onClick={() => setStep('pick-duration')} className={`${kBtn} flex-1 bg-slate-700 hover:bg-slate-600 text-white focus:ring-slate-500`}>
+            <button
+              onClick={() => setStep('pick-duration')}
+              className={`${kBtn} flex-1 bg-white hover:bg-slate-100 text-slate-700 border-2 border-slate-200 shadow-sm`}
+            >
               <ArrowLeft size={24} /> Batal
             </button>
-            <button onClick={() => borrowMutation.mutate()} disabled={borrowMutation.isPending} className={`${kBtn} flex-1 bg-primary-600 hover:bg-primary-500 text-white focus:ring-primary-400`}>
+            <button
+              onClick={() => borrowMutation.mutate()}
+              disabled={borrowMutation.isPending}
+              className={`${kBtn} flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30`}
+            >
               {borrowMutation.isPending ? <Loader2 className="animate-spin" size={24} /> : <CheckCircle2 size={24} />}
               {borrowMutation.isPending ? 'Memproses...' : 'Konfirmasi'}
             </button>
