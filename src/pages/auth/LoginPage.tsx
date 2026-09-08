@@ -9,6 +9,7 @@ import { authService } from '@/api/auth.service'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Footer } from '@/components/layout/Footer'
 import { getErrorMessage } from '@/api/client'
 
 const schema = z.object({
@@ -43,8 +44,8 @@ export function LoginPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-slate-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-slate-100 flex flex-col items-center justify-between p-4 sm:p-6">
+      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm py-6">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <img src="/logo-smakzie.png" alt="Logo SMK Negeri 1 Cianjur" className="w-24 h-24 object-contain mb-4 drop-shadow-sm" />
@@ -53,7 +54,7 @@ export function LoginPage() {
         </div>
 
         {/* Form */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 w-full">
           {error && (
             <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-600">{error}</p>
@@ -95,6 +96,8 @@ export function LoginPage() {
           <a href="/kiosk" className="text-primary-500 hover:underline">klik di sini</a>
         </p>
       </div>
+
+      <Footer variant="auth" />
     </div>
   )
 }

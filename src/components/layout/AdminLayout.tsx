@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { authService } from '@/api/auth.service'
 import { cn } from '@/utils'
+import { Footer } from './Footer'
 import {
   BookOpen, Users, ClipboardList, AlertTriangle,
   PackageX, BarChart2, ScrollText, LayoutDashboard,
@@ -141,8 +142,11 @@ export function AdminLayout() {
           </div>
         </div>
 
-        <main className="flex-1 overflow-auto p-6">
-          <Outlet />
+        <main className="flex-1 overflow-auto p-4 md:p-6 flex flex-col justify-between">
+          <div className="flex-1">
+            <Outlet />
+          </div>
+          <Footer />
         </main>
       </div>
     </div>

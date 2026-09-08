@@ -145,7 +145,7 @@ export function KioskBorrowIndividual() {
   const isOverdue = activeLoan?.status === 'overdue'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/40 to-indigo-50/40 flex flex-col p-8 text-slate-900">
+    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-sky-50/40 to-indigo-50/40 flex flex-col p-8 text-slate-900">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <button

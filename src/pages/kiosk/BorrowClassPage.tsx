@@ -70,7 +70,7 @@ export function KioskBorrowClass() {
   const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-xl px-8 py-5 min-h-[80px] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/40 to-indigo-50/40 flex flex-col p-8 text-slate-900">
+    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-purple-50/40 to-indigo-50/40 flex flex-col p-8 text-slate-900">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <button

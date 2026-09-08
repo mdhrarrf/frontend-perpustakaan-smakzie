@@ -27,7 +27,7 @@ export function KioskSuccessPage() {
   const isReturn = state.type === 'return' || state.type === 'return_late'
 
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-center gap-8 p-8 ${
+    <div className={`flex-1 min-h-[calc(100vh-2.75rem)] flex flex-col items-center justify-center gap-8 p-8 ${
       isLate
         ? 'bg-gradient-to-br from-amber-50 via-rose-50/40 to-slate-50'
         : 'bg-gradient-to-br from-slate-50 via-teal-50/40 to-emerald-50/50'
