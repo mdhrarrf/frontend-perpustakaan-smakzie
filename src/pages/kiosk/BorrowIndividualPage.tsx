@@ -57,7 +57,8 @@ export function KioskBorrowIndividual() {
       // Cek apakah siswa masih punya peminjaman aktif
       setLoadingMessage('Mengecek riwayat peminjaman...')
       const loansRes = await studentService.loans(s.id, { status: 'active,overdue', per_page: 1 })
-      const activeLoans = loansRes.data?.data ?? []
+      const rawLoans = loansRes.data?.data ?? []
+      const activeLoans = rawLoans.filter((l: Loan) => l.status === 'active' || l.status === 'overdue')
 
       if (activeLoans.length > 0) {
         // Ada pinjaman aktif — tampilkan peringatan

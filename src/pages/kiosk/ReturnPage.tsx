@@ -35,9 +35,10 @@ export function KioskReturnPage() {
       const s = Array.isArray(data) ? data[0] : data
       setStudent(s)
       const loanData = await studentService.loans(s.id, { status: 'active,overdue' })
-      const loans = loanData.data?.data ?? []
+      const rawLoans = loanData.data?.data ?? []
+      const loans = rawLoans.filter((l: Loan) => l.status === 'active' || l.status === 'overdue')
       if (loans.length === 0) {
-        setError('Tidak ada peminjaman aktif. Pastikan Anda belum mengembalikan semua buku.')
+        setError('Tidak ada peminjaman aktif. Anda tidak memiliki tanggungan buku yang sedang dipinjam.')
         return
       }
       setActiveLoans(loans)
