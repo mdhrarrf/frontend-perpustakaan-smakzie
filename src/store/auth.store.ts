@@ -7,8 +7,9 @@ interface AuthState {
   token: string | null
   isAuthenticated: boolean
   role: string | null
+  rememberMe: boolean
 
-  setAuth: (user: AuthUser, token: string) => void
+  setAuth: (user: AuthUser, token: string, role?: string, rememberMe?: boolean) => void
   setRole: (role: string) => void
   logout: () => void
 }
@@ -20,9 +21,16 @@ export const useAuthStore = create<AuthState>()(
       token:           null,
       isAuthenticated: false,
       role:            null,
+      rememberMe:      true,
 
-      setAuth: (user, token) =>
-        set({ user, token, isAuthenticated: true }),
+      setAuth: (user, token, role, rememberMe = true) =>
+        set((state) => ({
+          user,
+          token,
+          isAuthenticated: true,
+          role: role ?? (user as any)?.role ?? state.role,
+          rememberMe,
+        })),
 
       setRole: (role) =>
         set({ role }),
@@ -32,12 +40,18 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'perpustakaan-auth',
-      // Hanya persist token dan user dasar, bukan data sensitif lain
       partialize: (state) => ({
-        user:  state.user,
-        token: state.token,
-        role:  state.role,
+        user:            state.user,
+        token:           state.token,
+        role:            state.role,
+        isAuthenticated: Boolean(state.token),
+        rememberMe:      state.rememberMe,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state && state.token) {
+          state.isAuthenticated = true
+        }
+      },
     },
   ),
 )

@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
-import { BookOpen, Lock, User } from 'lucide-react'
+import { Lock, User } from 'lucide-react'
 import { authService } from '@/api/auth.service'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/Button'
@@ -15,30 +15,50 @@ import { getErrorMessage } from '@/api/client'
 const schema = z.object({
   email:    z.string().email('Format email tidak valid'),
   password: z.string().min(1, 'Password wajib diisi'),
+  remember: z.boolean(),
 })
 type FormData = z.infer<typeof schema>
 
 export function LoginPage() {
-  const navigate   = useNavigate()
-  const setAuth    = useAuthStore((s) => s.setAuth)
-  const setRole    = useAuthStore((s) => s.setRole)
+  const navigate        = useNavigate()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const token           = useAuthStore((s) => s.token)
+  const role            = useAuthStore((s) => s.role)
+  const setAuth         = useAuthStore((s) => s.setAuth)
   const [error, setError] = useState<string | null>(null)
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
+    defaultValues: {
+      email: localStorage.getItem('perpustakaan_remembered_email') ?? '',
+      password: '',
+      remember: true,
+    },
   })
+
+  // Jika sudah terautentikasi, langsung redirect ke dashboard yang sesuai
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      if (role === 'admin') navigate('/admin/dashboard', { replace: true })
+      else navigate('/staff/dashboard', { replace: true })
+    }
+  }, [isAuthenticated, token, role, navigate])
 
   const loginMutation = useMutation({
     mutationFn: (data: FormData) => authService.login(data),
-    onSuccess: ({ user, token }) => {
-      setAuth(user, token)
-      // Tentukan role (akan diisi lebih lengkap setelah /auth/me)
-      // Untuk sementara cek nama role dari response (backend harus menyertakan role)
-      const role = (user as unknown as { role?: string }).role ?? 'petugas'
-      setRole(role)
+    onSuccess: ({ user, token }, variables) => {
+      const userRole = (user as unknown as { role?: string }).role ?? 'petugas'
 
-      if (role === 'admin') navigate('/admin/dashboard')
-      else navigate('/staff/dashboard')
+      if (variables.remember) {
+        localStorage.setItem('perpustakaan_remembered_email', variables.email)
+      } else {
+        localStorage.removeItem('perpustakaan_remembered_email')
+      }
+
+      setAuth(user, token, userRole, variables.remember)
+
+      if (userRole === 'admin') navigate('/admin/dashboard', { replace: true })
+      else navigate('/staff/dashboard', { replace: true })
     },
     onError: (err) => setError(getErrorMessage(err)),
   })
@@ -81,6 +101,16 @@ export function LoginPage() {
               error={errors.password?.message}
               required
             />
+            <div className="flex items-center justify-between py-1">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  {...register('remember')}
+                  className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer accent-primary-600"
+                />
+                <span className="text-sm text-slate-600 font-medium">Ingat saya</span>
+              </label>
+            </div>
             <Button
               type="submit"
               className="w-full"
