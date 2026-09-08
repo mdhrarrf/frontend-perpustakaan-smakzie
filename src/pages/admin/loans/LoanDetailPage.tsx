@@ -5,7 +5,7 @@ import { Card, CardHeader, CardBody } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { LoanStatusBadge, ViolationStatusBadge } from '@/components/ui/Badge'
 import { formatCurrency, formatDate, formatDateTime } from '@/utils'
-import { ArrowLeft, RotateCcw, PackageX } from 'lucide-react'
+import { ArrowLeft, RotateCcw, PackageX, Camera, ZoomIn, X } from 'lucide-react'
 import { useState } from 'react'
 import { getErrorMessage } from '@/api/client'
 
@@ -15,6 +15,7 @@ export function AdminLoanDetail() {
   const qc = useQueryClient()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [previewImage, setPreviewImage] = useState<{ url: string; label: string } | null>(null)
 
   const { data: loan, isLoading } = useQuery({
     queryKey: ['loan', id],
@@ -146,24 +147,106 @@ export function AdminLoanDetail() {
       {/* Foto dokumentasi */}
       {(loan.borrow_photo || loan.return_photo) && (
         <Card>
-          <CardHeader><h2 className="font-semibold text-slate-800">Foto Dokumentasi</h2></CardHeader>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Camera size={18} className="text-slate-500" />
+              <h2 className="font-semibold text-slate-800">Foto Dokumentasi</h2>
+            </div>
+          </CardHeader>
           <CardBody>
-            <div className="flex gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {loan.borrow_photo && (
-                <div>
-                  <p className="text-xs text-slate-500 mb-2">Saat Peminjaman</p>
-                  <img src={loan.borrow_photo} alt="Foto pinjam" className="w-40 h-28 object-cover rounded-lg shadow" />
+                <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex flex-col">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-slate-700">Saat Peminjaman</span>
+                    <span className="text-[11px] text-slate-400">Kamera Kiosk/Petugas</span>
+                  </div>
+                  <div
+                    onClick={() => setPreviewImage({ url: loan.borrow_photo!, label: 'Foto Saat Peminjaman' })}
+                    className="relative group cursor-pointer overflow-hidden rounded-lg bg-slate-100 aspect-video flex items-center justify-center border border-slate-200"
+                  >
+                    <img
+                      src={loan.borrow_photo}
+                      alt="Foto Saat Peminjaman"
+                      className="w-full h-full object-cover transition duration-200 group-hover:scale-105"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                        e.currentTarget.nextElementSibling?.removeAttribute('style')
+                      }}
+                    />
+                    <div style={{ display: 'none' }} className="flex flex-col items-center justify-center p-4 text-center text-slate-400">
+                      <Camera size={28} className="mb-1 text-slate-300" />
+                      <p className="text-xs">Foto tidak dapat dimuat</p>
+                    </div>
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-medium">
+                      <ZoomIn size={16} /> Perbesar Foto
+                    </div>
+                  </div>
                 </div>
               )}
+
               {loan.return_photo && (
-                <div>
-                  <p className="text-xs text-slate-500 mb-2">Saat Pengembalian</p>
-                  <img src={loan.return_photo} alt="Foto kembali" className="w-40 h-28 object-cover rounded-lg shadow" />
+                <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex flex-col">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-slate-700">Saat Pengembalian</span>
+                    <span className="text-[11px] text-slate-400">Kamera Kiosk/Petugas</span>
+                  </div>
+                  <div
+                    onClick={() => setPreviewImage({ url: loan.return_photo!, label: 'Foto Saat Pengembalian' })}
+                    className="relative group cursor-pointer overflow-hidden rounded-lg bg-slate-100 aspect-video flex items-center justify-center border border-slate-200"
+                  >
+                    <img
+                      src={loan.return_photo}
+                      alt="Foto Saat Pengembalian"
+                      className="w-full h-full object-cover transition duration-200 group-hover:scale-105"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                        e.currentTarget.nextElementSibling?.removeAttribute('style')
+                      }}
+                    />
+                    <div style={{ display: 'none' }} className="flex flex-col items-center justify-center p-4 text-center text-slate-400">
+                      <Camera size={28} className="mb-1 text-slate-300" />
+                      <p className="text-xs">Foto tidak dapat dimuat</p>
+                    </div>
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-medium">
+                      <ZoomIn size={16} /> Perbesar Foto
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
           </CardBody>
         </Card>
+      )}
+
+      {/* Modal Preview Foto */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="relative max-w-4xl max-h-[90vh] bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-700 flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-slate-900/90">
+              <span className="text-sm font-semibold text-slate-200">{previewImage.label}</span>
+              <button
+                onClick={() => setPreviewImage(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-2 flex items-center justify-center bg-black/50 overflow-auto max-h-[80vh]">
+              <img
+                src={previewImage.url}
+                alt={previewImage.label}
+                className="max-w-full max-h-[75vh] object-contain rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
