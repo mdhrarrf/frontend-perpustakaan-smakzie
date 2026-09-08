@@ -36,7 +36,7 @@ export function AdminLayout() {
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="h-16 flex items-center px-4 border-b border-slate-700/50">
+      <div className="h-16 flex items-center px-4 border-b border-slate-200">
         <div className="flex items-center justify-center flex-shrink-0">
           <img src="/logo-smakzie.png" alt="Logo" className="w-8 h-8 object-contain drop-shadow-sm" />
         </div>
@@ -70,16 +70,21 @@ export function AdminLayout() {
       </nav>
 
       {/* User info */}
-      <div className={cn('border-t border-slate-200 p-3', collapsed && 'flex justify-center')}>
+      <div className={cn('border-t border-slate-200 p-3', collapsed && 'flex justify-center flex-col items-center')}>
         {!collapsed && (
           <div className="flex items-center gap-2 px-2 py-1.5 mb-1">
-            <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-semibold text-sm">
+            <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-semibold text-sm flex-shrink-0">
               {user?.name?.[0] ?? 'A'}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-slate-900 truncate">{user?.name}</p>
               <p className="text-xs text-slate-500">Admin</p>
             </div>
+          </div>
+        )}
+        {collapsed && (
+          <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-semibold text-sm mb-2" title={user?.name ?? 'Admin'}>
+            {user?.name?.[0] ?? 'A'}
           </div>
         )}
         <button
@@ -101,15 +106,15 @@ export function AdminLayout() {
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className={cn(
-        'hidden lg:flex flex-col bg-white border-r border-slate-200 transition-all duration-200',
+        'hidden lg:flex flex-col bg-white border-r border-slate-200 transition-all duration-200 relative',
         collapsed ? 'w-16' : 'w-60'
       )}>
         {sidebarContent}
         {/* Collapse toggle */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="absolute top-20 -right-3 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-sm hover:bg-slate-50 transition-colors"
-          style={{ position: 'absolute', left: collapsed ? '3.5rem' : '14.25rem' }}
+          className="absolute top-20 -right-3 z-20 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-sm hover:bg-slate-50 transition-colors"
+          title={collapsed ? 'Perluas Sidebar' : 'Ciutkan Sidebar'}
         >
           {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
         </button>
