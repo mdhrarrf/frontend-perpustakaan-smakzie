@@ -146,7 +146,7 @@ export function KioskBorrowClass() {
             <h2 className="text-slate-900 text-3xl font-extrabold tracking-tight">Scan Buku yang Dipinjam</h2>
           </div>
           <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
-            <BarcodeScanner onScan={handleBookScan} placeholder="Scan QR/barcode buku + Enter" kioskMode autoFocus />
+            <BarcodeScanner onScan={handleBookScan} placeholder="Scan barcode / QR buku" kioskMode autoFocus />
           </div>
 
           {books.length > 0 && (

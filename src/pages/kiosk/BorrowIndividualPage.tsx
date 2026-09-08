@@ -203,7 +203,7 @@ export function KioskBorrowIndividual() {
             <p className="text-slate-600 text-lg mt-1 font-medium">Scan kartu pelajar Anda atau ketik NIS secara manual</p>
           </div>
           <div className="w-full max-w-lg bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
-            <BarcodeScanner onScan={handleStudentScan} placeholder="Scan kartu / ketik NIS + Enter" kioskMode autoFocus />
+            <BarcodeScanner onScan={handleStudentScan} placeholder="Scan kartu / NIS / NISN" kioskMode autoFocus />
           </div>
         </div>
       )}
@@ -294,7 +294,7 @@ export function KioskBorrowIndividual() {
             </div>
           </div>
           <div className="w-full max-w-lg bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
-            <BarcodeScanner onScan={handleBookScan} placeholder="Scan QR/barcode buku + Enter" kioskMode autoFocus />
+            <BarcodeScanner onScan={handleBookScan} placeholder="Scan barcode / QR buku" kioskMode autoFocus />
           </div>
         </div>
       )}

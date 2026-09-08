@@ -23,7 +23,7 @@ interface BarcodeScannerProps {
  */
 export function BarcodeScanner({
   onScan,
-  placeholder = 'Scan atau ketik kode...',
+  placeholder = 'Scan kode / ketik...',
   label,
   autoFocus = true,
   kioskMode = false,
@@ -71,7 +71,7 @@ export function BarcodeScanner({
               className="bg-white border-2 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-primary-600 focus:ring-4 focus:ring-primary-100 shadow-sm rounded-2xl"
             />
           </div>
-          <p className="text-slate-500 text-sm">Arahkan scanner ke kode QR/barcode atau ketik lalu tekan Enter</p>
+          <p className="text-slate-400 text-xs font-medium">Arahkan scanner ke kode atau ketik lalu tekan Enter</p>
         </div>
       ) : (
         <div className="flex items-center gap-2">

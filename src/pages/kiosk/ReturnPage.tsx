@@ -142,7 +142,7 @@ export function KioskReturnPage() {
           <div className="w-full max-w-lg bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
             <BarcodeScanner
               onScan={handleStudentScan}
-              placeholder="Scan kartu / ketik NIS + Enter"
+              placeholder="Scan kartu / NIS / NISN"
               kioskMode
               autoFocus
             />
