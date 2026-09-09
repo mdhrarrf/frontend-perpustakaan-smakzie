@@ -32,15 +32,9 @@ export function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-sm text-slate-500">Ringkasan aktivitas dan pemantauan perpustakaan secara real-time</p>
-        </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200/80 rounded-full text-xs font-semibold text-emerald-700">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Live Update Aktif</span>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+        <p className="text-sm text-slate-500">Ringkasan aktivitas perpustakaan hari ini</p>
       </div>
 
       {/* Stats */}
