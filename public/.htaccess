@@ -2,10 +2,8 @@
   RewriteEngine On
   RewriteBase /
 
-  # 1. Reverse Proxy API ke backend JagoanHosting (mengatasi Mixed Content HTTPS -> HTTP)
-  <IfModule mod_proxy.c>
-    RewriteRule ^api/v1/(.*)$ http://be-smakzie.jh-beon.cloud/api/v1/$1 [P,L]
-  </IfModule>
+  # 1. API Reverse Proxy via PHP (menghindari error 503 LiteSpeed mod_proxy di Hostinger)
+  RewriteRule ^api/v1/(.*)$ proxy.php [QSA,L]
 
   # 2. SPA Routing fallback untuk React Router
   RewriteRule ^index\.html$ - [L]
