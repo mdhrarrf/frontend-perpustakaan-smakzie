@@ -151,10 +151,13 @@ export function KioskBorrowClass() {
     }))
   }
 
-  // ─── Step 3: Scan Buku ───
+  // ─── Step 3: Scan Buku (hanya 1 judul diizinkan untuk kelas) ───
   async function handleBookScan(code: string) {
-    setIsLoading(true)
     setError(null)
+    // Sudah ada buku terpilih — tidak perlu scan lagi, cukup atur quantity
+    if (books.length > 0) return
+
+    setIsLoading(true)
     setLoadingMessage('Mencari data buku...')
     try {
       const res = await bookService.scanSmart(code)
@@ -165,15 +168,7 @@ export function KioskBorrowClass() {
         return
       }
 
-      setBooks((prev) => {
-        const exists = prev.find((x) => x.book.id === b.id)
-        if (exists) {
-          return prev.map((x) =>
-            x.book.id === b.id ? { ...x, quantity: x.quantity + 1 } : x
-          )
-        }
-        return [...prev, { book: b, quantity: 1 }]
-      })
+      setBooks([{ book: b, quantity: 1 }])
     } catch {
       setError('Buku tidak ditemukan. Pastikan barcode terbaca dengan jelas.')
     } finally {
@@ -557,125 +552,139 @@ export function KioskBorrowClass() {
 
           {/* ─── Step 3: Scan Buku Paket / Pelajaran ─── */}
           {step === 'scan-books' && (
-            <div key="scan-books" className="animate-kiosk-step max-w-2xl mx-auto w-full my-auto flex flex-col gap-4">
+            <div key="scan-books" className="animate-kiosk-step max-w-xl mx-auto w-full my-auto flex flex-col gap-5">
               <div className="text-center">
                 <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
                   Langkah 3 dari {steps.length} • Scan Buku
                 </span>
-                <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Scan Barcode Buku</h2>
-                <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Arahkan barcode atau QR pada buku pelajaran ke scanner</p>
+                <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">
+                  {books.length === 0 ? 'Scan Barcode Buku' : 'Atur Jumlah Buku'}
+                </h2>
+                <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">
+                  {books.length === 0
+                    ? 'Arahkan barcode atau QR pada buku pelajaran ke scanner'
+                    : 'Masukkan jumlah buku yang akan dipinjam oleh kelas'}
+                </p>
               </div>
 
               {/* Context Bar */}
               <div className="flex items-center justify-between bg-white border border-slate-200 rounded-2xl px-5 py-3 shadow-xs">
-                <div className="flex items-center gap-2 text-sm text-slate-700 font-medium">
-                  <span className="font-bold text-indigo-600">{classInfo.class_name}</span>
-                  <span>·</span>
-                  <span>{classInfo.teacher_name}</span>
-                  <span>·</span>
-                  <span className="text-slate-500">{classInfo.subject_name}</span>
+                <div className="flex items-center gap-2 text-sm text-slate-700 font-medium min-w-0">
+                  <span className="font-bold text-indigo-600 flex-shrink-0">{classInfo.class_name}</span>
+                  <span className="flex-shrink-0">·</span>
+                  <span className="truncate">{classInfo.teacher_name}</span>
+                  <span className="flex-shrink-0">·</span>
+                  <span className="text-slate-500 truncate">{classInfo.subject_name}</span>
                 </div>
-                <span className="text-xs bg-slate-100 text-slate-700 font-bold px-3 py-1 rounded-full">
-                  {totalQuantity} Buku
-                </span>
               </div>
 
-              {/* Scanner Area */}
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
-                <BarcodeScanner onScan={handleBookScan} placeholder="Scan barcode / QR buku..." kioskMode autoFocus />
-              </div>
-
-              {/* Daftar Buku Terpilih */}
-              {books.length > 0 && (
-                <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xl shadow-slate-200/50 space-y-4">
-                  <div className="flex items-center justify-between text-sm font-bold text-slate-600">
-                    <span>{books.length} Judul Buku Dipilih</span>
-                    <span className="text-indigo-600 font-extrabold">{totalQuantity} Total Eksemplar</span>
-                  </div>
-
-                  <div className="max-h-56 overflow-y-auto space-y-2.5 pr-1">
-                    {books.map(({ book, quantity }) => (
-                      <div key={book.id} className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:px-4 sm:py-3">
-                        <div className="flex items-center gap-3 min-w-0 pr-2">
-                          <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center flex-shrink-0 font-bold">
-                            <BookOpen size={20} />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-slate-900 font-bold text-sm leading-tight truncate">{book.judul}</p>
-                            <p className="text-xs text-slate-500 truncate">{book.penulis || '—'}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          {/* Quick Presets */}
-                          <div className="hidden sm:flex items-center gap-1 mr-1">
-                            {[10, 20, 30].map((delta) => (
-                              <button
-                                key={delta}
-                                type="button"
-                                onClick={() => handleAddQuantity(book.id, delta)}
-                                className="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1 rounded-lg border border-indigo-200 transition-colors cursor-pointer"
-                                title={`Tambah ${delta} buku`}
-                              >
-                                +{delta}
-                              </button>
-                            ))}
-                          </div>
-
-                          {/* Tombol Kurang */}
-                          <button
-                            type="button"
-                            onClick={() => handleAddQuantity(book.id, -1)}
-                            disabled={quantity <= 1}
-                            className="w-9 h-9 rounded-xl bg-white hover:bg-slate-100 disabled:opacity-30 text-slate-800 flex items-center justify-center border border-slate-200 cursor-pointer shadow-xs transition-colors"
-                          >
-                            <Minus size={15} />
-                          </button>
-
-                          {/* Input Angka Keyboard */}
-                          <input
-                            type="number"
-                            min="1"
-                            max={book.jumlah_tersedia || 999}
-                            value={quantity === 0 ? '' : quantity}
-                            onFocus={(e) => e.target.select()}
-                            onChange={(e) => handleQuantityChange(book.id, e.target.value)}
-                            onBlur={() => handleQuantityBlur(book.id, quantity)}
-                            className="w-16 h-9 text-center font-black text-base text-slate-900 bg-white border-2 border-indigo-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 rounded-xl shadow-inner tabular-nums focus:outline-none"
-                          />
-
-                          {/* Tombol Tambah */}
-                          <button
-                            type="button"
-                            onClick={() => handleAddQuantity(book.id, 1)}
-                            className="w-9 h-9 rounded-xl bg-white hover:bg-slate-100 text-slate-800 flex items-center justify-center border border-slate-200 cursor-pointer shadow-xs transition-colors"
-                          >
-                            <Plus size={15} />
-                          </button>
-
-                          {/* Tombol Hapus */}
-                          <button
-                            type="button"
-                            onClick={() => setBooks((p) => p.filter((x) => x.book.id !== book.id))}
-                            className="w-9 h-9 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center border border-rose-200 cursor-pointer ml-1 shadow-xs transition-colors"
-                            title="Hapus"
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setStep('photo')}
-                    className={`${kBtn} w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/25`}
-                  >
-                    Lanjut ke Foto ({totalQuantity} Buku) →
-                  </button>
+              {/* ── Belum scan: tampilkan scanner ── */}
+              {books.length === 0 && (
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
+                  <BarcodeScanner onScan={handleBookScan} placeholder="Scan barcode / QR buku..." kioskMode autoFocus />
                 </div>
               )}
+
+              {/* ── Sudah scan: tampilkan UI quantity ── */}
+              {books.length > 0 && (() => {
+                const { book, quantity } = books[0]
+                const maxStock = book.jumlah_tersedia && book.jumlah_tersedia > 0 ? book.jumlah_tersedia : 999
+                return (
+                  <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50 flex flex-col gap-6">
+                    {/* Info Buku */}
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center flex-shrink-0">
+                        <BookOpen size={28} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-slate-900 font-extrabold text-base sm:text-lg leading-tight truncate">{book.judul}</p>
+                        <p className="text-sm text-slate-500 mt-0.5 truncate">{book.penulis || '—'}</p>
+                        {book.jumlah_tersedia != null && book.jumlah_tersedia > 0 && (
+                          <p className="text-xs text-emerald-600 font-bold mt-1">{book.jumlah_tersedia} eksemplar tersedia</p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setBooks([])}
+                        className="flex-shrink-0 w-9 h-9 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center border border-rose-200 cursor-pointer transition-colors"
+                        title="Ganti buku"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+
+                    {/* Quantity Control */}
+                    <div className="flex flex-col items-center gap-4">
+                      <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Jumlah Eksemplar</p>
+
+                      {/* Main Controls */}
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleAddQuantity(book.id, -1)}
+                          disabled={quantity <= 1}
+                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100 hover:bg-slate-200 disabled:opacity-30 text-slate-800 flex items-center justify-center border border-slate-200 cursor-pointer shadow-sm transition-colors text-2xl font-black"
+                        >
+                          <Minus size={22} />
+                        </button>
+
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min="1"
+                          max={maxStock}
+                          value={quantity === 0 ? '' : quantity}
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) => handleQuantityChange(book.id, e.target.value)}
+                          onBlur={() => handleQuantityBlur(book.id, quantity)}
+                          className="w-28 sm:w-32 h-14 sm:h-16 text-center font-black text-3xl sm:text-4xl text-slate-900 bg-white border-2 border-indigo-400 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 rounded-2xl shadow-inner tabular-nums focus:outline-none"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => handleAddQuantity(book.id, 1)}
+                          disabled={quantity >= maxStock}
+                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-30 text-white flex items-center justify-center border border-indigo-600 cursor-pointer shadow-sm transition-colors"
+                        >
+                          <Plus size={22} />
+                        </button>
+                      </div>
+
+                      {/* Preset Buttons */}
+                      <div className="flex items-center gap-2">
+                        {[10, 20, 30, 36].map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => handleQuantityChange(book.id, String(Math.min(preset, maxStock)))}
+                            className={`px-4 py-2 rounded-xl font-bold text-sm border transition-all cursor-pointer ${
+                              quantity === preset
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                                : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200'
+                            }`}
+                          >
+                            {preset}
+                          </button>
+                        ))}
+                      </div>
+
+                      <p className="text-xs text-slate-400 font-medium">
+                        Ketik angka langsung atau gunakan tombol ±
+                      </p>
+                    </div>
+
+                    {/* Lanjut Button */}
+                    <button
+                      type="button"
+                      onClick={() => setStep('photo')}
+                      disabled={quantity < 1}
+                      className={`${kBtn} w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed`}
+                    >
+                      Lanjut ke Foto ({quantity} Buku) →
+                    </button>
+                  </div>
+                )
+              })()}
             </div>
           )}
 
