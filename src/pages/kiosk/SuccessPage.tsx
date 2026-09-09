@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { CheckCircle2, AlertTriangle, BookOpen, Home } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, Home, BookOpen, Clock, RotateCcw } from 'lucide-react'
 import { formatDate } from '@/utils'
 
 interface SuccessState {
@@ -12,110 +12,133 @@ interface SuccessState {
   penalty_end?: string
 }
 
+const AUTO_REDIRECT_SECS = 10
+
 export function KioskSuccessPage() {
   const navigate  = useNavigate()
   const location  = useLocation()
   const state     = (location.state ?? {}) as SuccessState
+  const [countdown, setCountdown] = useState(AUTO_REDIRECT_SECS)
 
-  // Auto-kembali ke standby setelah 8 detik
   useEffect(() => {
-    const timer = setTimeout(() => navigate('/kiosk'), 8000)
-    return () => clearTimeout(timer)
+    const interval = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) { navigate('/kiosk'); return 0 }
+        return c - 1
+      })
+    }, 1000)
+    return () => clearInterval(interval)
   }, [navigate])
 
   const isLate = state.type === 'return_late'
-  const isReturn = state.type === 'return' || state.type === 'return_late'
+
+  const content = (() => {
+    switch (state.type) {
+      case 'borrow':
+        return {
+          icon:     <CheckCircle2 size={60} className="text-indigo-600" />,
+          title:    'Peminjaman Berhasil!',
+          subtitle: state.book_title ? `"${state.book_title}"` : undefined,
+          info:     state.due_at
+            ? `Kembalikan paling lambat ${formatDate(new Date(state.due_at).toISOString())}`
+            : undefined,
+        }
+      case 'borrow_class':
+        return {
+          icon:     <BookOpen size={60} className="text-indigo-600" />,
+          title:    'Peminjaman Kelas Berhasil!',
+          subtitle: `${state.book_count ?? 0} eksemplar buku pelajaran dipinjam`,
+          info:     state.due_at
+            ? `Kembalikan paling lambat ${formatDate(new Date(state.due_at).toISOString())}`
+            : undefined,
+        }
+      case 'return':
+        return {
+          icon:     <RotateCcw size={60} className="text-indigo-600" />,
+          title:    'Buku Berhasil Dikembalikan!',
+          subtitle: state.book_title ? `"${state.book_title}"` : undefined,
+          info:     'Terima kasih telah mengembalikan buku tepat waktu.',
+        }
+      case 'return_late':
+        return {
+          icon:     <AlertTriangle size={60} className="text-amber-500" />,
+          title:    'Pengembalian Terlambat',
+          subtitle: state.book_title ? `"${state.book_title}"` : undefined,
+          info:     undefined,
+        }
+      default:
+        return {
+          icon:     <CheckCircle2 size={60} className="text-indigo-600" />,
+          title:    'Berhasil!',
+          subtitle: undefined,
+          info:     undefined,
+        }
+    }
+  })()
 
   return (
-    <div className={`flex-1 min-h-[calc(100vh-2.75rem)] flex flex-col items-center justify-center gap-8 p-8 ${
-      isLate
-        ? 'bg-gradient-to-br from-amber-50 via-rose-50/40 to-slate-50'
-        : 'bg-gradient-to-br from-slate-50 via-teal-50/40 to-emerald-50/50'
-    }`}>
+    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-sky-50/40 to-indigo-50/40 flex flex-col items-center justify-center gap-8 p-6 sm:p-10 text-slate-900">
 
-      {/* Icon */}
-      <div className={`w-32 h-32 rounded-full flex items-center justify-center shadow-2xl ${
-        isLate
-          ? 'bg-white border-4 border-amber-500 shadow-amber-200/60'
-          : 'bg-white border-4 border-emerald-500 shadow-emerald-200/60'
+      <div className={`w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-white flex items-center justify-center shadow-2xl border-4 ${
+        isLate ? 'border-amber-400 shadow-amber-200/60' : 'border-indigo-200 shadow-indigo-200/60'
       }`}>
-        {isLate
-          ? <AlertTriangle size={64} className="text-amber-600" />
-          : <CheckCircle2 size={64} className="text-emerald-600" />}
+        {content.icon}
       </div>
 
-      {/* Message */}
-      <div className="text-center max-w-xl">
-        {state.type === 'borrow' && (
-          <div className="space-y-3">
-            <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Peminjaman Berhasil!</h1>
-            {state.book_title && (
-              <p className="text-slate-700 text-2xl font-bold bg-white/80 border border-slate-200/80 px-6 py-3 rounded-2xl shadow-sm inline-block">
-                "{state.book_title}"
-              </p>
-            )}
-            {state.due_at && (
-              <p className="text-slate-600 text-lg font-medium">
-                Harap dikembalikan paling lambat{' '}
-                <span className="text-indigo-600 font-extrabold">{formatDate(new Date(state.due_at).toISOString())}</span>
-              </p>
-            )}
-          </div>
+      <div className="text-center max-w-lg flex flex-col items-center gap-3">
+        <h1 className={`text-3xl sm:text-4xl font-extrabold tracking-tight ${
+          isLate ? 'text-amber-800' : 'text-slate-900'
+        }`}>
+          {content.title}
+        </h1>
+
+        {content.subtitle && (
+          <p className="text-base sm:text-xl font-bold text-slate-700 bg-white border border-slate-200 px-6 py-3 rounded-2xl shadow-sm w-full">
+            {content.subtitle}
+          </p>
         )}
 
-        {state.type === 'borrow_class' && (
-          <div className="space-y-3">
-            <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Peminjaman Kelas Berhasil!</h1>
-            <p className="text-slate-700 text-2xl font-bold bg-white/80 border border-slate-200/80 px-6 py-3 rounded-2xl shadow-sm inline-block">
-              {state.book_count} buku pelajaran telah dipinjam
+        {content.info && (
+          <p className="text-slate-500 text-sm sm:text-base font-medium flex items-center gap-1.5">
+            <Clock size={14} className="flex-shrink-0" />
+            {content.info}
+          </p>
+        )}
+
+        {isLate && (
+          <div className="bg-white border-2 border-amber-300 rounded-2xl p-5 text-left w-full space-y-2 shadow-md shadow-amber-100/60 mt-1">
+            <p className="text-amber-800 text-base font-bold">
+              Terlambat <span className="text-rose-700">{state.late_days} hari</span>
             </p>
-            <p className="text-slate-500 text-base font-medium">Selamat belajar untuk siswa dan guru!</p>
-          </div>
-        )}
-
-        {state.type === 'return' && (
-          <div className="space-y-3">
-            <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Buku Berhasil Dikembalikan!</h1>
-            {state.book_title && (
-              <p className="text-slate-700 text-2xl font-bold bg-white/80 border border-slate-200/80 px-6 py-3 rounded-2xl shadow-sm inline-block">
-                "{state.book_title}"
+            {state.penalty_end && (
+              <p className="text-slate-700 text-sm font-semibold">
+                Sanksi berlaku hingga:{' '}
+                <span className="text-slate-900 font-extrabold">{formatDate(state.penalty_end)}</span>
               </p>
             )}
-            <p className="text-emerald-700 text-lg font-bold mt-2">Terima kasih telah mengembalikan tepat waktu! 🌟</p>
-          </div>
-        )}
-
-        {state.type === 'return_late' && (
-          <div className="space-y-3">
-            <h1 className="text-4xl font-extrabold text-rose-900 tracking-tight">Pengembalian Terlambat!</h1>
-            {state.book_title && <p className="text-slate-800 text-xl font-bold">"{state.book_title}"</p>}
-            <div className="bg-white border-2 border-amber-300 rounded-3xl p-6 text-left space-y-2 shadow-lg shadow-amber-100">
-              <p className="text-rose-700 text-lg font-bold">
-                ⚠ Terlambat: <span className="text-rose-900">{state.late_days} hari</span>
-              </p>
-              {state.penalty_end && (
-                <p className="text-slate-700 text-base font-semibold">
-                  Sanksi peminjaman buku hingga: <span className="text-slate-900 font-extrabold">{formatDate(state.penalty_end)}</span>
-                </p>
-              )}
-              <p className="text-slate-500 text-sm font-medium pt-2 border-t border-slate-100">
-                Catatan: Sanksi hanya berlaku untuk peminjaman mandiri buku sejenis.
-              </p>
-            </div>
+            <p className="text-slate-400 text-xs font-medium pt-2 border-t border-slate-100">
+              Sanksi hanya berlaku untuk peminjaman mandiri buku sejenis.
+            </p>
           </div>
         )}
       </div>
 
-      {/* Auto-redirect notice */}
-      <p className="text-slate-400 text-sm font-medium">Layar akan otomatis kembali ke menu utama dalam 8 detik...</p>
+      <div className="flex items-center gap-2 text-slate-400 text-sm font-medium">
+        <span className="w-7 h-7 rounded-full bg-slate-100 text-slate-600 font-extrabold text-sm flex items-center justify-center tabular-nums">
+          {countdown}
+        </span>
+        <span>Otomatis kembali ke menu utama...</span>
+      </div>
 
       <button
+        type="button"
         onClick={() => navigate('/kiosk')}
-        className="flex items-center justify-center gap-3 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white rounded-2xl px-10 py-5 text-xl font-bold min-h-[70px] shadow-xl shadow-slate-900/20 transition-all cursor-pointer"
+        className="flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-2xl px-10 py-4 sm:py-5 text-lg sm:text-xl font-bold min-h-[64px] sm:min-h-[72px] shadow-xl shadow-indigo-600/25 transition-all cursor-pointer focus:outline-none focus:ring-4 focus:ring-indigo-300"
       >
-        <Home size={24} />
+        <Home size={22} />
         Kembali ke Layar Utama
       </button>
+
     </div>
   )
 }
