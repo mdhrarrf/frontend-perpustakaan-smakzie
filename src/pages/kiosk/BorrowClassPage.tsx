@@ -12,12 +12,12 @@ import { useKioskStore } from '@/store/kiosk.store'
 import { getErrorMessage } from '@/api/client'
 import {
   ArrowLeft, AlertTriangle, CheckCircle2, Loader2, Plus, Minus, X,
-  Search, BookOpen, ChevronDown, Check, Clock
+  Search, BookOpen, ChevronDown, Check, Clock, AlertCircle
 } from 'lucide-react'
-import type { Student, Book, Teacher } from '@/types'
+import type { Student, Book, Teacher, Loan } from '@/types'
 import { formatDate } from '@/utils'
 
-type Step = 'scan-student' | 'class-details' | 'scan-books' | 'return-time' | 'photo' | 'confirm'
+type Step = 'scan-student' | 'active-loan-warning' | 'class-details' | 'scan-books' | 'return-time' | 'photo' | 'confirm'
 
 const steps = [
   { id: 'scan-student', label: 'Scan Siswa' },
@@ -34,6 +34,8 @@ export function KioskBorrowClass() {
 
   const [step, setStep] = useState<Step>('scan-student')
   const [student, setStudent] = useState<Student | null>(null)
+  const [activeLoan, setActiveLoan] = useState<Loan | null>(null)
+  const [activeLoanReason, setActiveLoanReason] = useState<'class' | 'student'>('class')
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null)
   const [teacherSearch, setTeacherSearch] = useState('')
   const [isTeacherDropdownOpen, setIsTeacherDropdownOpen] = useState(false)
@@ -71,7 +73,9 @@ export function KioskBorrowClass() {
 
   const currentStepIndex = (() => {
     switch (step) {
-      case 'scan-student': return 0
+      case 'scan-student':
+      case 'active-loan-warning':
+        return 0
       case 'class-details': return 1
       case 'scan-books': return 2
       case 'return-time': return 3
@@ -96,6 +100,11 @@ export function KioskBorrowClass() {
         purpose: 'Pembelajaran di kelas',
       })
       setSelectedTeacher(null)
+      setStep('scan-student')
+    }
+    else if (step === 'active-loan-warning') {
+      setActiveLoan(null)
+      setStudent(null)
       setStep('scan-student')
     }
     else navigate('/kiosk/borrow')
@@ -177,6 +186,41 @@ export function KioskBorrowClass() {
       if (s.status !== 'active') {
         setError('Kartu siswa tidak aktif. Hubungi petugas perpustakaan.')
         return
+      }
+
+      setLoadingMessage('Memeriksa riwayat peminjaman...')
+
+      // 1. Cek apakah siswa ini masih memiliki pinjaman aktif (mandiri maupun perwakilan kelas)
+      const studentLoansRes = await studentService.loans(s.id, { status: 'active,overdue', per_page: 1 })
+      const rawStudentLoans = studentLoansRes.data?.data ?? []
+      const activeStudentLoans = rawStudentLoans.filter((l: Loan) => l.status === 'active' || l.status === 'overdue')
+
+      if (activeStudentLoans.length > 0) {
+        setStudent(s)
+        setActiveLoan(activeStudentLoans[0])
+        setActiveLoanReason('student')
+        setStep('active-loan-warning')
+        return
+      }
+
+      // 2. Cek apakah rombel kelas siswa ini masih memiliki peminjaman kelas yang belum dikembalikan
+      if (s.kelas) {
+        const classLoansRes = await loanService.list({
+          class_name: s.kelas,
+          status: 'active,overdue',
+          loan_type: 'class',
+          per_page: 1,
+        })
+        const rawClassLoans = classLoansRes.data?.data ?? []
+        const activeClassLoans = rawClassLoans.filter((l: Loan) => l.status === 'active' || l.status === 'overdue')
+
+        if (activeClassLoans.length > 0) {
+          setStudent(s)
+          setActiveLoan(activeClassLoans[0])
+          setActiveLoanReason('class')
+          setStep('active-loan-warning')
+          return
+        }
       }
 
       setStudent(s)
@@ -308,6 +352,12 @@ export function KioskBorrowClass() {
 
   const totalQuantity = books.reduce((a, b) => a + b.quantity, 0)
 
+  const activeLoanBookTitle = activeLoan?.items?.[0]?.book?.judul
+    ?? (activeLoan?.items?.[0] as any)?.book_title_snapshot
+    ?? 'Buku Pelajaran Kelas'
+
+  const isActiveLoanOverdue = activeLoan?.status === 'overdue'
+
   const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-lg sm:text-xl px-8 py-4 sm:py-5 min-h-[64px] sm:min-h-[72px] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2'
 
   return (
@@ -405,6 +455,76 @@ export function KioskBorrowClass() {
                   kioskMode
                   autoFocus
                 />
+              </div>
+            </div>
+          )}
+
+          {/* ─── Step: Active Loan Warning ─── */}
+          {step === 'active-loan-warning' && student && activeLoan && (
+            <div key="active-loan-warning" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full my-auto">
+              <div className={`w-full rounded-3xl p-6 sm:p-8 border-2 shadow-lg ${isActiveLoanOverdue ? 'bg-rose-50 border-rose-300' : 'bg-amber-50 border-amber-300'}`}>
+                <div className="flex flex-col items-center gap-4 text-center">
+                  <AlertCircle size={48} className={isActiveLoanOverdue ? 'text-rose-600' : 'text-amber-600'} />
+                  <h2 className={`text-2xl font-extrabold ${isActiveLoanOverdue ? 'text-rose-900' : 'text-amber-900'}`}>
+                    {activeLoanReason === 'class'
+                      ? (isActiveLoanOverdue ? 'Buku Kelas Terlambat Dikembalikan' : 'Kelas Masih Meminjam Buku')
+                      : (isActiveLoanOverdue ? 'Buku Siswa Terlambat Dikembalikan' : 'Masih Ada Buku yang Dipinjam')
+                    }
+                  </h2>
+                  <p className={`text-sm sm:text-base font-medium ${isActiveLoanOverdue ? 'text-rose-800' : 'text-amber-800'}`}>
+                    {activeLoanReason === 'class'
+                      ? `Kelas ${student.kelas || classInfo.class_name} masih memiliki peminjaman buku pelajaran yang belum dikembalikan. Kembalikan buku tersebut terlebih dahulu sebelum meminjam buku baru.`
+                      : `Siswa ${student.nama} masih memiliki peminjaman aktif yang belum dikembalikan. Kembalikan buku terlebih dahulu sebelum meminjam lagi.`
+                    }
+                  </p>
+
+                  <div className="bg-white rounded-2xl p-5 w-full mt-2 text-left space-y-3 border border-slate-200/80 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <BookOpen size={20} className="text-indigo-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Judul Buku</p>
+                        <p className="text-slate-900 font-bold text-base sm:text-lg">{activeLoanBookTitle}</p>
+                        {activeLoan.teacher_name && (
+                          <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                            Guru: {activeLoan.teacher_name} {activeLoan.subject_name ? `(${activeLoan.subject_name})` : ''}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Clock size={20} className="text-amber-600 flex-shrink-0" />
+                      <div>
+                        <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Jatuh Tempo</p>
+                        <p className={`font-bold text-sm sm:text-base ${isActiveLoanOverdue ? 'text-rose-600' : 'text-amber-700'}`}>
+                          {formatDate(activeLoan.due_at)}
+                          {isActiveLoanOverdue && (
+                            <span className="ml-2 text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-bold">
+                              Terlambat {activeLoan.late_days} hari
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 w-full">
+                <button
+                  type="button"
+                  onClick={() => navigate('/kiosk/return')}
+                  className={`${kBtn} w-full ${isActiveLoanOverdue ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-200' : 'bg-amber-600 hover:bg-amber-700 shadow-amber-200'} text-white shadow-lg`}
+                >
+                  <CheckCircle2 size={24} />
+                  Kembalikan Buku Dulu
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setActiveLoan(null); setStudent(null); setStep('scan-student') }}
+                  className="w-full bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 py-3.5 rounded-2xl text-sm sm:text-base font-bold shadow-sm transition-all cursor-pointer"
+                >
+                  ← Ganti Kartu Pelajar
+                </button>
               </div>
             </div>
           )}
