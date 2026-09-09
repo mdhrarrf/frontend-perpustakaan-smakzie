@@ -12,18 +12,18 @@ import { useKioskStore } from '@/store/kiosk.store'
 import { getErrorMessage } from '@/api/client'
 import {
   ArrowLeft, AlertTriangle, CheckCircle2, Loader2, Plus, Minus, X,
-  Search, BookOpen, ChevronDown, Check
+  Search, BookOpen, ChevronDown, Check, Clock
 } from 'lucide-react'
 import type { Student, Book, Teacher } from '@/types'
 import { formatDate } from '@/utils'
 
-type Step = 'scan-student' | 'class-details' | 'scan-books' | 'photo' | 'confirm'
-const DEFAULT_DUE_DAYS = 14
+type Step = 'scan-student' | 'class-details' | 'scan-books' | 'return-time' | 'photo' | 'confirm'
 
 const steps = [
   { id: 'scan-student', label: 'Scan Siswa' },
   { id: 'class-details', label: 'Guru & Mapel' },
   { id: 'scan-books', label: 'Scan Buku' },
+  { id: 'return-time', label: 'Batas Jam' },
   { id: 'photo', label: 'Foto' },
   { id: 'confirm', label: 'Konfirmasi' },
 ]
@@ -74,8 +74,9 @@ export function KioskBorrowClass() {
       case 'scan-student': return 0
       case 'class-details': return 1
       case 'scan-books': return 2
-      case 'photo': return 3
-      case 'confirm': return 4
+      case 'return-time': return 3
+      case 'photo': return 4
+      case 'confirm': return 5
       default: return 0
     }
   })()
@@ -83,7 +84,8 @@ export function KioskBorrowClass() {
   // Smart Step-Back Navigation
   function handleBack() {
     if (step === 'confirm') setStep('photo')
-    else if (step === 'photo') setStep('scan-books')
+    else if (step === 'photo') setStep('return-time')
+    else if (step === 'return-time') setStep('scan-books')
     else if (step === 'scan-books') setStep('class-details')
     else if (step === 'class-details') {
       setStudent(null)
@@ -99,9 +101,57 @@ export function KioskBorrowClass() {
     else navigate('/kiosk/borrow')
   }
 
-  const dueAt = new Date()
-  dueAt.setDate(dueAt.getDate() + DEFAULT_DUE_DAYS)
-  dueAt.setHours(23, 59, 0, 0)
+  // Pilihan hari: Hari Ini atau Besok
+  const [returnDateType, setReturnDateType] = useState<'today' | 'tomorrow'>('today')
+
+  // Batas jam pengembalian (default: +2 jam dari sekarang, dibulatkan ke kelipatan 15 menit terdekat)
+  const [returnTime, setReturnTime] = useState<string>(() => {
+    const d = new Date()
+    d.setHours(d.getHours() + 2)
+    const rem = d.getMinutes() % 15
+    if (rem !== 0) d.setMinutes(d.getMinutes() + (15 - rem))
+    const hh = String(d.getHours()).padStart(2, '0')
+    const mm = String(d.getMinutes()).padStart(2, '0')
+    return `${hh}:${mm}`
+  })
+
+  function getDueAt(): Date {
+    const [hhStr, mmStr] = returnTime.split(':')
+    const hours = parseInt(hhStr, 10) || 15
+    const minutes = parseInt(mmStr, 10) || 30
+
+    const d = new Date()
+    if (returnDateType === 'tomorrow') {
+      d.setDate(d.getDate() + 1)
+    }
+    d.setHours(hours, minutes, 0, 0)
+    return d
+  }
+
+  const dueAt = getDueAt()
+  const isDueAtValid = dueAt.getTime() > Date.now()
+
+  function setRelativeHours(hours: number) {
+    setReturnDateType('today')
+    const d = new Date()
+    d.setHours(d.getHours() + hours)
+    const hh = String(d.getHours()).padStart(2, '0')
+    const mm = String(d.getMinutes()).padStart(2, '0')
+    setReturnTime(`${hh}:${mm}`)
+  }
+
+  function setFixedSchedule(timeStr: string) {
+    setReturnDateType('today')
+    setReturnTime(timeStr)
+  }
+
+  function adjustMinutes(delta: number) {
+    const current = getDueAt()
+    current.setMinutes(current.getMinutes() + delta)
+    const hh = String(current.getHours()).padStart(2, '0')
+    const mm = String(current.getMinutes()).padStart(2, '0')
+    setReturnTime(`${hh}:${mm}`)
+  }
 
   // ─── Step 1: Scan Kartu Siswa ───
   async function handleStudentScan(code: string) {
@@ -683,11 +733,11 @@ export function KioskBorrowClass() {
                     {/* Lanjut Button */}
                     <button
                       type="button"
-                      onClick={() => setStep('photo')}
+                      onClick={() => setStep('return-time')}
                       disabled={selectedQty < 1}
                       className={`${kBtn} w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed`}
                     >
-                      Lanjut ke Foto ({selectedQty} Buku) →
+                      Lanjut ke Batas Waktu ({selectedQty} Buku) →
                     </button>
                   </div>
                 )
@@ -695,12 +745,208 @@ export function KioskBorrowClass() {
             </div>
           )}
 
-          {/* ─── Step 4: Foto Dokumentasi ─── */}
+          {/* ─── Step 4: Batas Waktu Pengembalian (Jam Pinjam) ─── */}
+          {step === 'return-time' && (
+            <div key="return-time" className="animate-kiosk-step max-w-xl mx-auto w-full my-auto flex flex-col gap-5">
+              <div className="text-center">
+                <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
+                  Langkah 4 dari {steps.length} • Batas Waktu
+                </span>
+                <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">
+                  Batas Jam Pengembalian
+                </h2>
+                <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">
+                  Tentukan sampai jam berapa buku pelajaran dipinjam
+                </p>
+              </div>
+
+              {/* Context Bar */}
+              <div className="flex items-center justify-between bg-white border border-slate-200 rounded-2xl px-5 py-3 shadow-xs">
+                <div className="flex items-center gap-2 text-sm text-slate-700 font-medium min-w-0">
+                  <span className="font-bold text-indigo-600 flex-shrink-0">{classInfo.class_name}</span>
+                  <span className="flex-shrink-0">·</span>
+                  <span className="truncate">{classInfo.teacher_name}</span>
+                  <span className="flex-shrink-0">·</span>
+                  <span className="text-slate-500 truncate">{classInfo.subject_name}</span>
+                </div>
+                <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-full flex-shrink-0 border border-indigo-200">
+                  {totalQuantity} Buku
+                </span>
+              </div>
+
+              {/* Card Pengaturan Waktu */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50 flex flex-col gap-6">
+                
+                {/* Pilihan Hari */}
+                <div className="flex items-center justify-center">
+                  <div className="inline-flex p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setReturnDateType('today')}
+                      className={`px-5 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                        returnDateType === 'today'
+                          ? 'bg-white text-indigo-600 shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Hari Ini
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReturnDateType('tomorrow')}
+                      className={`px-5 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                        returnDateType === 'tomorrow'
+                          ? 'bg-white text-indigo-600 shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Besok
+                    </button>
+                  </div>
+                </div>
+
+                {/* Main Time Control: Display & Increment/Decrement */}
+                <div className="flex flex-col items-center gap-3">
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <Clock size={14} /> Jam Pengembalian
+                  </p>
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => adjustMinutes(-15)}
+                      className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 flex items-center justify-center border border-slate-200 cursor-pointer shadow-sm transition-all font-bold text-sm"
+                      title="Kurang 15 menit"
+                    >
+                      -15m
+                    </button>
+
+                    <input
+                      type="time"
+                      value={returnTime}
+                      onChange={(e) => setReturnTime(e.target.value)}
+                      className="w-44 sm:w-48 h-14 sm:h-16 text-center font-black text-3xl sm:text-4xl text-slate-900 bg-white border-2 border-indigo-400 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 rounded-2xl shadow-inner tabular-nums focus:outline-none cursor-pointer"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => adjustMinutes(15)}
+                      className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 flex items-center justify-center border border-slate-200 cursor-pointer shadow-sm transition-all font-bold text-sm"
+                      title="Tambah 15 menit"
+                    >
+                      +15m
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-slate-400 font-medium">
+                    Ketik langsung, pilih jam, atau gunakan tombol ±15m
+                  </p>
+                </div>
+
+                {/* Preset Cepat Durasi Jam Pelajaran */}
+                <div className="space-y-2">
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider text-center">
+                    Pilihan Cepat Durasi
+                  </p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { label: '+1 Jam', hours: 1 },
+                      { label: '+2 Jam', hours: 2 },
+                      { label: '+3 Jam', hours: 3 },
+                      { label: '+4 Jam', hours: 4 },
+                    ].map((item) => (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onClick={() => setRelativeHours(item.hours)}
+                        className="py-2.5 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs sm:text-sm rounded-xl border border-indigo-200 transition-all cursor-pointer text-center"
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Preset Jadwal Istirahat & Pulang */}
+                <div className="space-y-2">
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider text-center">
+                    Sesuai Jadwal Sekolah
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { label: '12:00 (Dzuhur)', time: '12:00' },
+                      { label: '14:00 (Sore)', time: '14:00' },
+                      { label: '15:30 (Pulang)', time: '15:30' },
+                    ].map((item) => {
+                      const isSelected = returnTime === item.time && returnDateType === 'today'
+                      return (
+                        <button
+                          key={item.time}
+                          type="button"
+                          onClick={() => setFixedSchedule(item.time)}
+                          className={`py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer text-center ${
+                            isSelected
+                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                              : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Info Jatuh Tempo Box */}
+                <div className={`rounded-2xl p-4 border text-center transition-all ${
+                  isDueAtValid
+                    ? 'bg-indigo-50/70 border-indigo-200'
+                    : 'bg-rose-50 border-rose-200'
+                }`}>
+                  {isDueAtValid ? (
+                    <div>
+                      <p className="text-xs text-indigo-600 font-bold uppercase tracking-wider">Batas Waktu Pengembalian</p>
+                      <p className="text-base sm:text-lg font-extrabold text-slate-900 mt-0.5">
+                        {formatDate(dueAt.toISOString())}, pukul {returnTime} WIB
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2 text-rose-700 font-bold text-sm">
+                      <AlertTriangle size={18} />
+                      <span>Jam pengembalian harus lebih lambat dari waktu sekarang.</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Tombol Aksi */}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setStep('scan-books')}
+                    className={`${kBtn} flex-1 bg-white hover:bg-slate-100 text-slate-700 border-2 border-slate-200 shadow-sm`}
+                  >
+                    <ArrowLeft size={20} /> Ubah Buku
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStep('photo')}
+                    disabled={!isDueAtValid}
+                    className={`${kBtn} flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed`}
+                  >
+                    Lanjut ke Foto →
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* ─── Step 5: Foto Dokumentasi ─── */}
           {step === 'photo' && (
             <div key="photo" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full my-auto">
               <div className="text-center">
                 <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
-                  Langkah 4 dari {steps.length} • Foto
+                  Langkah 5 dari {steps.length} • Foto
                 </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Foto Siswa</h2>
                 <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Ambil foto bukti peminjaman buku kelas</p>
@@ -727,12 +973,12 @@ export function KioskBorrowClass() {
             </div>
           )}
 
-          {/* ─── Step 5: Konfirmasi Peminjaman Kelas ─── */}
+          {/* ─── Step 6: Konfirmasi Peminjaman Kelas ─── */}
           {step === 'confirm' && (
             <div key="confirm" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full my-auto">
               <div className="text-center">
                 <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
-                  Langkah 5 dari {steps.length} • Konfirmasi
+                  Langkah 6 dari {steps.length} • Konfirmasi
                 </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Konfirmasi Peminjaman</h2>
                 <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Pastikan data peminjaman sudah sesuai</p>
@@ -745,7 +991,7 @@ export function KioskBorrowClass() {
                   { label: 'Guru',           value: classInfo.teacher_name },
                   { label: 'Mata Pelajaran', value: classInfo.subject_name || '—' },
                   { label: 'Total Buku',     value: `${totalQuantity} buku` },
-                  { label: 'Jatuh Tempo',    value: formatDate(dueAt.toISOString()) + ' (23:59)' },
+                  { label: 'Jatuh Tempo',    value: `${formatDate(dueAt.toISOString())}, pukul ${returnTime} WIB` },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex justify-between items-start gap-4 py-2.5 border-b border-slate-100 last:border-0">
                     <span className="text-slate-500 text-sm sm:text-base font-medium">{label}</span>
@@ -757,7 +1003,7 @@ export function KioskBorrowClass() {
               <div className="flex gap-4 w-full">
                 <button
                   type="button"
-                  onClick={() => setStep('scan-books')}
+                  onClick={() => setStep('return-time')}
                   className={`${kBtn} flex-1 bg-white hover:bg-slate-100 text-slate-700 border-2 border-slate-200 shadow-sm`}
                 >
                   <ArrowLeft size={22} /> Batal / Ubah

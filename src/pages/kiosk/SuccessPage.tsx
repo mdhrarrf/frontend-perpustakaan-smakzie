@@ -1,7 +1,7 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { CheckCircle2, AlertTriangle, Home, BookOpen, Clock, RotateCcw } from 'lucide-react'
-import { formatDate } from '@/utils'
+import { formatDate, formatDateTime } from '@/utils'
 
 interface SuccessState {
   type: 'borrow' | 'borrow_class' | 'return' | 'return_late'
@@ -49,7 +49,7 @@ export function KioskSuccessPage() {
           title:    'Peminjaman Kelas Berhasil!',
           subtitle: `${state.book_count ?? 0} eksemplar buku pelajaran dipinjam`,
           info:     state.due_at
-            ? `Kembalikan paling lambat ${formatDate(new Date(state.due_at).toISOString())}`
+            ? `Kembalikan paling lambat ${formatDateTime(state.due_at)} WIB`
             : undefined,
         }
       case 'return':
