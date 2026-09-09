@@ -149,13 +149,6 @@ export function KioskBorrowClass() {
     setMinStr(String(mm).padStart(2, '0'))
   }
 
-  function setPlusHours(additionalHours: number) {
-    const d = new Date()
-    const newH = Math.min(23, d.getHours() + additionalHours)
-    setHourStr(String(newH).padStart(2, '0'))
-    setMinStr(String(d.getMinutes()).padStart(2, '0'))
-  }
-
   function getDueAt(): Date {
     const h = parseInt(hourStr, 10) || 15
     const m = parseInt(minStr, 10) || 30
@@ -812,24 +805,32 @@ export function KioskBorrowClass() {
                   </div>
                 </div>
 
-                {/* Preset Cepat */}
-                <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                {/* Preset Jam Sekolah (Pagi, Siang, Sore) */}
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 pt-1">
                   {[
-                    { label: '+1 Jam', action: () => setPlusHours(1) },
-                    { label: '+2 Jam', action: () => setPlusHours(2) },
-                    { label: '+3 Jam', action: () => setPlusHours(3) },
-                    { label: '12:00',  action: () => setPresetTime(12, 0) },
-                    { label: '15:30',  action: () => setPresetTime(15, 30) },
-                  ].map((p) => (
-                    <button
-                      key={p.label}
-                      type="button"
-                      onClick={p.action}
-                      className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 active:scale-95 text-indigo-700 font-bold text-sm rounded-xl border border-indigo-200 transition-all cursor-pointer"
-                    >
-                      {p.label}
-                    </button>
-                  ))}
+                    { label: '09:30', h: 9,  m: 30 },
+                    { label: '10:30', h: 10, m: 30 },
+                    { label: '12:00', h: 12, m: 0 },
+                    { label: '13:30', h: 13, m: 30 },
+                    { label: '14:30', h: 14, m: 30 },
+                    { label: '15:30', h: 15, m: 30 },
+                  ].map((p) => {
+                    const isSelected = returnTime === p.label
+                    return (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => setPresetTime(p.h, p.m)}
+                        className={`py-2.5 px-2 rounded-xl font-bold text-sm border transition-all cursor-pointer text-center ${
+                          isSelected
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                            : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    )
+                  })}
                 </div>
 
                 {/* Info Jatuh Tempo Ringkas */}
