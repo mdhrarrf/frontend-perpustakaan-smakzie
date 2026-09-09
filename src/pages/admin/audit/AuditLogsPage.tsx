@@ -18,7 +18,7 @@ export function AdminAuditLogsPage() {
 
   const actionColors: Record<string, string> = {
     create: 'text-green-600', update: 'text-blue-600',
-    delete: 'text-red-600',  borrow: 'text-purple-600',
+    delete: 'text-red-600',  borrow: 'text-blue-600',
     return: 'text-teal-600', mark_lost: 'text-orange-600',
     resolve: 'text-green-600',
   }

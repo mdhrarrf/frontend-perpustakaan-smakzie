@@ -361,7 +361,7 @@ export function KioskBorrowClass() {
   const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-lg sm:text-xl px-8 py-4 sm:py-5 min-h-[64px] sm:min-h-[72px] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2'
 
   return (
-    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-sky-50/40 to-indigo-50/40 flex flex-col p-4 sm:p-6 lg:p-8 text-slate-900 justify-between">
+    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-sky-50/40 to-blue-50/40 flex flex-col p-4 sm:p-6 lg:p-8 text-slate-900 justify-between">
       {/* ── Header ── */}
       <div className="flex items-center justify-between gap-4 mb-4 sm:mb-6">
         <div className="flex items-center gap-3 sm:gap-4">
@@ -390,9 +390,9 @@ export function KioskBorrowClass() {
                 key={st.id}
                 className={`h-2 rounded-full transition-all duration-300 ${
                   idx === currentStepIndex
-                    ? 'w-6 bg-indigo-600'
+                    ? 'w-6 bg-blue-600'
                     : idx < currentStepIndex
-                    ? 'w-2 bg-indigo-400'
+                    ? 'w-2 bg-blue-400'
                     : 'w-2 bg-slate-200'
                 }`}
               />
@@ -405,7 +405,7 @@ export function KioskBorrowClass() {
 
         {/* Mobile Stepper */}
         <div className="sm:hidden flex items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-slate-200/80 px-3 py-1.5 rounded-full shadow-xs text-xs font-bold text-slate-600">
-          <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
           <span>Langkah {currentStepIndex + 1}/{steps.length}</span>
         </div>
       </div>
@@ -424,7 +424,7 @@ export function KioskBorrowClass() {
       {/* ── Loading ── */}
       {isLoading && (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 py-8">
-          <Loader2 className="text-indigo-600 animate-spin" size={40} />
+          <Loader2 className="text-blue-600 animate-spin" size={40} />
           <p className="text-slate-800 text-xl font-bold">{loadingMessage}</p>
         </div>
       )}
@@ -437,7 +437,7 @@ export function KioskBorrowClass() {
           {step === 'scan-student' && (
             <div key="scan-student" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
-                <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
+                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
                   Langkah 1 dari {steps.length} • Scan Siswa
                 </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -480,7 +480,7 @@ export function KioskBorrowClass() {
 
                   <div className="bg-white rounded-2xl p-5 w-full mt-2 text-left space-y-3 border border-slate-200/80 shadow-sm">
                     <div className="flex items-start gap-3">
-                      <BookOpen size={20} className="text-indigo-600 flex-shrink-0 mt-0.5" />
+                      <BookOpen size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Judul Buku</p>
                         <p className="text-slate-900 font-bold text-base sm:text-lg">{activeLoanBookTitle}</p>
@@ -533,7 +533,7 @@ export function KioskBorrowClass() {
           {step === 'class-details' && (
             <div key="class-details" className="animate-kiosk-step max-w-xl mx-auto w-full my-auto">
               <div className="text-center mb-6">
-                <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
+                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
                   Langkah 2 dari {steps.length} • Guru & Mapel
                 </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -552,7 +552,7 @@ export function KioskBorrowClass() {
                     <p className="text-base font-bold text-slate-900 truncate">
                       {student?.nama} <span className="text-slate-500 font-normal">({student?.nis})</span>
                     </p>
-                    <p className="text-sm font-bold text-indigo-600 mt-0.5">
+                    <p className="text-sm font-bold text-blue-600 mt-0.5">
                       Kelas: {classInfo.class_name || student?.kelas || '—'}
                     </p>
                   </div>
@@ -572,7 +572,7 @@ export function KioskBorrowClass() {
                   </label>
 
                   {selectedTeacher ? (
-                    <div className="flex items-center justify-between bg-indigo-50/80 border-2 border-indigo-200 rounded-2xl p-3.5">
+                    <div className="flex items-center justify-between bg-blue-50/80 border-2 border-blue-200 rounded-2xl p-3.5">
                       <div className="min-w-0 pr-2">
                         <p className="text-slate-900 font-bold text-base leading-tight truncate">
                           {selectedTeacher.nama}
@@ -589,7 +589,7 @@ export function KioskBorrowClass() {
                           setIsTeacherDropdownOpen(true)
                           setTimeout(() => teacherSearchRef.current?.focus(), 100)
                         }}
-                        className="text-xs bg-white hover:bg-slate-100 text-indigo-700 font-bold px-3 py-1.5 rounded-xl border border-indigo-200 cursor-pointer transition-all flex-shrink-0"
+                        className="text-xs bg-white hover:bg-slate-100 text-blue-700 font-bold px-3 py-1.5 rounded-xl border border-blue-200 cursor-pointer transition-all flex-shrink-0"
                       >
                         Ganti Guru
                       </button>
@@ -607,7 +607,7 @@ export function KioskBorrowClass() {
                           }}
                           onFocus={() => setIsTeacherDropdownOpen(true)}
                           placeholder="Ketik nama guru..."
-                          className="w-full pl-10 pr-10 py-3.5 text-base bg-white border-2 border-slate-200 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 transition-all"
+                          className="w-full pl-10 pr-10 py-3.5 text-base bg-white border-2 border-slate-200 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all"
                         />
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         {teacherSearch && (
@@ -637,7 +637,7 @@ export function KioskBorrowClass() {
                                 key={t.id}
                                 type="button"
                                 onClick={() => handleSelectTeacher(t)}
-                                className="w-full px-4 py-3 text-left hover:bg-indigo-50/80 flex items-center justify-between transition-colors cursor-pointer"
+                                className="w-full px-4 py-3 text-left hover:bg-blue-50/80 flex items-center justify-between transition-colors cursor-pointer"
                               >
                                 <div className="min-w-0 pr-2">
                                   <p className="text-slate-900 font-bold text-sm truncate">{t.nama}</p>
@@ -645,7 +645,7 @@ export function KioskBorrowClass() {
                                     {t.nip ? `NIP: ${t.nip}` : 'Guru'}
                                   </p>
                                 </div>
-                                <span className="text-xs text-indigo-600 font-bold flex-shrink-0">
+                                <span className="text-xs text-blue-600 font-bold flex-shrink-0">
                                   Pilih
                                 </span>
                               </button>
@@ -673,7 +673,7 @@ export function KioskBorrowClass() {
                         <select
                           value={classInfo.subject_name}
                           onChange={(e) => setClassInfo((p) => ({ ...p, subject_name: e.target.value }))}
-                          className="w-full appearance-none px-4 py-3 text-base font-medium bg-white border-2 border-slate-200 rounded-2xl text-slate-900 focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 pr-10 cursor-pointer"
+                          className="w-full appearance-none px-4 py-3 text-base font-medium bg-white border-2 border-slate-200 rounded-2xl text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 pr-10 cursor-pointer"
                         >
                           <option value="">-- Pilih Mata Pelajaran --</option>
                           {selectedTeacher.subjects.map((s) => (
@@ -697,7 +697,7 @@ export function KioskBorrowClass() {
                                 onClick={() => setClassInfo((p) => ({ ...p, subject_name: s.nama }))}
                                 className={`text-xs px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 cursor-pointer border ${
                                   isSelected
-                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                                     : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
                                 }`}
                               >
@@ -718,7 +718,7 @@ export function KioskBorrowClass() {
                     type="button"
                     onClick={() => setStep('scan-books')}
                     disabled={!classInfo.class_name || !classInfo.teacher_name || !classInfo.subject_name}
-                    className={`${kBtn} w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-indigo-600 disabled:shadow-none`}
+                    className={`${kBtn} w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/25 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-blue-600 disabled:shadow-none`}
                   >
                     Lanjut ke Scan Buku →
                   </button>
@@ -731,7 +731,7 @@ export function KioskBorrowClass() {
           {step === 'scan-books' && (
             <div key="scan-books" className="animate-kiosk-step max-w-xl mx-auto w-full my-auto flex flex-col gap-5">
               <div className="text-center">
-                <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
+                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
                   Langkah 3 dari {steps.length} • Scan Buku
                 </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -747,7 +747,7 @@ export function KioskBorrowClass() {
               {/* Context Bar */}
               <div className="flex items-center justify-between bg-white border border-slate-200 rounded-2xl px-5 py-3 shadow-xs">
                 <div className="flex items-center gap-2 text-sm text-slate-700 font-medium min-w-0">
-                  <span className="font-bold text-indigo-600 flex-shrink-0">{classInfo.class_name}</span>
+                  <span className="font-bold text-blue-600 flex-shrink-0">{classInfo.class_name}</span>
                   <span className="flex-shrink-0">·</span>
                   <span className="truncate">{classInfo.teacher_name}</span>
                   <span className="flex-shrink-0">·</span>
@@ -773,7 +773,7 @@ export function KioskBorrowClass() {
                   <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50 flex flex-col gap-6">
                     {/* Info Buku */}
                     <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center flex-shrink-0">
+                      <div className="w-14 h-14 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0">
                         <BookOpen size={28} />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -821,14 +821,14 @@ export function KioskBorrowClass() {
                           onBlur={() => {
                             if (!selectedQty || selectedQty < 1) setBooks([{ book: selectedBook, quantity: 1 }])
                           }}
-                          className="w-28 sm:w-32 h-14 sm:h-16 text-center font-black text-3xl sm:text-4xl text-slate-900 bg-white border-2 border-indigo-400 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 rounded-2xl shadow-inner tabular-nums focus:outline-none"
+                          className="w-28 sm:w-32 h-14 sm:h-16 text-center font-black text-3xl sm:text-4xl text-slate-900 bg-white border-2 border-blue-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 rounded-2xl shadow-inner tabular-nums focus:outline-none"
                         />
 
                         <button
                           type="button"
                           onClick={() => setBooks([{ book: selectedBook, quantity: Math.min(selectedQty + 1, CLASS_MAX) }])}
                           disabled={selectedQty >= CLASS_MAX}
-                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-30 text-white flex items-center justify-center border border-indigo-600 cursor-pointer shadow-sm transition-colors"
+                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-30 text-white flex items-center justify-center border border-blue-600 cursor-pointer shadow-sm transition-colors"
                         >
                           <Plus size={22} />
                         </button>
@@ -843,8 +843,8 @@ export function KioskBorrowClass() {
                             onClick={() => setBooks([{ book: selectedBook, quantity: preset }])}
                             className={`px-4 py-2 rounded-xl font-bold text-sm border transition-all cursor-pointer ${
                               selectedQty === preset
-                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                                : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200'
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200'
                             }`}
                           >
                             {preset}
@@ -862,7 +862,7 @@ export function KioskBorrowClass() {
                       type="button"
                       onClick={() => setStep('return-time')}
                       disabled={selectedQty < 1}
-                      className={`${kBtn} w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed`}
+                      className={`${kBtn} w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/25 disabled:opacity-40 disabled:cursor-not-allowed`}
                     >
                       Lanjut ke Batas Waktu ({selectedQty} Buku) →
                     </button>
@@ -876,7 +876,7 @@ export function KioskBorrowClass() {
           {step === 'return-time' && (
             <div key="return-time" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full my-auto">
               <div className="text-center">
-                <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
+                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
                   Langkah 4 dari {steps.length} • Batas Jam
                 </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -903,7 +903,7 @@ export function KioskBorrowClass() {
                         onChange={(e) => handleHourChange(e.target.value)}
                         onBlur={handleHourBlur}
                         onFocus={(e) => e.target.select()}
-                        className="w-24 sm:w-28 h-16 sm:h-20 text-center font-black text-4xl sm:text-5xl text-slate-900 bg-slate-50 border-2 border-indigo-200 focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-100 rounded-2xl tabular-nums focus:outline-none transition-all shadow-inner"
+                        className="w-24 sm:w-28 h-16 sm:h-20 text-center font-black text-4xl sm:text-5xl text-slate-900 bg-slate-50 border-2 border-blue-200 focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100 rounded-2xl tabular-nums focus:outline-none transition-all shadow-inner"
                       />
                     </div>
 
@@ -919,7 +919,7 @@ export function KioskBorrowClass() {
                         onChange={(e) => handleMinChange(e.target.value)}
                         onBlur={handleMinBlur}
                         onFocus={(e) => e.target.select()}
-                        className="w-24 sm:w-28 h-16 sm:h-20 text-center font-black text-4xl sm:text-5xl text-slate-900 bg-slate-50 border-2 border-indigo-200 focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-100 rounded-2xl tabular-nums focus:outline-none transition-all shadow-inner"
+                        className="w-24 sm:w-28 h-16 sm:h-20 text-center font-black text-4xl sm:text-5xl text-slate-900 bg-slate-50 border-2 border-blue-200 focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100 rounded-2xl tabular-nums focus:outline-none transition-all shadow-inner"
                       />
                     </div>
                   </div>
@@ -943,8 +943,8 @@ export function KioskBorrowClass() {
                         onClick={() => setPresetTime(p.h, p.m)}
                         className={`py-2.5 px-2 rounded-xl font-bold text-sm border transition-all cursor-pointer text-center ${
                           isSelected
-                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                            : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                            : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200'
                         }`}
                       >
                         {p.label}
@@ -960,7 +960,7 @@ export function KioskBorrowClass() {
                   {isDueAtValid ? (
                     <p className="text-slate-700 text-sm sm:text-base font-medium">
                       Batas Pengembalian:{' '}
-                      <span className="text-indigo-600 font-extrabold text-lg tabular-nums">
+                      <span className="text-blue-600 font-extrabold text-lg tabular-nums">
                         {returnTime} WIB
                       </span>{' '}
                       (Hari Ini)
@@ -987,7 +987,7 @@ export function KioskBorrowClass() {
                   type="button"
                   onClick={() => setStep('photo')}
                   disabled={!isDueAtValid}
-                  className={`${kBtn} flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30 disabled:opacity-40 disabled:cursor-not-allowed`}
+                  className={`${kBtn} flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30 disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
                   Lanjut ke Foto →
                 </button>
@@ -999,7 +999,7 @@ export function KioskBorrowClass() {
           {step === 'photo' && (
             <div key="photo" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full my-auto">
               <div className="text-center">
-                <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
+                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
                   Langkah 5 dari {steps.length} • Foto
                 </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Foto Siswa</h2>
@@ -1031,7 +1031,7 @@ export function KioskBorrowClass() {
           {step === 'confirm' && (
             <div key="confirm" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full my-auto">
               <div className="text-center">
-                <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
+                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
                   Langkah 6 dari {steps.length} • Konfirmasi
                 </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Konfirmasi Peminjaman</h2>
@@ -1066,7 +1066,7 @@ export function KioskBorrowClass() {
                   type="button"
                   onClick={() => borrowMutation.mutate()}
                   disabled={borrowMutation.isPending}
-                  className={`${kBtn} flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30`}
+                  className={`${kBtn} flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30`}
                 >
                   {borrowMutation.isPending ? <Loader2 className="animate-spin" size={24} /> : <CheckCircle2 size={24} />}
                   {borrowMutation.isPending ? 'Memproses...' : 'Konfirmasi Pinjam'}

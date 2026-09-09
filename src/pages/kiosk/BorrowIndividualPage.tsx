@@ -184,7 +184,7 @@ export function KioskBorrowIndividual() {
   const isOverdue = activeLoan?.status === 'overdue'
 
   return (
-    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-sky-50/40 to-indigo-50/40 flex flex-col p-4 sm:p-6 lg:p-8 text-slate-900 justify-between">
+    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-sky-50/40 to-blue-50/40 flex flex-col p-4 sm:p-6 lg:p-8 text-slate-900 justify-between">
       {/* ── Header ── */}
       <div className="flex items-center justify-between gap-4 mb-4 sm:mb-6">
         <div className="flex items-center gap-3 sm:gap-4">
@@ -213,9 +213,9 @@ export function KioskBorrowIndividual() {
                 key={st.id}
                 className={`h-2 rounded-full transition-all duration-300 ${
                   idx === currentStepIndex
-                    ? 'w-6 bg-indigo-600'
+                    ? 'w-6 bg-blue-600'
                     : idx < currentStepIndex
-                    ? 'w-2 bg-indigo-400'
+                    ? 'w-2 bg-blue-400'
                     : 'w-2 bg-slate-200'
                 }`}
               />
@@ -228,7 +228,7 @@ export function KioskBorrowIndividual() {
 
         {/* Mobile Stepper */}
         <div className="sm:hidden flex items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-slate-200/80 px-3 py-1.5 rounded-full shadow-xs text-xs font-bold text-slate-600">
-          <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
           <span>Langkah {currentStepIndex + 1}/{steps.length}</span>
         </div>
       </div>
@@ -247,7 +247,7 @@ export function KioskBorrowIndividual() {
       {/* ── Loading ── */}
       {isLoading && (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 py-8">
-          <Loader2 className="text-indigo-600 animate-spin" size={40} />
+          <Loader2 className="text-blue-600 animate-spin" size={40} />
           <p className="text-slate-800 text-xl font-bold">{loadingMessage}</p>
         </div>
       )}
@@ -260,7 +260,7 @@ export function KioskBorrowIndividual() {
           {step === 'scan-student' && (
             <div key="scan-student" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
-                <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
+                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
                   Langkah 1 dari {steps.length} • Scan Siswa
                 </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -295,7 +295,7 @@ export function KioskBorrowIndividual() {
 
                   <div className="bg-white rounded-2xl p-5 w-full mt-2 text-left space-y-3 border border-slate-200/80 shadow-sm">
                     <div className="flex items-start gap-3">
-                      <BookOpen size={20} className="text-indigo-600 flex-shrink-0 mt-0.5" />
+                      <BookOpen size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Judul Buku</p>
                         <p className="text-slate-900 font-bold text-base sm:text-lg">{activeLoanBookTitle}</p>
@@ -337,7 +337,7 @@ export function KioskBorrowIndividual() {
           {step === 'scan-book' && student && (
             <div key="scan-book" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
-                <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
+                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
                   Langkah 2 dari {steps.length} • Scan Buku
                 </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Scan Barcode Buku</h2>
@@ -354,7 +354,7 @@ export function KioskBorrowIndividual() {
           {step === 'pick-duration' && student && book && (
             <div key="pick-duration" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
-                <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
+                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
                   Langkah 3 dari {steps.length} • Durasi
                 </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Durasi Peminjaman</h2>
@@ -369,7 +369,7 @@ export function KioskBorrowIndividual() {
                       onClick={() => setDueDays(day)}
                       className={`aspect-square rounded-2xl text-xl font-extrabold transition-all active:scale-95 focus:outline-none cursor-pointer ${
                         dueDays === day
-                          ? 'bg-indigo-600 text-white ring-4 ring-indigo-200 scale-105 shadow-lg shadow-indigo-600/30'
+                          ? 'bg-blue-600 text-white ring-4 ring-blue-200 scale-105 shadow-lg shadow-blue-600/30'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200/80 border border-slate-200'
                       }`}
                     >
@@ -380,7 +380,7 @@ export function KioskBorrowIndividual() {
 
                 <div className="text-center bg-slate-50 rounded-2xl p-5 border border-slate-200/80 space-y-1">
                   <p className="text-slate-800 text-base sm:text-lg font-medium">
-                    Lama pinjam: <span className="text-indigo-600 font-extrabold text-2xl">{dueDays}</span> Hari
+                    Lama pinjam: <span className="text-blue-600 font-extrabold text-2xl">{dueDays}</span> Hari
                   </p>
                   <p className="text-slate-500 text-sm">
                     Jatuh tempo: <span className="text-slate-900 font-bold">{formatDate(getDueAt().toISOString())}</span> (23:59)
@@ -397,7 +397,7 @@ export function KioskBorrowIndividual() {
                 </button>
                 <button
                   onClick={() => setStep('photo')}
-                  className={`${kBtn} flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30`}
+                  className={`${kBtn} flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30`}
                 >
                   <CheckCircle2 size={22} /> Lanjut ke Foto →
                 </button>
@@ -409,7 +409,7 @@ export function KioskBorrowIndividual() {
           {step === 'photo' && book && (
             <div key="photo" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
-                <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
+                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
                   Langkah 4 dari {steps.length} • Foto
                 </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Foto Siswa</h2>
@@ -431,7 +431,7 @@ export function KioskBorrowIndividual() {
           {step === 'confirm' && student && book && (
             <div key="confirm" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
-                <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
+                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
                   Langkah 5 dari {steps.length} • Konfirmasi
                 </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Konfirmasi Peminjaman</h2>
@@ -464,7 +464,7 @@ export function KioskBorrowIndividual() {
                 <button
                   onClick={() => borrowMutation.mutate()}
                   disabled={borrowMutation.isPending}
-                  className={`${kBtn} flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30`}
+                  className={`${kBtn} flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30`}
                 >
                   {borrowMutation.isPending ? <Loader2 className="animate-spin" size={24} /> : <CheckCircle2 size={24} />}
                   {borrowMutation.isPending ? 'Memproses...' : 'Konfirmasi Pinjam'}

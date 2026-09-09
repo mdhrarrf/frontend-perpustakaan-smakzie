@@ -35,7 +35,7 @@ export function AdminDashboard() {
           <StatCard label="Total Buku"       value={s.total_buku}       icon={<BookOpen size={20} />}       color="blue" />
           <StatCard label="Buku Tersedia"    value={s.buku_tersedia}    icon={<Layers size={20} />}         color="green" />
           <StatCard label="Sedang Dipinjam"  value={s.pinjam_aktif}     icon={<ClipboardList size={20} />}  color="blue" />
-          <StatCard label="Total Siswa"      value={s.total_siswa}      icon={<Users size={20} />}          color="purple" />
+          <StatCard label="Total Siswa"      value={s.total_siswa}      icon={<Users size={20} />}          color="emerald" />
           <StatCard label="Pinjam Hari Ini"  value={s.pinjam_hari_ini}  icon={<TrendingUp size={20} />}     color="blue" />
           <StatCard label="Kembali Hari Ini" value={s.kembali_hari_ini} icon={<RotateCcw size={20} />}      color="green" />
           <StatCard label="Terlambat"        value={s.terlambat}        icon={<AlertTriangle size={20} />}  color="red" />

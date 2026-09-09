@@ -36,17 +36,17 @@ interface StatCardProps {
   value: number | string
   icon?: React.ReactNode
   trend?: { value: string; up?: boolean }
-  color?: 'default' | 'blue' | 'green' | 'red' | 'yellow' | 'purple'
+  color?: 'default' | 'blue' | 'green' | 'red' | 'yellow' | 'emerald'
 }
 
 export function StatCard({ label, value, icon, trend, color = 'default' }: StatCardProps) {
   const colors = {
-    default: 'bg-slate-50  text-slate-600',
-    blue:    'bg-blue-50   text-blue-600',
-    green:   'bg-green-50  text-green-600',
-    red:     'bg-red-50    text-red-600',
-    yellow:  'bg-yellow-50 text-yellow-600',
-    purple:  'bg-purple-50 text-purple-600',
+    default: 'bg-slate-50   text-slate-600',
+    blue:    'bg-blue-50    text-blue-600',
+    green:   'bg-green-50   text-green-600',
+    red:     'bg-red-50     text-red-600',
+    yellow:  'bg-yellow-50  text-yellow-600',
+    emerald: 'bg-emerald-50 text-emerald-600',
   }
 
   return (

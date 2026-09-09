@@ -31,12 +31,13 @@ export function KioskSuccessPage() {
   }, [navigate])
 
   const isLate = state.type === 'return_late'
+  const isReturn = state.type === 'return' || state.type === 'return_late'
 
   const content = (() => {
     switch (state.type) {
       case 'borrow':
         return {
-          icon:     <CheckCircle2 size={60} className="text-indigo-600" />,
+          icon:     <CheckCircle2 size={60} className="text-blue-600" />,
           title:    'Peminjaman Berhasil!',
           subtitle: state.book_title ? `"${state.book_title}"` : undefined,
           info:     state.due_at
@@ -45,7 +46,7 @@ export function KioskSuccessPage() {
         }
       case 'borrow_class':
         return {
-          icon:     <BookOpen size={60} className="text-indigo-600" />,
+          icon:     <BookOpen size={60} className="text-blue-600" />,
           title:    'Peminjaman Kelas Berhasil!',
           subtitle: `${state.book_count ?? 0} eksemplar buku pelajaran dipinjam`,
           info:     state.due_at
@@ -54,7 +55,7 @@ export function KioskSuccessPage() {
         }
       case 'return':
         return {
-          icon:     <RotateCcw size={60} className="text-indigo-600" />,
+          icon:     <RotateCcw size={60} className="text-emerald-600" />,
           title:    'Buku Berhasil Dikembalikan!',
           subtitle: state.book_title ? `"${state.book_title}"` : undefined,
           info:     'Terima kasih telah mengembalikan buku tepat waktu.',
@@ -68,7 +69,7 @@ export function KioskSuccessPage() {
         }
       default:
         return {
-          icon:     <CheckCircle2 size={60} className="text-indigo-600" />,
+          icon:     <CheckCircle2 size={60} className="text-blue-600" />,
           title:    'Berhasil!',
           subtitle: undefined,
           info:     undefined,
@@ -76,12 +77,28 @@ export function KioskSuccessPage() {
     }
   })()
 
-  return (
-    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-sky-50/40 to-indigo-50/40 flex flex-col items-center justify-center gap-8 p-6 sm:p-10 text-slate-900">
+  const bgGradient = isLate
+    ? 'from-slate-50 via-amber-50/40 to-orange-50/40'
+    : isReturn
+    ? 'from-slate-50 via-teal-50/40 to-emerald-50/40'
+    : 'from-slate-50 via-sky-50/40 to-blue-50/40'
 
-      <div className={`w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-white flex items-center justify-center shadow-2xl border-4 ${
-        isLate ? 'border-amber-400 shadow-amber-200/60' : 'border-indigo-200 shadow-indigo-200/60'
-      }`}>
+  const circleBorder = isLate
+    ? 'border-amber-400 shadow-amber-200/60'
+    : isReturn
+    ? 'border-emerald-200 shadow-emerald-200/60'
+    : 'border-blue-200 shadow-blue-200/60'
+
+  const btnColor = isLate
+    ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/25 focus:ring-amber-300'
+    : isReturn
+    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/25 focus:ring-emerald-300'
+    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/25 focus:ring-blue-300'
+
+  return (
+    <div className={`flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br ${bgGradient} flex flex-col items-center justify-center gap-8 p-6 sm:p-10 text-slate-900`}>
+
+      <div className={`w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-white flex items-center justify-center shadow-2xl border-4 ${circleBorder}`}>
         {content.icon}
       </div>
 
@@ -133,7 +150,7 @@ export function KioskSuccessPage() {
       <button
         type="button"
         onClick={() => navigate('/kiosk')}
-        className="flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-2xl px-10 py-4 sm:py-5 text-lg sm:text-xl font-bold min-h-[64px] sm:min-h-[72px] shadow-xl shadow-indigo-600/25 transition-all cursor-pointer focus:outline-none focus:ring-4 focus:ring-indigo-300"
+        className={`flex items-center justify-center gap-3 ${btnColor} active:scale-95 text-white rounded-2xl px-10 py-4 sm:py-5 text-lg sm:text-xl font-bold min-h-[64px] sm:min-h-[72px] shadow-xl transition-all cursor-pointer focus:outline-none focus:ring-4`}
       >
         <Home size={22} />
         Kembali ke Layar Utama
