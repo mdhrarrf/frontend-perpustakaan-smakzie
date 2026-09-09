@@ -587,8 +587,11 @@ export function KioskBorrowClass() {
 
               {/* ── Sudah scan: tampilkan UI quantity ── */}
               {books.length > 0 && (() => {
-                const { book, quantity } = books[0]
-                const maxStock = book.jumlah_tersedia && book.jumlah_tersedia > 0 ? book.jumlah_tersedia : 999
+                const selectedBook = books[0].book
+                const selectedQty  = books[0].quantity
+                // Untuk peminjaman kelas, tidak dibatasi stok sistem — kelas bisa pinjam banyak eksemplar
+                const CLASS_MAX = 99
+
                 return (
                   <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50 flex flex-col gap-6">
                     {/* Info Buku */}
@@ -597,11 +600,8 @@ export function KioskBorrowClass() {
                         <BookOpen size={28} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-slate-900 font-extrabold text-base sm:text-lg leading-tight truncate">{book.judul}</p>
-                        <p className="text-sm text-slate-500 mt-0.5 truncate">{book.penulis || '—'}</p>
-                        {book.jumlah_tersedia != null && book.jumlah_tersedia > 0 && (
-                          <p className="text-xs text-emerald-600 font-bold mt-1">{book.jumlah_tersedia} eksemplar tersedia</p>
-                        )}
+                        <p className="text-slate-900 font-extrabold text-base sm:text-lg leading-tight truncate">{selectedBook.judul}</p>
+                        <p className="text-sm text-slate-500 mt-0.5 truncate">{selectedBook.penulis || '—'}</p>
                       </div>
                       <button
                         type="button"
@@ -617,13 +617,13 @@ export function KioskBorrowClass() {
                     <div className="flex flex-col items-center gap-4">
                       <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Jumlah Eksemplar</p>
 
-                      {/* Main Controls */}
+                      {/* Tombol − Angka + */}
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
-                          onClick={() => handleAddQuantity(book.id, -1)}
-                          disabled={quantity <= 1}
-                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100 hover:bg-slate-200 disabled:opacity-30 text-slate-800 flex items-center justify-center border border-slate-200 cursor-pointer shadow-sm transition-colors text-2xl font-black"
+                          onClick={() => setBooks([{ book: selectedBook, quantity: Math.max(1, selectedQty - 1) }])}
+                          disabled={selectedQty <= 1}
+                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100 hover:bg-slate-200 disabled:opacity-30 text-slate-800 flex items-center justify-center border border-slate-200 cursor-pointer shadow-sm transition-colors"
                         >
                           <Minus size={22} />
                         </button>
@@ -632,33 +632,40 @@ export function KioskBorrowClass() {
                           type="number"
                           inputMode="numeric"
                           min="1"
-                          max={maxStock}
-                          value={quantity === 0 ? '' : quantity}
+                          max={CLASS_MAX}
+                          value={selectedQty === 0 ? '' : selectedQty}
                           onFocus={(e) => e.target.select()}
-                          onChange={(e) => handleQuantityChange(book.id, e.target.value)}
-                          onBlur={() => handleQuantityBlur(book.id, quantity)}
+                          onChange={(e) => {
+                            const raw = e.target.value
+                            if (raw === '') { setBooks([{ book: selectedBook, quantity: 0 }]); return }
+                            const q = parseInt(raw, 10)
+                            if (!isNaN(q) && q >= 1) setBooks([{ book: selectedBook, quantity: Math.min(q, CLASS_MAX) }])
+                          }}
+                          onBlur={() => {
+                            if (!selectedQty || selectedQty < 1) setBooks([{ book: selectedBook, quantity: 1 }])
+                          }}
                           className="w-28 sm:w-32 h-14 sm:h-16 text-center font-black text-3xl sm:text-4xl text-slate-900 bg-white border-2 border-indigo-400 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 rounded-2xl shadow-inner tabular-nums focus:outline-none"
                         />
 
                         <button
                           type="button"
-                          onClick={() => handleAddQuantity(book.id, 1)}
-                          disabled={quantity >= maxStock}
+                          onClick={() => setBooks([{ book: selectedBook, quantity: Math.min(selectedQty + 1, CLASS_MAX) }])}
+                          disabled={selectedQty >= CLASS_MAX}
                           className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-30 text-white flex items-center justify-center border border-indigo-600 cursor-pointer shadow-sm transition-colors"
                         >
                           <Plus size={22} />
                         </button>
                       </div>
 
-                      {/* Preset Buttons */}
+                      {/* Preset langsung set angka */}
                       <div className="flex items-center gap-2">
                         {[10, 20, 30, 36].map((preset) => (
                           <button
                             key={preset}
                             type="button"
-                            onClick={() => handleQuantityChange(book.id, String(Math.min(preset, maxStock)))}
+                            onClick={() => setBooks([{ book: selectedBook, quantity: preset }])}
                             className={`px-4 py-2 rounded-xl font-bold text-sm border transition-all cursor-pointer ${
-                              quantity === preset
+                              selectedQty === preset
                                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                                 : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200'
                             }`}
@@ -669,7 +676,7 @@ export function KioskBorrowClass() {
                       </div>
 
                       <p className="text-xs text-slate-400 font-medium">
-                        Ketik angka langsung atau gunakan tombol ±
+                        Ketik angka atau tap preset — maks {CLASS_MAX} eksemplar
                       </p>
                     </div>
 
@@ -677,10 +684,10 @@ export function KioskBorrowClass() {
                     <button
                       type="button"
                       onClick={() => setStep('photo')}
-                      disabled={quantity < 1}
+                      disabled={selectedQty < 1}
                       className={`${kBtn} w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed`}
                     >
-                      Lanjut ke Foto ({quantity} Buku) →
+                      Lanjut ke Foto ({selectedQty} Buku) →
                     </button>
                   </div>
                 )
