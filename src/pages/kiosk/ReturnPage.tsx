@@ -183,7 +183,7 @@ export function KioskReturnPage() {
                       <div className="flex items-center gap-4 mt-3 text-sm">
                         <span className="text-slate-500 font-medium">Dipinjam: {formatDate(loan.borrowed_at)}</span>
                         <span className={isLate ? 'text-rose-600 font-bold' : 'text-slate-700 font-medium'}>
-                          Jatuh Tempo: {formatDate(loan.due_at)}
+                          Jatuh Tempo: {loan.loan_type === 'class' ? formatDateTime(loan.due_at) : formatDate(loan.due_at)}
                         </span>
                       </div>
                     </div>
@@ -256,7 +256,7 @@ export function KioskReturnPage() {
               { label: 'Nama',        value: student.nama },
               { label: 'NIS',         value: student.nis },
               { label: 'Buku',        value: getLoanBookTitle(selectedLoan) },
-              { label: 'Jatuh Tempo', value: formatDate(selectedLoan.due_at) },
+              { label: 'Jatuh Tempo', value: selectedLoan.loan_type === 'class' ? formatDateTime(selectedLoan.due_at) : formatDate(selectedLoan.due_at) },
             ].map(({ label, value }) => (
               <div key={label} className="flex justify-between items-start gap-4 py-2 border-b border-slate-100 last:border-0">
                 <span className="text-slate-500 text-base font-medium">{label}</span>
