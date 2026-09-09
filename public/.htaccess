@@ -1,6 +1,13 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
+
+  # 1. Reverse Proxy API ke backend JagoanHosting (mengatasi Mixed Content HTTPS -> HTTP)
+  <IfModule mod_proxy.c>
+    RewriteRule ^api/v1/(.*)$ http://be-smakzie.jh-beon.cloud/api/v1/$1 [P,L]
+  </IfModule>
+
+  # 2. SPA Routing fallback untuk React Router
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
