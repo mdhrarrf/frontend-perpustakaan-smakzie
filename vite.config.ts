@@ -12,6 +12,12 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    proxy: {
+      '/api/v1': {
+        target: 'http://be-smakzie.jh-beon.cloud',
+        changeOrigin: true,
+      },
+    },
   },
   build: {
     outDir: 'dist',
