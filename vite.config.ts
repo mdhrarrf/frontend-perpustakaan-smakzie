@@ -14,7 +14,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api/v1': {
-        target: 'http://be-smakzie.jh-beon.cloud',
+        target: 'https://api-perpus.smkn1cianjur.sch.id',
         changeOrigin: true,
       },
     },
