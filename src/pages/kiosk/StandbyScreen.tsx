@@ -88,9 +88,14 @@ export function KioskStandby() {
             </div>
             <div className="flex gap-3 overflow-x-auto pb-1">
               {items.map((item, i) => (
-                <div key={i} className="flex-shrink-0 bg-slate-50 hover:bg-slate-100/80 rounded-xl px-5 py-3 min-w-[220px] border border-slate-200 shadow-sm transition-colors">
+                <div key={i} className="flex-shrink-0 bg-slate-50 hover:bg-slate-100/80 rounded-xl px-5 py-3 min-w-[260px] border border-slate-200 shadow-sm transition-colors">
                   <p className="text-slate-900 text-base font-bold line-clamp-1">{item.judul}</p>
-                  <p className="text-slate-500 text-xs font-medium mt-1">{item.kelas} · {item.borrowed_at}</p>
+                  <p className="text-slate-500 text-xs font-medium mt-1">{item.kelas}</p>
+                  <div className="flex items-center gap-3 mt-1.5 text-xs font-semibold">
+                    <span className="text-slate-500">Pinjam <span className="text-slate-700">{item.borrowed_at}</span></span>
+                    <span className="text-slate-300">→</span>
+                    <span className="text-slate-500">Kembali <span className="text-indigo-600">{item.due_at}</span></span>
+                  </div>
                 </div>
               ))}
             </div>
