@@ -13,7 +13,7 @@ import { BarcodeScanner } from '@/components/kiosk/BarcodeScanner'
 import { LoanStatusBadge } from '@/components/ui/Badge'
 import { formatDateTime } from '@/utils'
 import { getErrorMessage } from '@/api/client'
-import { BookOpen, Users, RotateCcw, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { BookOpen, Users, RotateCcw, CheckCircle2, AlertTriangle, Check, ArrowLeft, ArrowRight } from 'lucide-react'
 import type { Student, Book } from '@/types'
 
 type Step = 'find-student' | 'find-book' | 'set-due' | 'photo' | 'confirm' | 'done'
@@ -149,9 +149,12 @@ export function StaffBorrowPage() {
             )}
             <Input label="Batas Pengembalian" type="datetime-local" required value={dueAt} onChange={(e) => setDueAt(e.target.value)} />
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep('find-book')}>← Kembali</Button>
-              <Button onClick={() => setStep('photo')} disabled={!dueAt || (loanType === 'class' && (!classInfo.class_name || !classInfo.teacher_name))}>
-                Lanjut → Foto
+              <Button variant="outline" onClick={() => setStep('find-book')} className="flex items-center gap-1.5">
+                <ArrowLeft size={16} /> Kembali
+              </Button>
+              <Button onClick={() => setStep('photo')} disabled={!dueAt || (loanType === 'class' && (!classInfo.class_name || !classInfo.teacher_name))} className="flex items-center gap-1.5">
+                <span>Lanjut ke Foto</span>
+                <ArrowRight size={16} />
               </Button>
             </div>
           </CardBody>
@@ -165,9 +168,12 @@ export function StaffBorrowPage() {
           <CardBody className="space-y-4">
             <WebcamCapture onCapture={handlePhotoCapture} />
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep('set-due')}>← Kembali</Button>
-              <Button onClick={() => setStep('confirm')}>
-                {photoPath ? 'Lanjut → Konfirmasi' : 'Lewati & Konfirmasi'}
+              <Button variant="outline" onClick={() => setStep('set-due')} className="flex items-center gap-1.5">
+                <ArrowLeft size={16} /> Kembali
+              </Button>
+              <Button onClick={() => setStep('confirm')} className="flex items-center gap-1.5">
+                <span>{photoPath ? 'Lanjut ke Konfirmasi' : 'Lewati & Konfirmasi'}</span>
+                <ArrowRight size={16} />
               </Button>
             </div>
           </CardBody>
@@ -187,12 +193,23 @@ export function StaffBorrowPage() {
                 <div className="flex justify-between"><dt className="text-slate-500">Kelas</dt><dd className="font-medium">{classInfo.class_name}</dd></div>
                 <div className="flex justify-between"><dt className="text-slate-500">Jumlah</dt><dd className="font-medium">{classInfo.quantity} buku</dd></div>
               </>}
-              {photoPath && <div className="flex justify-between"><dt className="text-slate-500">Foto</dt><dd className="text-green-600">✓ Terlampir</dd></div>}
+              {photoPath && (
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Foto</dt>
+                  <dd className="text-emerald-600 font-medium flex items-center gap-1">
+                    <Check size={14} strokeWidth={2.5} />
+                    Terlampir
+                  </dd>
+                </div>
+              )}
             </dl>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep('photo')}>← Kembali</Button>
-              <Button loading={borrowMutation.isPending} onClick={() => borrowMutation.mutate()}>
-                ✓ Konfirmasi Peminjaman
+              <Button variant="outline" onClick={() => setStep('photo')} className="flex items-center gap-1.5">
+                <ArrowLeft size={16} /> Kembali
+              </Button>
+              <Button loading={borrowMutation.isPending} onClick={() => borrowMutation.mutate()} className="flex items-center gap-1.5">
+                <CheckCircle2 size={16} />
+                <span>Konfirmasi Peminjaman</span>
               </Button>
             </div>
           </CardBody>

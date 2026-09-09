@@ -11,7 +11,7 @@ import { BarcodeScanner } from '@/components/kiosk/BarcodeScanner'
 import { useKioskStore } from '@/store/kiosk.store'
 import { getErrorMessage } from '@/api/client'
 import {
-  ArrowLeft, AlertTriangle, CheckCircle2, Loader2, Plus, Minus, X,
+  ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Loader2, Plus, Minus, X,
   Search, BookOpen, ChevronDown, Check, Clock, AlertCircle
 } from 'lucide-react'
 import type { Student, Book, Teacher, Loan } from '@/types'
@@ -521,9 +521,9 @@ export function KioskBorrowClass() {
                 <button
                   type="button"
                   onClick={() => { setActiveLoan(null); setStudent(null); setStep('scan-student') }}
-                  className="w-full bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 py-3.5 rounded-2xl text-sm sm:text-base font-bold shadow-sm transition-all cursor-pointer"
+                  className="w-full bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 py-3.5 rounded-2xl text-sm sm:text-base font-bold shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
-                  ← Ganti Kartu Pelajar
+                  <ArrowLeft size={18} /> Ganti Kartu Pelajar
                 </button>
               </div>
             </div>
@@ -720,7 +720,8 @@ export function KioskBorrowClass() {
                     disabled={!classInfo.class_name || !classInfo.teacher_name || !classInfo.subject_name}
                     className={`${kBtn} w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/25 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-blue-600 disabled:shadow-none`}
                   >
-                    Lanjut ke Scan Buku →
+                    <span>Lanjut ke Scan Buku</span>
+                    <ArrowRight size={22} />
                   </button>
                 </div>
               </div>
@@ -864,7 +865,8 @@ export function KioskBorrowClass() {
                       disabled={selectedQty < 1}
                       className={`${kBtn} w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/25 disabled:opacity-40 disabled:cursor-not-allowed`}
                     >
-                      Lanjut ke Batas Waktu ({selectedQty} Buku) →
+                      <span>Lanjut ke Batas Waktu ({selectedQty} Buku)</span>
+                      <ArrowRight size={22} />
                     </button>
                   </div>
                 )
@@ -989,7 +991,8 @@ export function KioskBorrowClass() {
                   disabled={!isDueAtValid}
                   className={`${kBtn} flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30 disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
-                  Lanjut ke Foto →
+                  <span>Lanjut ke Foto</span>
+                  <ArrowRight size={22} />
                 </button>
               </div>
             </div>
@@ -1020,9 +1023,10 @@ export function KioskBorrowClass() {
               <button
                 type="button"
                 onClick={() => setStep('confirm')}
-                className="text-slate-600 hover:text-slate-900 text-sm sm:text-base font-bold bg-white hover:bg-slate-50 border border-slate-200 px-6 py-2.5 rounded-full shadow-sm transition-all cursor-pointer"
+                className="text-slate-600 hover:text-slate-900 text-sm sm:text-base font-bold bg-white hover:bg-slate-50 border border-slate-200 px-6 py-2.5 rounded-full shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
               >
-                Lewati Foto →
+                <span>Lewati Foto</span>
+                <ArrowRight size={18} />
               </button>
             </div>
           )}

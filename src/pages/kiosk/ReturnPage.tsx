@@ -9,7 +9,7 @@ import { WebcamCapture } from '@/components/kiosk/WebcamCapture'
 import { useKioskStore } from '@/store/kiosk.store'
 import { getErrorMessage } from '@/api/client'
 import { formatDateTime, formatDate } from '@/utils'
-import { ArrowLeft, AlertTriangle, CheckCircle2, Loader2, RotateCcw, BookOpen, Clock } from 'lucide-react'
+import { ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Loader2, RotateCcw, BookOpen, Clock, Check } from 'lucide-react'
 import type { Student, Loan } from '@/types'
 
 type Step = 'scan-student' | 'select-loan' | 'photo' | 'confirm'
@@ -226,9 +226,10 @@ export function KioskReturnPage() {
 
           <button
             onClick={() => setStep('confirm')}
-            className="text-slate-600 hover:text-slate-900 text-base font-bold bg-white border border-slate-200 px-6 py-2.5 rounded-full shadow-sm transition-all"
+            className="text-slate-600 hover:text-slate-900 text-base font-bold bg-white border border-slate-200 px-6 py-2.5 rounded-full shadow-sm transition-all flex items-center gap-1.5"
           >
-            Lewati Foto →
+            <span>Lewati Foto</span>
+            <ArrowRight size={18} />
           </button>
         </div>
       )}
@@ -266,7 +267,10 @@ export function KioskReturnPage() {
             {photoPath && (
               <div className="flex justify-between py-2">
                 <span className="text-slate-500 text-base font-medium">Foto</span>
-                <span className="text-emerald-600 text-base font-bold">✓ Terlampir</span>
+                <span className="text-emerald-600 text-base font-bold flex items-center gap-1.5">
+                  <Check size={18} strokeWidth={2.5} />
+                  Terlampir
+                </span>
               </div>
             )}
           </div>

@@ -1,5 +1,5 @@
 import { cn } from '@/utils'
-import { Loader2 } from 'lucide-react'
+import { Loader2, TrendingUp, TrendingDown } from 'lucide-react'
 
 interface CardProps {
   children: React.ReactNode
@@ -56,8 +56,9 @@ export function StatCard({ label, value, icon, trend, color = 'default' }: StatC
           <p className="text-sm text-slate-500">{label}</p>
           <p className="mt-1 text-3xl font-bold text-slate-900">{value}</p>
           {trend && (
-            <p className={cn('mt-1 text-xs', trend.up ? 'text-green-600' : 'text-red-600')}>
-              {trend.up ? '▲' : '▼'} {trend.value}
+            <p className={cn('mt-1 text-xs flex items-center gap-1', trend.up ? 'text-green-600' : 'text-red-600')}>
+              {trend.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+              <span>{trend.value}</span>
             </p>
           )}
         </div>

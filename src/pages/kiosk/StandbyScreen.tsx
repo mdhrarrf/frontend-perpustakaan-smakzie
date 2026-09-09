@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { loanService } from '@/api/loan.service'
-import { BookOpen, RotateCcw, Clock } from 'lucide-react'
+import { BookOpen, RotateCcw, Clock, ArrowRight } from 'lucide-react'
 import { cn } from '@/utils'
 
 export function KioskStandby() {
@@ -93,7 +93,7 @@ export function KioskStandby() {
                   <p className="text-slate-500 text-xs font-medium mt-1">{item.kelas}</p>
                   <div className="flex items-center gap-3 mt-1.5 text-xs font-semibold">
                     <span className="text-slate-500">Pinjam <span className="text-slate-700">{item.borrowed_at}</span></span>
-                    <span className="text-slate-300">→</span>
+                    <ArrowRight size={12} className="text-slate-400 flex-shrink-0" />
                     <span className="text-slate-500">Kembali <span className="text-blue-600">{item.due_at}</span></span>
                   </div>
                 </div>

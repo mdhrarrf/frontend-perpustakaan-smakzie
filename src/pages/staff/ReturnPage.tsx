@@ -10,7 +10,7 @@ import { BarcodeScanner } from '@/components/kiosk/BarcodeScanner'
 import { LoanStatusBadge } from '@/components/ui/Badge'
 import { formatDateTime } from '@/utils'
 import { getErrorMessage } from '@/api/client'
-import { CheckCircle2, AlertTriangle } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, ArrowLeft } from 'lucide-react'
 import type { Student, Loan } from '@/types'
 
 type Step = 'find-student' | 'select-loan' | 'photo' | 'done'
@@ -112,9 +112,12 @@ export function StaffReturnPage() {
             </div>
             <WebcamCapture onCapture={handlePhotoCapture} />
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep('select-loan')}>← Kembali</Button>
-              <Button loading={returnMutation.isPending} onClick={() => returnMutation.mutate()}>
-                ✓ Konfirmasi Pengembalian
+              <Button variant="outline" onClick={() => setStep('select-loan')} className="flex items-center gap-1.5">
+                <ArrowLeft size={16} /> Kembali
+              </Button>
+              <Button loading={returnMutation.isPending} onClick={() => returnMutation.mutate()} className="flex items-center gap-1.5">
+                <CheckCircle2 size={16} />
+                <span>Konfirmasi Pengembalian</span>
               </Button>
             </div>
           </CardBody>

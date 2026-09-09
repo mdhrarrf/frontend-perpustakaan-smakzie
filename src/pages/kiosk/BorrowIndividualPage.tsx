@@ -9,7 +9,7 @@ import { WebcamCapture } from '@/components/kiosk/WebcamCapture'
 import { BarcodeScanner } from '@/components/kiosk/BarcodeScanner'
 import { useKioskStore } from '@/store/kiosk.store'
 import { getErrorMessage } from '@/api/client'
-import { ArrowLeft, AlertTriangle, CheckCircle2, Loader2, BookOpen, Clock, AlertCircle, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Loader2, BookOpen, Clock, AlertCircle, X } from 'lucide-react'
 import type { Student, Book, Loan } from '@/types'
 import { formatDate } from '@/utils'
 
@@ -325,9 +325,9 @@ export function KioskBorrowIndividual() {
                 </button>
                 <button
                   onClick={() => { setActiveLoan(null); setStudent(null); setStep('scan-student') }}
-                  className="w-full bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 py-3.5 rounded-2xl text-sm sm:text-base font-bold shadow-sm transition-all cursor-pointer"
+                  className="w-full bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 py-3.5 rounded-2xl text-sm sm:text-base font-bold shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
-                  ← Ganti Kartu Pelajar
+                  <ArrowLeft size={18} /> Ganti Kartu Pelajar
                 </button>
               </div>
             </div>
@@ -399,7 +399,8 @@ export function KioskBorrowIndividual() {
                   onClick={() => setStep('photo')}
                   className={`${kBtn} flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30`}
                 >
-                  <CheckCircle2 size={22} /> Lanjut ke Foto →
+                  <span>Lanjut ke Foto</span>
+                  <ArrowRight size={22} />
                 </button>
               </div>
             </div>
@@ -420,9 +421,10 @@ export function KioskBorrowIndividual() {
 
               <button
                 onClick={() => setStep('confirm')}
-                className="text-slate-600 hover:text-slate-900 text-sm sm:text-base font-bold bg-white hover:bg-slate-50 border border-slate-200 px-6 py-2.5 rounded-full shadow-sm transition-all cursor-pointer"
+                className="text-slate-600 hover:text-slate-900 text-sm sm:text-base font-bold bg-white hover:bg-slate-50 border border-slate-200 px-6 py-2.5 rounded-full shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
               >
-                Lewati Foto →
+                <span>Lewati Foto</span>
+                <ArrowRight size={18} />
               </button>
             </div>
           )}
