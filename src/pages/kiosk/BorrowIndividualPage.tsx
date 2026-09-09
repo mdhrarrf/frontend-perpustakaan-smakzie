@@ -18,10 +18,10 @@ type Step = 'scan-student' | 'active-loan-warning' | 'scan-book' | 'pick-duratio
 const MAX_DUE_DAYS = 7
 
 const steps = [
-  { id: 'scan-student', label: 'Identifikasi Siswa' },
+  { id: 'scan-student', label: 'Scan Siswa' },
   { id: 'scan-book', label: 'Scan Buku' },
-  { id: 'pick-duration', label: 'Pilih Durasi' },
-  { id: 'photo', label: 'Foto Dokumentasi' },
+  { id: 'pick-duration', label: 'Durasi' },
+  { id: 'photo', label: 'Foto' },
   { id: 'confirm', label: 'Konfirmasi' },
 ]
 
@@ -36,11 +36,9 @@ export function KioskBorrowIndividual() {
   const [photoPath,      setPhotoPath]      = useState<string | null>(null)
   const [error,          setError]          = useState<string | null>(null)
   const [isLoading,      setIsLoading]      = useState(false)
-  const [smartScanInfo,  setSmartScanInfo]  = useState<{ registered: boolean; message: string } | null>(null)
   const [loadingMessage, setLoadingMessage] = useState('Memproses...')
-  const [dueDays,        setDueDays]        = useState(7) // Default 7 hari
+  const [dueDays,        setDueDays]        = useState(7)
 
-  // Hitung index langkah aktif untuk stepper
   const currentStepIndex = (() => {
     switch (step) {
       case 'scan-student':
@@ -77,7 +75,6 @@ export function KioskBorrowIndividual() {
     else navigate('/kiosk/borrow')
   }
 
-  // Hitung tanggal jatuh tempo berdasarkan dueDays yang dipilih siswa
   const getDueAt = () => {
     const d = new Date()
     d.setDate(d.getDate() + dueDays)
@@ -104,7 +101,6 @@ export function KioskBorrowIndividual() {
 
       setStudent(s)
 
-      // Cek apakah siswa masih punya peminjaman aktif
       setLoadingMessage('Mengecek riwayat peminjaman...')
       const loansRes = await studentService.loans(s.id, { status: 'active,overdue', per_page: 1 })
       const rawLoans = loansRes.data?.data ?? []
@@ -125,23 +121,18 @@ export function KioskBorrowIndividual() {
 
   // ─── Step 2: Scan Buku ───
   async function handleBookScan(code: string) {
-    setIsLoading(true); setError(null); setSmartScanInfo(null)
-    setLoadingMessage('🔍 Mencari buku...')
+    setIsLoading(true); setError(null)
+    setLoadingMessage('Mencari buku...')
     try {
       const result = await bookService.scanSmart(code)
       const b = result.data!
       const meta = result.meta ?? null
-
-      if (meta?.registered) {
-        setSmartScanInfo({ registered: true, message: result.message ?? 'Buku otomatis didaftarkan ke perpustakaan.' })
-      }
 
       if ((b.jumlah_tersedia ?? 0) < 1 && !meta?.registered) {
         setError('Maaf, stok buku ini sedang habis.')
         return
       }
 
-      // Cek violation per buku
       const v = await violationService.check(student!.id, b.id)
       if (!v.allowed) {
         setError(`Tidak dapat meminjam buku ini. Terkena sanksi keterlambatan hingga ${formatDate(v.violation?.penalty_end_date)}.`)
@@ -151,7 +142,7 @@ export function KioskBorrowIndividual() {
       setBook(b)
       setStep('pick-duration')
     } catch {
-      setError('Buku tidak ditemukan. Pastikan QR/barcode terbaca dengan benar.')
+      setError('Buku tidak ditemukan. Pastikan barcode terbaca dengan jelas.')
     } finally {
       setIsLoading(false)
     }
@@ -206,10 +197,10 @@ export function KioskBorrowIndividual() {
           </button>
           <div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">
-              Peminjaman Buku Individu
+              Peminjaman Individu
             </h1>
             <p className="text-slate-500 text-xs sm:text-sm font-medium">
-              Layanan mandiri peminjaman buku perpustakaan untuk 1 siswa
+              Peminjaman buku mandiri untuk 1 siswa
             </p>
           </div>
         </div>
@@ -258,22 +249,6 @@ export function KioskBorrowIndividual() {
         <div className="flex-1 flex flex-col items-center justify-center gap-3 py-8">
           <Loader2 className="text-indigo-600 animate-spin" size={40} />
           <p className="text-slate-800 text-xl font-bold">{loadingMessage}</p>
-          {loadingMessage.includes('Mencari') && (
-            <p className="text-slate-500 text-sm text-center max-w-xs font-medium">
-              Sistem sedang mencari data buku di katalog perpustakaan...
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* ── Smart Scan Notification ── */}
-      {smartScanInfo?.registered && !isLoading && (
-        <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4 text-blue-900 shadow-sm max-w-xl mx-auto w-full">
-          <CheckCircle2 size={24} className="text-blue-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-blue-950 font-bold text-sm sm:text-base">✨ Buku Baru Otomatis Didaftarkan!</p>
-            <p className="text-blue-700 text-xs sm:text-sm mt-0.5 font-medium">{smartScanInfo.message}</p>
-          </div>
         </div>
       )}
 
@@ -286,10 +261,10 @@ export function KioskBorrowIndividual() {
             <div key="scan-student" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
                 <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
-                  Langkah 1 dari {steps.length} • Identifikasi Siswa
+                  Langkah 1 dari {steps.length} • Scan Siswa
                 </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">
-                  Identifikasi Kartu Pelajar
+                  Scan Kartu Pelajar
                 </h2>
                 <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">
                   Scan kartu pelajar Anda atau ketik NIS secara manual
@@ -297,7 +272,7 @@ export function KioskBorrowIndividual() {
               </div>
 
               <div className="w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
-                <BarcodeScanner onScan={handleStudentScan} placeholder="Scan kartu pelajar / NIS / NISN..." kioskMode autoFocus />
+                <BarcodeScanner onScan={handleStudentScan} placeholder="Scan kartu pelajar / ketik NIS..." kioskMode autoFocus />
               </div>
             </div>
           )}
@@ -305,34 +280,19 @@ export function KioskBorrowIndividual() {
           {/* ─── Step: Active Loan Warning ─── */}
           {step === 'active-loan-warning' && student && activeLoan && (
             <div key="active-loan-warning" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
-              {/* Badge Siswa */}
-              <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-5 py-2 shadow-sm">
-                <CheckCircle2 size={18} className="text-emerald-600" />
-                <p className="text-slate-800 text-sm sm:text-base font-bold">
-                  {student.nama} <span className="text-slate-400 font-normal">({student.nis})</span>
-                  {student.kelas && (
-                    <span className="ml-2 bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full text-xs font-extrabold border border-indigo-200/60">
-                      {student.kelas}
-                    </span>
-                  )}
-                </p>
-              </div>
-
-              {/* Peringatan Card */}
               <div className={`w-full rounded-3xl p-6 sm:p-8 border-2 shadow-lg ${isOverdue ? 'bg-rose-50 border-rose-300' : 'bg-amber-50 border-amber-300'}`}>
                 <div className="flex flex-col items-center gap-4 text-center">
                   <AlertCircle size={48} className={isOverdue ? 'text-rose-600' : 'text-amber-600'} />
                   <h2 className={`text-2xl font-extrabold ${isOverdue ? 'text-rose-900' : 'text-amber-900'}`}>
-                    {isOverdue ? '⚠️ Buku Terlambat Dikembalikan!' : '📚 Masih Ada Buku yang Dipinjam'}
+                    {isOverdue ? 'Buku Terlambat Dikembalikan' : 'Masih Ada Buku yang Dipinjam'}
                   </h2>
                   <p className={`text-sm sm:text-base font-medium ${isOverdue ? 'text-rose-800' : 'text-amber-800'}`}>
                     {isOverdue
                       ? 'Anda memiliki buku yang telah melewati batas jatuh tempo. Silakan kembalikan terlebih dahulu.'
-                      : 'Anda masih memiliki tanggungan buku yang belum dikembalikan. Kembalikan buku tersebut sebelum meminjam yang baru.'
+                      : 'Anda masih memiliki pinjaman buku yang belum dikembalikan. Kembalikan buku tersebut sebelum meminjam yang baru.'
                     }
                   </p>
 
-                  {/* Detail buku yang dipinjam */}
                   <div className="bg-white rounded-2xl p-5 w-full mt-2 text-left space-y-3 border border-slate-200/80 shadow-sm">
                     <div className="flex items-start gap-3">
                       <BookOpen size={20} className="text-indigo-600 flex-shrink-0 mt-0.5" />
@@ -351,15 +311,10 @@ export function KioskBorrowIndividual() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                      <span className="text-slate-400 text-xs font-medium">No. Peminjaman:</span>
-                      <span className="text-slate-700 text-xs font-mono font-semibold">{activeLoan.loan_number}</span>
-                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Tombol Aksi */}
               <div className="flex flex-col gap-3 w-full">
                 <button
                   onClick={() => navigate('/kiosk/return')}
@@ -382,24 +337,11 @@ export function KioskBorrowIndividual() {
           {step === 'scan-book' && student && (
             <div key="scan-book" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
-                <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-5 py-2 mb-3 shadow-sm">
-                  <CheckCircle2 size={18} className="text-emerald-600" />
-                  <p className="text-slate-800 text-sm sm:text-base font-bold">
-                    {student.nama} <span className="text-slate-400 font-normal">({student.nis})</span>
-                    {student.kelas && (
-                      <span className="ml-2 bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full text-xs font-extrabold border border-indigo-200/60">
-                        {student.kelas}
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
-                    Langkah 2 dari {steps.length} • Scan Buku
-                  </span>
-                  <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Scan Barcode Buku</h2>
-                  <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Arahkan barcode atau QR pada buku ke scanner</p>
-                </div>
+                <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
+                  Langkah 2 dari {steps.length} • Scan Buku
+                </span>
+                <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Scan Barcode Buku</h2>
+                <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Arahkan barcode atau QR pada buku ke scanner</p>
               </div>
 
               <div className="w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
@@ -412,20 +354,13 @@ export function KioskBorrowIndividual() {
           {step === 'pick-duration' && student && book && (
             <div key="pick-duration" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
-                <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-5 py-2 mb-3 shadow-sm max-w-md">
-                  <CheckCircle2 size={18} className="text-emerald-600 flex-shrink-0" />
-                  <p className="text-slate-800 text-sm sm:text-base font-bold truncate">{book.judul}</p>
-                </div>
-                <div>
-                  <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
-                    Langkah 3 dari {steps.length} • Pilih Durasi
-                  </span>
-                  <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Berapa Lama Meminjam?</h2>
-                  <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Pilih durasi peminjaman (maksimal {MAX_DUE_DAYS} hari)</p>
-                </div>
+                <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
+                  Langkah 3 dari {steps.length} • Durasi
+                </span>
+                <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Durasi Peminjaman</h2>
+                <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Pilih berapa hari Anda ingin meminjam buku ini</p>
               </div>
 
-              {/* Duration Picker Card */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 w-full border border-slate-200/80 shadow-xl shadow-slate-200/50">
                 <div className="grid grid-cols-7 gap-2.5 mb-6">
                   {Array.from({ length: MAX_DUE_DAYS }, (_, i) => i + 1).map(day => (
@@ -464,7 +399,7 @@ export function KioskBorrowIndividual() {
                   onClick={() => setStep('photo')}
                   className={`${kBtn} flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30`}
                 >
-                  <CheckCircle2 size={22} /> Lanjutkan →
+                  <CheckCircle2 size={22} /> Lanjut ke Foto →
                 </button>
               </div>
             </div>
@@ -474,17 +409,11 @@ export function KioskBorrowIndividual() {
           {step === 'photo' && book && (
             <div key="photo" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
-                <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-5 py-2 mb-3 shadow-sm max-w-md">
-                  <BookOpen size={18} className="text-indigo-600 flex-shrink-0" />
-                  <p className="text-slate-800 text-sm sm:text-base font-bold truncate">{book.judul}</p>
-                </div>
-                <div>
-                  <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
-                    Langkah 4 dari {steps.length} • Foto Dokumentasi
-                  </span>
-                  <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Dokumentasi Foto</h2>
-                  <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Foto otomatis diambil untuk bukti peminjaman</p>
-                </div>
+                <span className="inline-block bg-indigo-50 text-indigo-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-indigo-200/60">
+                  Langkah 4 dari {steps.length} • Foto
+                </span>
+                <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Foto Siswa</h2>
+                <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Ambil foto bukti peminjaman</p>
               </div>
 
               <WebcamCapture onCapture={handlePhotoCapture} autoCapture autoCaptureDelay={5} kioskMode />
@@ -506,12 +435,12 @@ export function KioskBorrowIndividual() {
                   Langkah 5 dari {steps.length} • Konfirmasi
                 </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Konfirmasi Peminjaman</h2>
-                <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Periksa kembali detail peminjaman buku sebelum konfirmasi</p>
+                <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Pastikan data peminjaman sudah sesuai</p>
               </div>
 
               <div className="bg-white rounded-3xl p-6 sm:p-8 w-full space-y-3 border border-slate-200/80 shadow-xl shadow-slate-200/50">
                 {[
-                  { label: 'Peminjam',    value: `${student.nama} (${student.nis})` },
+                  { label: 'Siswa',       value: `${student.nama} (${student.nis})` },
                   { label: 'Kelas',       value: student.kelas ?? '—' },
                   { label: 'Judul Buku',  value: book.judul },
                   { label: 'Penulis',     value: book.penulis || '—' },
