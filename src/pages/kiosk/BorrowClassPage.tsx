@@ -205,21 +205,25 @@ export function KioskBorrowClass() {
 
       // 2. Cek apakah rombel kelas siswa ini masih memiliki peminjaman kelas yang belum dikembalikan
       if (s.kelas) {
-        const classLoansRes = await loanService.list({
-          class_name: s.kelas,
-          status: 'active,overdue',
-          loan_type: 'class',
-          per_page: 1,
-        })
-        const rawClassLoans = classLoansRes.data?.data ?? []
-        const activeClassLoans = rawClassLoans.filter((l: Loan) => l.status === 'active' || l.status === 'overdue')
+        try {
+          const classLoansRes = await loanService.list({
+            class_name: s.kelas,
+            status: 'active,overdue',
+            loan_type: 'class',
+            per_page: 1,
+          })
+          const rawClassLoans = classLoansRes.data?.data ?? []
+          const activeClassLoans = rawClassLoans.filter((l: Loan) => l.status === 'active' || l.status === 'overdue')
 
-        if (activeClassLoans.length > 0) {
-          setStudent(s)
-          setActiveLoan(activeClassLoans[0])
-          setActiveLoanReason('class')
-          setStep('active-loan-warning')
-          return
+          if (activeClassLoans.length > 0) {
+            setStudent(s)
+            setActiveLoan(activeClassLoans[0])
+            setActiveLoanReason('class')
+            setStep('active-loan-warning')
+            return
+          }
+        } catch (err) {
+          console.warn('Cek peminjaman rombel kelas dilewati:', err)
         }
       }
 
