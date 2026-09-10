@@ -155,7 +155,7 @@ export function AdminReportsPage() {
           @page { size: 215.9mm 355.6mm; margin: 0; }
           body { background: #fff !important; margin: 0 !important; }
           .no-print, aside, header, nav, .app-sidebar, .app-header { display: none !important; }
-          .print-area { display: block !important; }
+          .print-area { display: block !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
           .sheet-page { box-shadow: none !important; border: none !important; margin: 0 auto !important; }
         }
       `}</style>
@@ -344,7 +344,7 @@ export function AdminReportsPage() {
           )}
 
           {/* ── Print Preview (Visitor Sheet) ── */}
-          <div className={viewMode === 'preview' ? 'block' : 'hidden print:block'}>
+          <div className={`print-area ${viewMode === 'preview' ? 'block' : 'hidden print:block'}`}>
             <div className="no-print mb-2 text-center text-xs text-slate-400">
               Pratinjau lembar fisik ukuran F4 — tekan "Cetak PDF (F4)" untuk mencetak
             </div>
@@ -432,7 +432,7 @@ export function AdminReportsPage() {
               <div className="no-print mb-2 text-center text-xs text-slate-400">
                 Pratinjau formulir peminjaman buku teks ukuran F4
               </div>
-              <div className="flex justify-center overflow-x-auto pb-8">
+              <div className="print-area flex justify-center overflow-x-auto pb-8">
                 <div className="bg-white shadow border border-slate-200 rounded-sm">
                   <TextbookLoanFormPrint form={selectedLoan} schoolYear={schoolYear} copies={copies} />
                 </div>
