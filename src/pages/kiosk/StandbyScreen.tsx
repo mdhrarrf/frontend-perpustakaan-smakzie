@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { loanService } from '@/api/loan.service'
+import type { StandbyItem } from '@/types'
 import { BookOpen, RotateCcw, Clock, ArrowRight } from 'lucide-react'
 import { cn } from '@/utils'
 
@@ -81,27 +82,161 @@ export function KioskStandby() {
       {/* Today's loan ticker (Above footer) */}
       {items && items.length > 0 && (
         <div className="absolute bottom-2 left-0 right-0 px-10 z-10">
-          <div className="bg-white/90 backdrop-blur-md rounded-2xl p-4 border border-slate-200/90 shadow-lg shadow-slate-200/50">
-            <div className="flex items-center gap-2 mb-3">
-              <Clock size={16} className="text-blue-600" />
-              <p className="text-slate-600 text-xs font-bold uppercase tracking-wider">Dipinjam Hari Ini ({items.length} transaksi)</p>
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-1">
-              {items.map((item, i) => (
-                <div key={i} className="flex-shrink-0 bg-slate-50 hover:bg-slate-100/80 rounded-xl px-5 py-3 min-w-[260px] border border-slate-200 shadow-sm transition-colors">
-                  <p className="text-slate-900 text-base font-bold line-clamp-1">{item.judul}</p>
-                  <p className="text-slate-500 text-xs font-medium mt-1">{item.kelas}</p>
-                  <div className="flex items-center gap-3 mt-1.5 text-xs font-semibold">
-                    <span className="text-slate-500">Pinjam <span className="text-slate-700">{item.borrowed_at}</span></span>
-                    <ArrowRight size={12} className="text-slate-400 flex-shrink-0" />
-                    <span className="text-slate-500">Kembali <span className="text-blue-600">{item.due_at}</span></span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <LoanTicker items={items} />
         </div>
       )}
+    </div>
+  )
+}
+
+function LoanTicker({ items }: { items: StandbyItem[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const setRef = useRef<HTMLDivElement>(null)
+  const isInteracting = useRef(false)
+  const isDragging = useRef(false)
+  const startX = useRef(0)
+  const startScrollLeft = useRef(0)
+  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el || items.length === 0) return
+
+    let animId: number
+    // Kecepatan santai dan mudah dibaca: ~0.55px per frame
+    const speed = 0.55
+
+    const tick = () => {
+      if (!isInteracting.current && !isDragging.current && el && setRef.current) {
+        const setWidth = setRef.current.offsetWidth + 12 // 12px adalah gap-3
+        if (setWidth > 0) {
+          if (el.scrollLeft >= setWidth) {
+            el.scrollLeft -= setWidth
+          } else {
+            el.scrollLeft += speed
+          }
+        }
+      }
+      animId = requestAnimationFrame(tick)
+    }
+
+    animId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(animId)
+  }, [items])
+
+  const pause = () => {
+    isInteracting.current = true
+    if (resumeTimer.current) clearTimeout(resumeTimer.current)
+  }
+
+  const resume = (delay = 1500) => {
+    if (resumeTimer.current) clearTimeout(resumeTimer.current)
+    resumeTimer.current = setTimeout(() => {
+      isInteracting.current = false
+    }, delay)
+  }
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isDragging.current = true
+    pause()
+    if (!scrollRef.current) return
+    startX.current = e.pageX - scrollRef.current.offsetLeft
+    startScrollLeft.current = scrollRef.current.scrollLeft
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current || !scrollRef.current) return
+    e.preventDefault()
+    const x = e.pageX - scrollRef.current.offsetLeft
+    const walk = (x - startX.current) * 1.2
+    scrollRef.current.scrollLeft = startScrollLeft.current - walk
+  }
+
+  const handleMouseUp = () => {
+    isDragging.current = false
+    resume(2000)
+  }
+
+  const handleScroll = () => {
+    if (!scrollRef.current || !setRef.current) return
+    const setWidth = setRef.current.offsetWidth + 12
+    if (setWidth > 0) {
+      if (scrollRef.current.scrollLeft >= setWidth * 2) {
+        scrollRef.current.scrollLeft -= setWidth
+      } else if (scrollRef.current.scrollLeft <= 0) {
+        scrollRef.current.scrollLeft += setWidth
+      }
+    }
+  }
+
+  const renderCard = (item: StandbyItem, key: string | number) => (
+    <div
+      key={key}
+      className="flex-shrink-0 bg-slate-50 hover:bg-slate-100/90 rounded-xl px-5 py-3 min-w-[280px] max-w-[360px] border border-slate-200 shadow-sm transition-colors cursor-grab active:cursor-grabbing select-none"
+    >
+      <p className="text-slate-900 text-base font-bold line-clamp-1">{item.judul}</p>
+      <p className="text-slate-500 text-xs font-medium mt-1">{item.kelas}</p>
+      <div className="flex items-center gap-3 mt-1.5 text-xs font-semibold">
+        <span className="text-slate-500">Pinjam <span className="text-slate-700">{item.borrowed_at}</span></span>
+        <ArrowRight size={12} className="text-slate-400 flex-shrink-0" />
+        <span className="text-slate-500">Kembali <span className="text-blue-600">{item.due_at}</span></span>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="bg-white/90 backdrop-blur-md rounded-2xl p-4 border border-slate-200/90 shadow-lg shadow-slate-200/50">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Clock size={16} className="text-blue-600" />
+          <p className="text-slate-600 text-xs font-bold uppercase tracking-wider">
+            Dipinjam Hari Ini ({items.length} transaksi)
+          </p>
+        </div>
+        <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+          Bergulir otomatis • Bisa digeser mouse
+        </span>
+      </div>
+
+      <style>{`
+        .kiosk-ticker::-webkit-scrollbar {
+          height: 6px;
+        }
+        .kiosk-ticker::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 9999px;
+        }
+        .kiosk-ticker::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 9999px;
+        }
+        .kiosk-ticker::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+      `}</style>
+
+      <div
+        ref={scrollRef}
+        onMouseEnter={pause}
+        onMouseLeave={() => { isDragging.current = false; resume(1500) }}
+        onTouchStart={pause}
+        onTouchEnd={() => resume(2000)}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onScroll={handleScroll}
+        className="kiosk-ticker flex gap-3 overflow-x-auto pb-2 select-none cursor-grab active:cursor-grabbing"
+      >
+        <div ref={setRef} className="flex gap-3 flex-shrink-0">
+          {items.map((item, i) => renderCard(item, `orig-${i}`))}
+        </div>
+        <div className="flex gap-3 flex-shrink-0" aria-hidden="true">
+          {items.map((item, i) => renderCard(item, `dup1-${i}`))}
+        </div>
+        <div className="flex gap-3 flex-shrink-0" aria-hidden="true">
+          {items.map((item, i) => renderCard(item, `dup2-${i}`))}
+        </div>
+      </div>
     </div>
   )
 }
