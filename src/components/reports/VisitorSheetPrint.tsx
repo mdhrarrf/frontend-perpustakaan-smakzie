@@ -1,4 +1,5 @@
 import React from 'react'
+import { Phone } from 'lucide-react'
 import type { Visitor } from '@/api/report.service'
 
 interface VisitorSheetPrintProps {
@@ -121,10 +122,10 @@ export const VisitorSheetPrint: React.FC<VisitorSheetPrintProps> = ({
                   BIDANG STUDI KEAHLIAN BISNIS MANAJEMEN & TEKNOLOGI INFORMASI DAN KOMUNIKASI
                 </p>
                 <p className="text-[10px] text-gray-800">
-                  Kampus I : Jalan Siliwangi No. 41 &#9742; (0263) 261265
+                  Kampus I : Jalan Siliwangi No. 41 <Phone size={9} className="inline mx-0.5 align-baseline" /> (0263) 261265
                 </p>
                 <p className="text-[10px] text-gray-800">
-                  Kampus 2 : Jalan Pangeran Hidayatullah No. 67 &#9742; (0263) 261949
+                  Kampus 2 : Jalan Pangeran Hidayatullah No. 67 <Phone size={9} className="inline mx-0.5 align-baseline" /> (0263) 261949
                 </p>
                 <p className="text-[10px] text-gray-800">
                   Fax (0263) 272561 – Cianjur – 43212

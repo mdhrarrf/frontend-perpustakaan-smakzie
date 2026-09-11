@@ -1,4 +1,5 @@
 import React from 'react'
+import { Scissors } from 'lucide-react'
 import type { TextbookLoanForm } from '@/api/report.service'
 
 interface TextbookLoanFormPrintProps {
@@ -212,8 +213,9 @@ export const TextbookLoanFormPrint: React.FC<TextbookLoanFormPrintProps> = ({
         {copies > 1 && (
           <>
             <div className="my-6 border-b-2 border-dashed border-gray-400 flex items-center justify-center">
-              <span className="bg-white px-3 text-[10px] text-gray-500 uppercase tracking-widest font-mono -my-2.5">
-                ✂ Potong Di Sini
+              <span className="bg-white px-3 text-[10px] text-gray-500 uppercase tracking-widest font-mono -my-2.5 inline-flex items-center gap-1.5">
+                <Scissors size={12} className="text-gray-400" />
+                Gunting Di Sini
               </span>
             </div>
             {renderSingleForm(1)}

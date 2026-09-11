@@ -417,7 +417,7 @@ export function AdminReportsPage() {
                       >
                         <span className="font-medium">{loan.student.nama}</span>
                         <span className="text-slate-400 ml-1">({loan.student.kelas})</span>
-                        <span className="text-slate-400 ml-1 font-mono">· {loan.items.length} buku</span>
+                        <span className="text-slate-400 ml-1 font-mono">({loan.items.length} buku)</span>
                       </button>
                     ))}
                   </div>
@@ -507,18 +507,36 @@ export function AdminReportsPage() {
               <div>
                 <label className="text-sm font-medium text-slate-700">Keperluan</label>
                 <div className="flex gap-2 mt-1.5">
-                  {(['baca','pinjam','kembali'] as const).map((k) => (
-                    <Button
-                      key={k}
-                      type="button"
-                      size="sm"
-                      variant={modalForm.keperluan === k ? 'primary' : 'outline'}
-                      className="flex-1"
-                      onClick={() => setModalForm({ ...modalForm, keperluan: k })}
-                    >
-                      {k.charAt(0).toUpperCase() + k.slice(1)}
-                    </Button>
-                  ))}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={modalForm.keperluan === 'baca' ? 'primary' : 'outline'}
+                    className="flex-1"
+                    onClick={() => setModalForm({ ...modalForm, keperluan: 'baca' })}
+                  >
+                    <BookOpen size={13} />
+                    Baca
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={modalForm.keperluan === 'pinjam' ? 'primary' : 'outline'}
+                    className="flex-1"
+                    onClick={() => setModalForm({ ...modalForm, keperluan: 'pinjam' })}
+                  >
+                    <ArrowUpRight size={13} />
+                    Pinjam
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={modalForm.keperluan === 'kembali' ? 'primary' : 'outline'}
+                    className="flex-1"
+                    onClick={() => setModalForm({ ...modalForm, keperluan: 'kembali' })}
+                  >
+                    <ArrowDownLeft size={13} />
+                    Kembali
+                  </Button>
                 </div>
               </div>
 
