@@ -448,14 +448,14 @@ export function KioskBorrowClass() {
                   Scan Kartu Pelajar
                 </h2>
                 <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">
-                  Scan kartu pelajar perwakilan kelas atau ketik NIS
+                  Scan kartu pelajar perwakilan kelas atau ketik NIS/NISN
                 </p>
               </div>
 
               <div className="w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
                 <BarcodeScanner
                   onScan={handleStudentScan}
-                  placeholder="Scan kartu pelajar / ketik NIS..."
+                  placeholder="Masukan NIS/NISN Perwakilan"
                   kioskMode
                   autoFocus
                 />
