@@ -92,6 +92,13 @@ export function KioskReturnPage() {
     setSelectedLoan(null); setPhotoPath(null); setError(null)
   }
 
+  // Cek apakah pinjaman terlambat (toleransi 30 menit)
+  const isLoanOverdue = (l: Loan) => {
+    if (l.status === 'overdue') return true
+    const dueTime = new Date(l.due_at).getTime()
+    return Date.now() > dueTime + 30 * 60 * 1000
+  }
+
   return (
     <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-teal-50/40 to-emerald-50/40 flex flex-col p-8 text-slate-900">
       {/* Header */}
@@ -168,7 +175,7 @@ export function KioskReturnPage() {
 
           <div className="space-y-4 w-full">
             {activeLoans.map((loan) => {
-              const isLate = loan.status === 'overdue' || new Date(loan.due_at) < new Date()
+              const isLate = isLoanOverdue(loan)
               const bookTitle = getLoanBookTitle(loan)
               const item = loan.items?.[0] as any
               const bookAuthor = item?.book?.penulis ?? item?.book_author_snapshot ?? null
@@ -241,7 +248,7 @@ export function KioskReturnPage() {
       {/* ─── Step 4: Confirm ─── */}
       {step === 'confirm' && student && selectedLoan && (
         <div key="confirm" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
-          {new Date(selectedLoan.due_at) < new Date() && (
+          {isLoanOverdue(selectedLoan) && (
             <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
               <div className="flex items-center gap-3">
                 <AlertTriangle size={28} className="text-amber-600 flex-shrink-0" />
