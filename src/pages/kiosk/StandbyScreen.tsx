@@ -91,27 +91,36 @@ export function KioskStandby() {
 
 function LoanTicker({ items }: { items: StandbyItem[] }) {
   const scrollRef = useRef<HTMLDivElement>(null)
-  const setRef = useRef<HTMLDivElement>(null)
   const isInteracting = useRef(false)
   const isDragging = useRef(false)
   const startX = useRef(0)
   const startScrollLeft = useRef(0)
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isRewinding = useRef(false)
 
   useEffect(() => {
     const el = scrollRef.current
     if (!el || items.length === 0) return
 
     let animId: number
-    // Kecepatan santai dan mudah dibaca: ~0.55px per frame
-    const speed = 0.55
+    // Kecepatan santai dan mudah dibaca: ~0.5px per frame
+    const speed = 0.5
 
     const tick = () => {
-      if (!isInteracting.current && !isDragging.current && el && setRef.current) {
-        const setWidth = setRef.current.offsetWidth + 12 // 12px adalah gap-3
-        if (setWidth > 0) {
-          if (el.scrollLeft >= setWidth) {
-            el.scrollLeft -= setWidth
+      if (!isInteracting.current && !isDragging.current && !isRewinding.current && el) {
+        const maxScroll = el.scrollWidth - el.clientWidth
+        if (maxScroll > 10) {
+          if (el.scrollLeft >= maxScroll - 2) {
+            isRewinding.current = true
+            // Beri jeda 2.5 detik di ujung kanan agar kartu terakhir terbaca jelas
+            setTimeout(() => {
+              if (!scrollRef.current) return
+              scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' })
+              // Beri jeda 1.5 detik di posisi awal sebelum mulai bergulir lagi
+              setTimeout(() => {
+                isRewinding.current = false
+              }, 1500)
+            }, 2500)
           } else {
             el.scrollLeft += speed
           }
@@ -157,33 +166,6 @@ function LoanTicker({ items }: { items: StandbyItem[] }) {
     resume(2000)
   }
 
-  const handleScroll = () => {
-    if (!scrollRef.current || !setRef.current) return
-    const setWidth = setRef.current.offsetWidth + 12
-    if (setWidth > 0) {
-      if (scrollRef.current.scrollLeft >= setWidth * 2) {
-        scrollRef.current.scrollLeft -= setWidth
-      } else if (scrollRef.current.scrollLeft <= 0) {
-        scrollRef.current.scrollLeft += setWidth
-      }
-    }
-  }
-
-  const renderCard = (item: StandbyItem, key: string | number) => (
-    <div
-      key={key}
-      className="flex-shrink-0 bg-slate-50 hover:bg-slate-100/90 rounded-xl px-5 py-3 min-w-[280px] max-w-[360px] border border-slate-200 shadow-sm transition-colors cursor-grab active:cursor-grabbing select-none"
-    >
-      <p className="text-slate-900 text-base font-bold line-clamp-1">{item.judul}</p>
-      <p className="text-slate-500 text-xs font-medium mt-1">{item.kelas}</p>
-      <div className="flex items-center gap-3 mt-1.5 text-xs font-semibold">
-        <span className="text-slate-500">Pinjam <span className="text-slate-700">{item.borrowed_at}</span></span>
-        <ArrowRight size={12} className="text-slate-400 flex-shrink-0" />
-        <span className="text-slate-500">Kembali <span className="text-blue-600">{item.due_at}</span></span>
-      </div>
-    </div>
-  )
-
   return (
     <div className="bg-white/90 backdrop-blur-md rounded-2xl p-4 border border-slate-200/90 shadow-lg shadow-slate-200/50">
       <div className="flex items-center justify-between mb-3">
@@ -224,18 +206,22 @@ function LoanTicker({ items }: { items: StandbyItem[] }) {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onScroll={handleScroll}
         className="kiosk-ticker flex gap-3 overflow-x-auto pb-2 select-none cursor-grab active:cursor-grabbing"
       >
-        <div ref={setRef} className="flex gap-3 flex-shrink-0">
-          {items.map((item, i) => renderCard(item, `orig-${i}`))}
-        </div>
-        <div className="flex gap-3 flex-shrink-0" aria-hidden="true">
-          {items.map((item, i) => renderCard(item, `dup1-${i}`))}
-        </div>
-        <div className="flex gap-3 flex-shrink-0" aria-hidden="true">
-          {items.map((item, i) => renderCard(item, `dup2-${i}`))}
-        </div>
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className="flex-shrink-0 bg-slate-50 hover:bg-slate-100/90 rounded-xl px-5 py-3 min-w-[280px] max-w-[360px] border border-slate-200 shadow-sm transition-colors cursor-grab active:cursor-grabbing select-none"
+          >
+            <p className="text-slate-900 text-base font-bold line-clamp-1">{item.judul}</p>
+            <p className="text-slate-500 text-xs font-medium mt-1">{item.kelas}</p>
+            <div className="flex items-center gap-3 mt-1.5 text-xs font-semibold">
+              <span className="text-slate-500">Pinjam <span className="text-slate-700">{item.borrowed_at}</span></span>
+              <ArrowRight size={12} className="text-slate-400 flex-shrink-0" />
+              <span className="text-slate-500">Kembali <span className="text-blue-600">{item.due_at}</span></span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
