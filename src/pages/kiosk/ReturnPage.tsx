@@ -33,6 +33,10 @@ export function KioskReturnPage() {
     try {
       const data = await studentService.search(code, 'barcode')
       const s = Array.isArray(data) ? data[0] : data
+      if (!s) {
+        setError('Siswa tidak ditemukan. Pastikan NIS/NISN yang Anda masukkan sudah benar atau kartu pelajar terbaca dengan jelas.')
+        return
+      }
       setStudent(s)
 
       const loanData = await studentService.loans(s.id, { status: 'active,overdue' })
@@ -45,8 +49,8 @@ export function KioskReturnPage() {
       }
       setActiveLoans(loans)
       setStep('select-loan')
-    } catch {
-      setError('Siswa tidak ditemukan. Pastikan kartu pelajar terbaca dengan benar.')
+    } catch (err) {
+      setError(getErrorMessage(err) || 'Siswa tidak ditemukan. Pastikan NIS/NISN yang Anda masukkan sudah benar atau kartu pelajar terbaca dengan jelas.')
     } finally {
       setIsLoading(false)
     }

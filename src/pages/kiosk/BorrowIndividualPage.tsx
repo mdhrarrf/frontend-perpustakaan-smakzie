@@ -90,7 +90,7 @@ export function KioskBorrowIndividual() {
       const s = Array.isArray(data) ? data[0] : data
 
       if (!s) {
-        setError('Siswa tidak ditemukan. Periksa kembali kartu pelajar Anda.')
+        setError('Siswa tidak ditemukan. Pastikan NIS/NISN yang Anda masukkan sudah benar atau kartu pelajar terbaca dengan jelas.')
         return
       }
 
@@ -112,8 +112,8 @@ export function KioskBorrowIndividual() {
       } else {
         setStep('scan-book')
       }
-    } catch {
-      setError('Siswa tidak ditemukan. Pastikan kartu pelajar terbaca dengan benar.')
+    } catch (err) {
+      setError(getErrorMessage(err) || 'Siswa tidak ditemukan. Pastikan NIS/NISN yang Anda masukkan sudah benar atau kartu pelajar terbaca dengan jelas.')
     } finally {
       setIsLoading(false)
     }
