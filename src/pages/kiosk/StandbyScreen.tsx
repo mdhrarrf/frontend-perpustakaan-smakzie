@@ -168,16 +168,11 @@ function LoanTicker({ items }: { items: StandbyItem[] }) {
 
   return (
     <div className="bg-white/90 backdrop-blur-md rounded-2xl p-4 border border-slate-200/90 shadow-lg shadow-slate-200/50">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Clock size={16} className="text-blue-600" />
-          <p className="text-slate-600 text-xs font-bold uppercase tracking-wider">
-            Dipinjam Hari Ini ({items.length} transaksi)
-          </p>
-        </div>
-        <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
-          Bergulir otomatis • Bisa digeser mouse
-        </span>
+      <div className="flex items-center gap-2 mb-3">
+        <Clock size={16} className="text-blue-600" />
+        <p className="text-slate-600 text-xs font-bold uppercase tracking-wider">
+          Dipinjam Hari Ini ({items.length} transaksi)
+        </p>
       </div>
 
       <style>{`
