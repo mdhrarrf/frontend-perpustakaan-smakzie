@@ -8,7 +8,6 @@ export type FaceStatus =
   | 'too_close'
   | 'not_centered'
   | 'eyes_closed'
-  | 'need_liveness'
   | 'ready'
 
 export interface FaceDetectionState {
@@ -19,7 +18,7 @@ export interface FaceDetectionState {
   isSizeValid: boolean
   isEyesOpen: boolean
   isLivenessVerified: boolean
-  hasBlinked: boolean
+  isSeverelyOut: boolean
   status: FaceStatus
   message: string
   faceBox: { x: number; y: number; width: number; height: number } | null
@@ -43,25 +42,19 @@ export function useFaceDetection({ videoRef, enabled = true }: UseFaceDetectionO
   const [isSizeValid, setIsSizeValid] = useState(false)
   const [isEyesOpen, setIsEyesOpen] = useState(false)
   const [isLivenessVerified, setIsLivenessVerified] = useState(false)
-  const [hasBlinked, setHasBlinked] = useState(false)
+  const [isSeverelyOut, setIsSeverelyOut] = useState(false)
   const [status, setStatus] = useState<FaceStatus>('initializing')
-  const [message, setMessage] = useState('Menyiapkan sensor pengenalan wajah...')
+  const [message, setMessage] = useState('Menyiapkan kamera...')
   const [faceBox, setFaceBox] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
 
   const landmarkerRef = useRef<FaceLandmarker | null>(null)
   const animFrameRef = useRef<number | null>(null)
   const lastVideoTimeRef = useRef<number>(-1)
 
-  // Tracking liveness: blink state machine & micro-motion
-  const blinkStateRef = useRef<{ wasOpen: boolean; closedCount: number; blinkDetected: boolean }>({
-    wasOpen: false,
-    closedCount: 0,
-    blinkDetected: false,
-  })
-
-  // Tracking position history for micro-movement anti-spoofing
-  const positionHistoryRef = useRef<{ x: number; y: number; ear: number; time: number }[]>([])
-  const centeredSinceRef = useRef<number | null>(null)
+  // Tracking liveness: natural blink or natural presence
+  const stablePresenceFramesRef = useRef<number>(0)
+  const blinkDetectedRef = useRef<boolean>(false)
+  const wasOpenRef = useRef<boolean>(false)
 
   // 1. Initialize FaceLandmarker
   useEffect(() => {
@@ -72,7 +65,7 @@ export function useFaceDetection({ videoRef, enabled = true }: UseFaceDetectionO
     async function initLandmarker() {
       try {
         setIsLoading(true)
-        setMessage('Memuat model analisis wajah...')
+        setMessage('Menyiapkan sensor...')
 
         // Try local wasm first, fallback to CDN
         let fileset
@@ -84,7 +77,7 @@ export function useFaceDetection({ videoRef, enabled = true }: UseFaceDetectionO
 
         if (!isMounted) return
 
-        // Try GPU delegate first, fallback to CPU
+        // Try local model first, then CDN; GPU delegate first, fallback to CPU
         let landmarker: FaceLandmarker
         const modelPaths = ['/models/face_landmarker.task', 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task']
 
@@ -103,8 +96,7 @@ export function useFaceDetection({ videoRef, enabled = true }: UseFaceDetectionO
             landmarkerRef.current = landmarker
             created = true
             break
-          } catch (gpuErr) {
-            console.warn(`GPU delegate failed for ${modelPath}, trying CPU...`, gpuErr)
+          } catch {
             try {
               landmarker = await FaceLandmarker.createFromOptions(fileset, {
                 baseOptions: {
@@ -118,8 +110,8 @@ export function useFaceDetection({ videoRef, enabled = true }: UseFaceDetectionO
               landmarkerRef.current = landmarker
               created = true
               break
-            } catch (cpuErr) {
-              console.warn(`CPU delegate failed for ${modelPath}:`, cpuErr)
+            } catch {
+              // Try next model path
             }
           }
         }
@@ -129,12 +121,12 @@ export function useFaceDetection({ videoRef, enabled = true }: UseFaceDetectionO
         setIsModelReady(true)
         setIsLoading(false)
         setStatus('no_face')
-        setMessage('Arahkan wajah Anda ke kamera')
+        setMessage('Arahkan wajah Anda ke dalam lingkaran')
       } catch (err) {
-        console.error('Gagal menginisialisasi Face Landmarker:', err)
+        console.error('Face detector load error:', err)
         if (isMounted) {
           setIsLoading(false)
-          setMessage('Sensor wajah siap (mode fallback)')
+          setMessage('Sensor siap')
         }
       }
     }
@@ -152,7 +144,7 @@ export function useFaceDetection({ videoRef, enabled = true }: UseFaceDetectionO
     }
   }, [enabled])
 
-  // 2. Detection Loop
+  // 2. Detection Loop with Generous/Smooth Tolerances
   useEffect(() => {
     if (!enabled || !isModelReady) return
 
@@ -178,11 +170,11 @@ export function useFaceDetection({ videoRef, enabled = true }: UseFaceDetectionO
               setIsCentered(false)
               setIsSizeValid(false)
               setIsEyesOpen(false)
+              setIsSeverelyOut(true)
               setFaceBox(null)
               setStatus('no_face')
-              setMessage('Arahkan wajah Anda ke kamera')
-              centeredSinceRef.current = null
-              positionHistoryRef.current = []
+              setMessage('Arahkan wajah Anda ke dalam lingkaran')
+              stablePresenceFramesRef.current = 0
             } else {
               setFaceDetected(true)
 
@@ -207,117 +199,70 @@ export function useFaceDetection({ videoRef, enabled = true }: UseFaceDetectionO
                 height: boxHeight,
               })
 
-              // Center target: (0.5, 0.46) with tolerance
-              const centered = Math.abs(centerX - 0.5) <= 0.13 && Math.abs(centerY - 0.46) <= 0.15
+              // Center target: generous tolerance (0.5 ± 0.18, 0.46 ± 0.20)
+              const centered = Math.abs(centerX - 0.5) <= 0.18 && Math.abs(centerY - 0.46) <= 0.20
               setIsCentered(centered)
 
-              // Size check: face width between 20% and 65% of frame
-              const tooFar = boxWidth < 0.20
-              const tooClose = boxWidth > 0.65
+              // Severely out of frame (only cancels countdown if true)
+              const severelyOut = Math.abs(centerX - 0.5) > 0.28 || Math.abs(centerY - 0.46) > 0.30 || boxWidth < 0.12 || boxWidth > 0.85
+              setIsSeverelyOut(severelyOut)
+
+              // Distance tolerance: width between 16% and 72%
+              const tooFar = boxWidth < 0.16
+              const tooClose = boxWidth > 0.72
               const sizeOk = !tooFar && !tooClose
               setIsSizeValid(sizeOk)
 
-              // Eye openness via landmarks (EAR - Eye Aspect Ratio)
-              // Left eye: 159 (top), 145 (bottom), 33 (outer), 133 (inner)
+              // Eye openness via landmarks (EAR) - very forgiving threshold
               const leftH = dist(landmarks[33], landmarks[133])
               const leftV = dist(landmarks[159], landmarks[145])
               const leftEAR = leftH > 0 ? leftV / leftH : 0
 
-              // Right eye: 386 (top), 374 (bottom), 362 (inner), 263 (outer)
               const rightH = dist(landmarks[362], landmarks[263])
               const rightV = dist(landmarks[386], landmarks[374])
               const rightEAR = rightH > 0 ? rightV / rightH : 0
 
               const avgEAR = (leftEAR + rightEAR) / 2
-              const eyesOpen = avgEAR >= 0.17
+              // Forgiving threshold for spectacles / normal lighting
+              const eyesOpen = avgEAR >= 0.14
               setIsEyesOpen(eyesOpen)
 
-              // Blendshapes check if available (eyeBlinkLeft, eyeBlinkRight)
-              let blendshapeBlink = false
-              if (results.faceBlendshapes?.[0]?.categories) {
-                const cats = results.faceBlendshapes[0].categories
-                const blinkL = cats.find((c) => c.categoryName === 'eyeBlinkLeft')?.score ?? 0
-                const blinkR = cats.find((c) => c.categoryName === 'eyeBlinkRight')?.score ?? 0
-                if (blinkL > 0.6 || blinkR > 0.6) {
-                  blendshapeBlink = true
-                }
-              }
+              // Natural presence & liveness detection
+              // If face is centered & size is OK:
+              if (centered && sizeOk) {
+                stablePresenceFramesRef.current += 1
 
-              // Liveness Detection: Natural Blink State Machine
-              const bState = blinkStateRef.current
-              const isBlinkingNow = !eyesOpen || blendshapeBlink
-
-              if (!bState.blinkDetected) {
-                if (eyesOpen && !isBlinkingNow) {
-                  bState.wasOpen = true
-                } else if (bState.wasOpen && isBlinkingNow) {
-                  bState.closedCount += 1
-                  if (bState.closedCount >= 1 && bState.closedCount <= 12) {
-                    // Closed for 1..12 frames (~30ms..400ms)
-                    // Wait for it to open again
-                  }
+                // Detect blink if user blinks naturally
+                if (eyesOpen) {
+                  wasOpenRef.current = true
+                } else if (wasOpenRef.current && !eyesOpen) {
+                  blinkDetectedRef.current = true
                 }
 
-                if (bState.wasOpen && bState.closedCount > 0 && eyesOpen && !isBlinkingNow) {
-                  // Successfully transitioned: OPEN -> BLINK -> OPEN = REAL HUMAN BLINK!
-                  bState.blinkDetected = true
-                  setHasBlinked(true)
+                // If stable for ~15 frames (~0.5s) OR blink detected -> liveness verified!
+                if (stablePresenceFramesRef.current >= 15 || blinkDetectedRef.current) {
                   setIsLivenessVerified(true)
                 }
+              } else {
+                stablePresenceFramesRef.current = Math.max(0, stablePresenceFramesRef.current - 1)
               }
-
-              // Record position history for micro-movement / natural variance
-              const now = performance.now()
-              const history = positionHistoryRef.current
-              history.push({ x: centerX, y: centerY, ear: avgEAR, time: now })
-              while (history.length > 40) history.shift()
-
-              // Secondary Liveness Check: Natural 3D Micro-Motion
-              // Real humans cannot remain mathematically frozen like a printed card;
-              // there are subtle sub-pixel breathing micro-motions and pulse variations.
-              let microMotionVerified = false
-              if (centered && sizeOk && history.length >= 25) {
-                if (!centeredSinceRef.current) centeredSinceRef.current = now
-
-                // Calculate position standard deviation across last 25 frames
-                const avgX = history.reduce((s, h) => s + h.x, 0) / history.length
-                const avgY = history.reduce((s, h) => s + h.y, 0) / history.length
-                const variance = history.reduce((s, h) => s + Math.hypot(h.x - avgX, h.y - avgY), 0) / history.length
-
-                // Natural human variance range: 0.001 to 0.04 (not completely rigid zero, not crazy shaking)
-                const isNaturalMotion = variance >= 0.0012 && variance <= 0.045
-                const heldTime = now - centeredSinceRef.current
-
-                // If held steady for > 2.5s with natural micro-motion, also verify liveness
-                if (isNaturalMotion && heldTime > 2500) {
-                  microMotionVerified = true
-                  setIsLivenessVerified(true)
-                }
-              } else if (!centered) {
-                centeredSinceRef.current = null
-              }
-
-              const livenessOk = bState.blinkDetected || microMotionVerified
 
               // Status Hierarchy
               if (tooFar) {
                 setStatus('too_far')
-                setMessage('Dekatkan wajah Anda ke kamera')
+                setMessage('Maju sedikit ke kamera')
               } else if (tooClose) {
                 setStatus('too_close')
-                setMessage('Mundurkan wajah sedikit')
+                setMessage('Mundur sedikit dari kamera')
               } else if (!centered) {
                 setStatus('not_centered')
-                setMessage('Posisikan wajah tepat di tengah oval')
+                setMessage('Posisikan wajah di dalam lingkaran')
               } else if (!eyesOpen) {
                 setStatus('eyes_closed')
-                setMessage('Buka mata Anda dengan jelas')
-              } else if (!livenessOk) {
-                setStatus('need_liveness')
-                setMessage('Kedipkan mata sekali untuk verifikasi keaslian')
+                setMessage('Buka mata Anda')
               } else {
                 setStatus('ready')
-                setMessage('Posisi sempurna! Tahan posisi...')
+                setMessage('Wajah pas. Tahan posisi...')
               }
             }
           } catch {
@@ -347,7 +292,7 @@ export function useFaceDetection({ videoRef, enabled = true }: UseFaceDetectionO
     isSizeValid,
     isEyesOpen,
     isLivenessVerified,
-    hasBlinked,
+    isSeverelyOut,
     status,
     message,
     faceBox,
