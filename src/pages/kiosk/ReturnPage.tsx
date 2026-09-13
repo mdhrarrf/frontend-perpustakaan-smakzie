@@ -239,16 +239,16 @@ export function KioskReturnPage() {
         </div>
       )}
 
-      {/* ─── Step 4: Confirm ─── */}
+      {/* ─── Step 4: Confirm (Landscape 2-Column Layout) ─── */}
       {step === 'confirm' && student && selectedLoan && (
-        <div key="confirm" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6 max-w-lg mx-auto w-full">
+        <div key="confirm" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-4 max-w-4xl lg:max-w-5xl mx-auto w-full my-auto px-4">
           {isLoanOverdue(selectedLoan) && (
-            <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
+            <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-sm">
               <div className="flex items-center gap-3">
-                <AlertTriangle size={28} className="text-amber-600 flex-shrink-0" />
+                <AlertTriangle size={24} className="text-amber-600 flex-shrink-0" />
                 <div>
-                  <p className="text-amber-900 text-base font-bold">Pengembalian Melewati Batas Tempo</p>
-                  <p className="text-amber-800 text-sm mt-0.5 font-medium">
+                  <p className="text-amber-900 text-sm sm:text-base font-bold">Pengembalian Melewati Batas Tempo</p>
+                  <p className="text-amber-800 text-xs sm:text-sm mt-0.5 font-medium">
                     Sanksi keterlambatan akan dicatat untuk buku ini sesuai dengan ketentuan perpustakaan.
                   </p>
                 </div>
@@ -256,100 +256,126 @@ export function KioskReturnPage() {
             </div>
           )}
 
-          <div className="bg-white rounded-3xl p-6 sm:p-8 w-full space-y-4 border border-slate-200/80 shadow-xl shadow-slate-200/50">
-            <h2 className="text-2xl font-extrabold text-slate-900 text-center mb-2 tracking-tight">Konfirmasi Pengembalian</h2>
+          <div className="bg-white rounded-3xl p-6 sm:p-8 w-full border border-slate-200/80 shadow-xl shadow-slate-200/50">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch">
+              {/* ─── KOLOM KIRI: KOMPARASI FOTO ─── */}
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Verifikasi Foto Peminjam
+                    </p>
+                    <span className="text-[11px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-md">
+                      Arsip vs Realtime
+                    </span>
+                  </div>
 
-            {/* Komparasi Foto: Peminjaman (Kiri) vs Pengembalian (Kanan) */}
-            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider text-center mb-3">
-                Verifikasi Foto Peminjam & Pengembali
-              </p>
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                {/* KIRI: Foto Saat Peminjaman */}
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center gap-1 text-xs font-bold text-slate-700 mb-1.5">
-                    <Clock size={13} className="text-blue-600" />
-                    <span>Saat Peminjaman</span>
-                  </div>
-                  <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-200 border border-slate-300 shadow-inner flex items-center justify-center">
-                    {selectedLoan.borrow_photo ? (
-                      <img
-                        src={selectedLoan.borrow_photo}
-                        alt="Foto Saat Peminjaman"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
-                        <User size={28} className="text-slate-300" />
-                        <span className="text-[11px] mt-1 font-medium">Tidak ada foto</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* KIRI: Foto Saat Peminjaman */}
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center gap-1 text-xs font-bold text-slate-700 mb-1.5">
+                        <Clock size={13} className="text-blue-600" />
+                        <span>Saat Pinjam</span>
                       </div>
-                    )}
+                      <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-200 border border-slate-300 shadow-inner flex items-center justify-center">
+                        {selectedLoan.borrow_photo ? (
+                          <img
+                            src={selectedLoan.borrow_photo}
+                            alt="Foto Saat Peminjaman"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
+                            <User size={28} className="text-slate-300" />
+                            <span className="text-[11px] mt-1 font-medium">Tidak ada foto</span>
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-slate-400 mt-1 font-medium">Foto Peminjam</span>
+                    </div>
+
+                    {/* KANAN: Foto Saat Pengembalian */}
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center gap-1 text-xs font-bold text-emerald-700 mb-1.5">
+                        <CheckCircle2 size={13} className="text-emerald-600" />
+                        <span>Saat Kembali</span>
+                      </div>
+                      <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-200 border-2 border-emerald-500 shadow-sm flex items-center justify-center">
+                        {returnPhotoPreview ? (
+                          <img
+                            src={returnPhotoPreview}
+                            alt="Foto Saat Pengembalian"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
+                            <Camera size={28} className="text-slate-300" />
+                            <span className="text-[11px] mt-1 font-medium">Kamera dilewati</span>
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-emerald-600 mt-1 font-semibold">Pengembali</span>
+                    </div>
                   </div>
-                  <span className="text-[11px] text-slate-400 mt-1 font-medium">Foto Arsip Pinjam</span>
                 </div>
 
-                {/* KANAN: Foto Saat Pengembalian */}
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center gap-1 text-xs font-bold text-emerald-700 mb-1.5">
-                    <CheckCircle2 size={13} className="text-emerald-600" />
-                    <span>Saat Pengembalian</span>
-                  </div>
-                  <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-200 border-2 border-emerald-500 shadow-sm flex items-center justify-center">
-                    {returnPhotoPreview ? (
-                      <img
-                        src={returnPhotoPreview}
-                        alt="Foto Saat Pengembalian"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
-                        <Camera size={28} className="text-slate-300" />
-                        <span className="text-[11px] mt-1 font-medium">Kamera dilewati</span>
+                <div className="mt-4 pt-3 border-t border-slate-200/60 text-center">
+                  <p className="text-xs text-slate-500 font-medium">
+                    Pastikan wajah pengembali sesuai dengan data peminjam di sebelah kiri.
+                  </p>
+                </div>
+              </div>
+
+              {/* ─── KOLOM KANAN: INFORMASI & AKSI ─── */}
+              <div className="flex flex-col justify-between space-y-4">
+                <div>
+                  <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight mb-3">
+                    Konfirmasi Pengembalian
+                  </h2>
+                  <div className="space-y-2">
+                    {[
+                      { label: 'Nama',        value: student.nama },
+                      { label: 'NIS',         value: student.nis },
+                      { label: 'Buku',        value: getLoanBookTitle(selectedLoan) },
+                      { label: 'Jatuh Tempo', value: selectedLoan.loan_type === 'class' ? formatDateTime(selectedLoan.due_at) : formatDate(selectedLoan.due_at) },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="flex justify-between items-start gap-4 py-2 border-b border-slate-100 last:border-0">
+                        <span className="text-slate-500 text-sm sm:text-base font-medium">{label}</span>
+                        <span className="text-slate-900 text-sm sm:text-base font-bold text-right max-w-xs">{value}</span>
+                      </div>
+                    ))}
+                    {photoPath && (
+                      <div className="flex justify-between py-2">
+                        <span className="text-slate-500 text-sm sm:text-base font-medium">Status Foto</span>
+                        <span className="text-emerald-600 text-sm sm:text-base font-bold flex items-center gap-1.5">
+                          <Check size={16} strokeWidth={2.5} />
+                          Terlampir & Terverifikasi
+                        </span>
                       </div>
                     )}
                   </div>
-                  <span className="text-[11px] text-emerald-600 mt-1 font-semibold">Foto Saat Ini</span>
+                </div>
+
+                {/* Tombol Aksi */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={reset}
+                    className={`${kBtn} flex-1 bg-white hover:bg-slate-100 text-slate-700 border-2 border-slate-200 shadow-sm py-3 text-base`}
+                  >
+                    <ArrowLeft size={20} /> Batal
+                  </button>
+                  <button
+                    onClick={() => returnMutation.mutate()}
+                    disabled={returnMutation.isPending}
+                    className={`${kBtn} flex-[1.4] bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/30 py-3 text-base`}
+                  >
+                    {returnMutation.isPending
+                      ? <><Loader2 className="animate-spin" size={20} /> Memproses...</>
+                      : <><CheckCircle2 size={20} /> Kembalikan Buku</>}
+                  </button>
                 </div>
               </div>
             </div>
-            {[
-              { label: 'Nama',        value: student.nama },
-              { label: 'NIS',         value: student.nis },
-              { label: 'Buku',        value: getLoanBookTitle(selectedLoan) },
-              { label: 'Jatuh Tempo', value: selectedLoan.loan_type === 'class' ? formatDateTime(selectedLoan.due_at) : formatDate(selectedLoan.due_at) },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex justify-between items-start gap-4 py-2 border-b border-slate-100 last:border-0">
-                <span className="text-slate-500 text-base font-medium">{label}</span>
-                <span className="text-slate-900 text-base font-bold text-right max-w-xs">{value}</span>
-              </div>
-            ))}
-            {photoPath && (
-              <div className="flex justify-between py-2">
-                <span className="text-slate-500 text-base font-medium">Foto</span>
-                <span className="text-emerald-600 text-base font-bold flex items-center gap-1.5">
-                  <Check size={18} strokeWidth={2.5} />
-                  Terlampir
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex gap-4 w-full">
-            <button
-              onClick={reset}
-              className={`${kBtn} flex-1 bg-white hover:bg-slate-100 text-slate-700 border-2 border-slate-200 shadow-sm`}
-            >
-              <ArrowLeft size={24} /> Batal
-            </button>
-            <button
-              onClick={() => returnMutation.mutate()}
-              disabled={returnMutation.isPending}
-              className={`${kBtn} flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/30`}
-            >
-              {returnMutation.isPending
-                ? <><Loader2 className="animate-spin" size={24} /> Memproses...</>
-                : <><CheckCircle2 size={24} /> Kembalikan Buku</>}
-            </button>
           </div>
         </div>
       )}
