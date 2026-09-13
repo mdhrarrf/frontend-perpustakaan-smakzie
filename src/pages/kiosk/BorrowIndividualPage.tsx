@@ -413,8 +413,8 @@ export function KioskBorrowIndividual() {
                 <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
                   Langkah 4 dari {steps.length} • Foto
                 </span>
-                <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Foto Siswa</h2>
-                <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Ambil foto bukti peminjaman</p>
+                <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Verifikasi & Foto Siswa</h2>
+                <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Posisikan wajah di dalam lingkaran oval untuk verifikasi otomatis</p>
               </div>
 
               <WebcamCapture onCapture={handlePhotoCapture} autoCapture autoCaptureDelay={5} kioskMode />
