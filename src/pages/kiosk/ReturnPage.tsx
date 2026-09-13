@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { studentService } from '@/api/student.service'
@@ -54,7 +54,7 @@ export function KioskReturnPage() {
     }
 
     setFaceMatchStatus('checking')
-    compareFaces(borrowPhoto, returnPreview, 0.80)
+    compareFaces(borrowPhoto, returnPreview)   // default threshold 0.45 Euclidean distance
       .then((result) => {
         setFaceMatchScore(result.score)
         if (result.hasNoFace1 || result.hasNoFace2) {
@@ -356,14 +356,9 @@ export function KioskReturnPage() {
 
               {/* ─── KOLOM KIRI: KOMPARASI FOTO & VERIFIKASI ─── */}
               <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 flex flex-col">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Verifikasi Identitas
-                  </p>
-                  <span className="text-[11px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-md">
-                    Arsip vs Realtime
-                  </span>
-                </div>
+                <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
+                  Verifikasi Identitas
+                </p>
 
                 <div className="grid grid-cols-2 gap-3">
                   {/* Foto Saat Peminjaman */}
