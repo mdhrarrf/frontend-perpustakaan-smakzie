@@ -1,69 +1,63 @@
 ﻿/**
  * faceCompare.ts
- * Membandingkan 2 foto menggunakan MediaPipe FaceLandmarker (mode IMAGE).
- * Menggunakan fetch() untuk download gambar sebagai blob agar tidak ada
- * masalah CORS "tainted canvas" saat MediaPipe membaca pixel.
+ * Verifikasi identitas wajah menggunakan face-api.js (faceRecognitionNet).
+ *
+ * Berbeda dengan landmark similarity (yang hanya mengukur geometri wajah dan
+ * menghasilkan false-positive tinggi karena semua manusia punya proporsi mirip),
+ * face-api.js menggunakan 128-dimensional embedding vector yang dilatih khusus
+ * untuk identity recognition.
+ *
+ * Euclidean distance antar descriptor:
+ *  - < 0.45 : orang yang sama (strict threshold untuk kiosk)
+ *  - >= 0.45: orang berbeda -> BLOKIR pengembalian
  */
-import { FilesetResolver, FaceLandmarker } from '@mediapipe/tasks-vision'
+import * as faceapi from 'face-api.js'
 
-type Landmark = { x: number; y: number; z: number }
+const MODEL_URL = '/models/face-api'
+let modelsLoaded = false
+let loadPromise: Promise<void> | null = null
 
-let landmarkerInstance: FaceLandmarker | null = null
-let initPromise: Promise<FaceLandmarker> | null = null
+async function ensureModels(): Promise<void> {
+  if (modelsLoaded) return
+  if (loadPromise) return loadPromise
 
-async function getLandmarker(): Promise<FaceLandmarker> {
-  if (landmarkerInstance) return landmarkerInstance
-  if (initPromise) return initPromise
-
-  initPromise = (async () => {
-    const vision = await FilesetResolver.forVisionTasks('/wasm').catch(() =>
-      FilesetResolver.forVisionTasks(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
-      )
-    )
-    const lm = await FaceLandmarker.createFromOptions(vision, {
-      baseOptions: {
-        modelAssetPath: '/models/face_landmarker.task',
-        delegate: 'GPU',
-      },
-      runningMode: 'IMAGE',
-      numFaces: 1,
-      minFaceDetectionConfidence: 0.4,
-      minFacePresenceConfidence: 0.4,
-      minTrackingConfidence: 0.4,
-    })
-    landmarkerInstance = lm
-    return lm
+  loadPromise = (async () => {
+    await Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+    ])
+    modelsLoaded = true
+    console.log('[faceCompare] Models loaded')
   })()
 
-  return initPromise
+  return loadPromise
 }
 
-/**
- * Load an image from either a base64 data URL or a remote URL.
- * For remote URLs: uses fetch() to get a blob ObjectURL so MediaPipe
- * can safely read pixels without CORS "tainted canvas" issues.
- */
 async function loadImage(src: string): Promise<HTMLImageElement> {
-  // Base64 data URLs load directly — no CORS issue
+  // base64 -> load directly
   if (src.startsWith('data:')) {
     return new Promise((resolve, reject) => {
       const img = new Image()
       img.onload = () => resolve(img)
-      img.onerror = (e) => reject(new Error(`Failed to load base64 image: ${e}`))
+      img.onerror = (e) => reject(new Error(`base64 image load failed: ${e}`))
       img.src = src
     })
   }
 
-  // Remote URL: fetch as blob to avoid canvas taint
-  let objectUrl: string | null = null
+  // Remote URL: fetch as blob to avoid CORS canvas-taint issues
   try {
     const res = await fetch(src, { mode: 'cors', credentials: 'omit' })
-    if (!res.ok) throw new Error(`HTTP ${res.status} fetching image`)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const blob = await res.blob()
-    objectUrl = URL.createObjectURL(blob)
+    const url = URL.createObjectURL(blob)
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img) }
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`Blob image load failed: ${src}`)) }
+      img.src = url
+    })
   } catch (fetchErr) {
-    // Fallback: try loading with crossOrigin attribute
     console.warn('[faceCompare] fetch failed, trying crossOrigin img:', fetchErr)
     return new Promise((resolve, reject) => {
       const img = new Image()
@@ -73,86 +67,57 @@ async function loadImage(src: string): Promise<HTMLImageElement> {
       img.src = src
     })
   }
-
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl)
-      resolve(img)
-    }
-    img.onerror = () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl)
-      reject(new Error(`Failed to decode blob image from: ${src}`))
-    }
-    img.src = objectUrl!
-  })
-}
-
-function normalizeLandmarks(lms: Landmark[]): number[] {
-  if (lms.length === 0) return []
-  const cx = lms.reduce((s, l) => s + l.x, 0) / lms.length
-  const cy = lms.reduce((s, l) => s + l.y, 0) / lms.length
-  const xs = lms.map((l) => l.x)
-  const ys = lms.map((l) => l.y)
-  const faceW = Math.max(...xs) - Math.min(...xs)
-  const faceH = Math.max(...ys) - Math.min(...ys)
-  const scale = Math.max(faceW, faceH) || 1
-  const vec: number[] = []
-  for (const l of lms) {
-    vec.push((l.x - cx) / scale, (l.y - cy) / scale, l.z / scale)
-  }
-  return vec
-}
-
-function cosineSimilarity(a: number[], b: number[]): number {
-  if (a.length !== b.length || a.length === 0) return 0
-  let dot = 0, na = 0, nb = 0
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i]
-    na += a[i] * a[i]
-    nb += b[i] * b[i]
-  }
-  if (na === 0 || nb === 0) return 0
-  return dot / (Math.sqrt(na) * Math.sqrt(nb))
 }
 
 export type FaceCompareResult = {
   match: boolean
+  /** 0–1 score: makin tinggi makin mirip (ditampilkan ke user sebagai %) */
   score: number
   hasNoFace1: boolean
   hasNoFace2: boolean
 }
 
+/**
+ * @param src1      URL foto arsip peminjaman (borrow_photo dari server)
+ * @param src2      base64 foto pengembalian (returnPhotoPreview dari webcam)
+ * @param threshold Jarak euclidean maksimum agar dianggap sama orang (default 0.45)
+ *                  0.6 = longgar (default face-api), 0.45 = ketat (kiosk)
+ */
 export async function compareFaces(
   src1: string,
   src2: string,
-  threshold = 0.80
+  threshold = 0.45
 ): Promise<FaceCompareResult> {
-  const landmarker = await getLandmarker()
+  await ensureModels()
 
-  // Load both images (parallel for speed)
   const [img1, img2] = await Promise.all([loadImage(src1), loadImage(src2)])
 
-  const r1 = landmarker.detect(img1)
-  const r2 = landmarker.detect(img2)
+  const opts = new faceapi.TinyFaceDetectorOptions({
+    inputSize: 416,
+    scoreThreshold: 0.3,
+  })
 
-  const lms1 = r1.faceLandmarks?.[0] ?? []
-  const lms2 = r2.faceLandmarks?.[0] ?? []
+  const [det1, det2] = await Promise.all([
+    faceapi.detectSingleFace(img1, opts).withFaceLandmarks(true).withFaceDescriptor(),
+    faceapi.detectSingleFace(img2, opts).withFaceLandmarks(true).withFaceDescriptor(),
+  ])
 
-  console.log(`[faceCompare] lms1=${lms1.length} lms2=${lms2.length}`)
+  console.log('[faceCompare] det1:', det1 ? 'found' : 'NOT FOUND', '| det2:', det2 ? 'found' : 'NOT FOUND')
 
-  if (lms1.length === 0 && lms2.length === 0)
-    return { match: false, score: 0, hasNoFace1: true, hasNoFace2: true }
-  if (lms1.length === 0)
-    return { match: false, score: 0, hasNoFace1: true, hasNoFace2: false }
-  if (lms2.length === 0)
-    return { match: false, score: 0, hasNoFace1: false, hasNoFace2: true }
+  if (!det1 && !det2) return { match: false, score: 0, hasNoFace1: true, hasNoFace2: true }
+  if (!det1)          return { match: false, score: 0, hasNoFace1: true, hasNoFace2: false }
+  if (!det2)          return { match: false, score: 0, hasNoFace1: false, hasNoFace2: true }
 
-  const v1 = normalizeLandmarks(lms1 as Landmark[])
-  const v2 = normalizeLandmarks(lms2 as Landmark[])
-  const score = cosineSimilarity(v1, v2)
+  const distance = faceapi.euclideanDistance(det1.descriptor, det2.descriptor)
+  // Convert distance ke score 0-1: distance 0 = score 1.0, distance 1.0 = score 0
+  const score = Math.max(0, 1 - distance)
 
-  console.log(`[faceCompare] score=${score.toFixed(4)} threshold=${threshold} match=${score >= threshold}`)
+  console.log(`[faceCompare] euclidean distance=${distance.toFixed(4)} threshold=${threshold} match=${distance < threshold} score=${score.toFixed(4)}`)
 
-  return { match: score >= threshold, score, hasNoFace1: false, hasNoFace2: false }
+  return {
+    match: distance < threshold,
+    score,
+    hasNoFace1: false,
+    hasNoFace2: false,
+  }
 }
