@@ -1,10 +1,11 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { loanService } from '@/api/loan.service'
 import type { StandbyItem } from '@/types'
 import { BookOpen, RotateCcw, Clock, ArrowRight } from 'lucide-react'
 import { cn } from '@/utils'
+import { useLiveClock } from '@/hooks/useLiveClock'
 
 export function KioskStandby() {
   const navigate = useNavigate()
@@ -15,10 +16,8 @@ export function KioskStandby() {
     refetchInterval: 30_000, // refresh tiap 30 detik
   })
 
-  // Tampilkan waktu
-  const now = new Date()
-  const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-  const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  // Jam & tanggal yang terus berjalan setiap detik
+  const { timeStr, dateStr } = useLiveClock()
 
   return (
     <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-sky-50/40 to-blue-50/50 flex flex-col overflow-hidden relative selection:bg-blue-100">
