@@ -230,18 +230,11 @@ export function KioskReturnPage() {
               } catch { /* optional */ }
               setStep('confirm')
             }}
+            onNoWebcam={() => setStep('confirm')}
             autoCapture
             autoCaptureDelay={5}
             kioskMode
           />
-
-          <button
-            onClick={() => setStep('confirm')}
-            className="text-slate-600 hover:text-slate-900 text-base font-bold bg-white border border-slate-200 px-6 py-2.5 rounded-full shadow-sm transition-all flex items-center gap-1.5"
-          >
-            <span>Lewati Foto</span>
-            <ArrowRight size={18} />
-          </button>
         </div>
       )}
 

@@ -8,13 +8,14 @@ import {
   AlertCircle,
   CheckCircle2,
   User,
-  ArrowRight,
+  ShieldAlert,
 } from 'lucide-react'
 import { cn } from '@/utils'
 
 interface WebcamCaptureProps {
   onCapture: (base64: string) => void
   onRetake?: () => void
+  onNoWebcam?: () => void
   autoCapture?: boolean
   autoCaptureDelay?: number
   className?: string
@@ -25,6 +26,7 @@ interface WebcamCaptureProps {
 export function WebcamCapture({
   onCapture,
   onRetake,
+  onNoWebcam,
   autoCapture = true,
   autoCaptureDelay = 5,
   className,
@@ -35,12 +37,22 @@ export function WebcamCapture({
   const [isFlashing, setIsFlashing] = useState(false)
   const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const isCountingDownRef = useRef(false)
+  const autoSkipTriggeredRef = useRef(false)
 
   const webcam = useWebcam({
     onCapture: (base64) => {
       setIsFlashing(true)
       setTimeout(() => setIsFlashing(false), 300)
       onCapture(base64)
+    },
+    onNoWebcam: () => {
+      // Jika kamera tidak ada / rusak / tercabut di mode kiosk, skip otomatis
+      if (kioskMode && !autoSkipTriggeredRef.current) {
+        autoSkipTriggeredRef.current = true
+        setTimeout(() => {
+          onNoWebcam?.()
+        }, 1200)
+      }
     },
   })
 
@@ -62,10 +74,7 @@ export function WebcamCapture({
   }, [countdown])
 
   // Manage Countdown trigger with relaxed tolerance:
-  // Once countdown starts, normal micro-movements DO NOT cancel it!
-  // It only cancels if face is lost completely OR moves severely out of the frame.
   useEffect(() => {
-    // Non-face-detection fallback
     if (!faceDetection || !kioskMode) {
       if (autoCapture && webcam.isReady && !webcam.capturedImage && countdown === null) {
         setCountdown(autoCaptureDelay)
@@ -79,12 +88,12 @@ export function WebcamCapture({
     }
 
     if (isCountingDownRef.current) {
-      // While counting down: ONLY cancel if face is lost or completely out of frame
+      // Saat countdown berjalan: HANYA batal jika wajah hilang atau keluar drastis dari frame
       if (!face.faceDetected || face.isSeverelyOut) {
         setCountdown(null)
       }
     } else {
-      // Start countdown when face is in position
+      // Mulai countdown saat posisi wajah sudah pas
       if (face.status === 'ready') {
         setCountdown(autoCaptureDelay)
       }
@@ -113,22 +122,50 @@ export function WebcamCapture({
     }
   }, [countdown])
 
-  const handleManualCapture = useCallback(() => {
-    setCountdown(null)
-    webcam.capture()
-  }, [webcam])
-
   const buttonSize = kioskMode ? 'kiosk' : 'lg'
 
-  // Error State
+  // 1. Kondisi: Kamera Fisik Tidak Ditemukan / Tercabut / Rusak -> Auto-Skip
+  if (webcam.isNoWebcam) {
+    return (
+      <div className={cn('flex flex-col items-center gap-4 p-8 bg-amber-50 border border-amber-200 rounded-3xl max-w-md mx-auto shadow-sm text-center animate-kiosk-page', className)}>
+        <Camera className="w-12 h-12 text-amber-600 animate-pulse" />
+        <div>
+          <h3 className="text-amber-900 font-extrabold text-lg sm:text-xl">Kamera Tidak Terdeteksi</h3>
+          <p className="text-amber-800 text-sm mt-1 font-medium">
+            Perangkat kamera tidak ditemukan atau kabel webcam tercabut.
+          </p>
+          <p className="text-amber-700 text-xs mt-2 font-semibold bg-amber-100/80 px-3 py-1.5 rounded-full inline-block">
+            Melanjutkan peminjaman secara otomatis...
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // 2. Kondisi: Kamera Tercolok tapi Permission Belum Di-Allow di Browser
+  if (webcam.isPermissionDenied) {
+    return (
+      <div className={cn('flex flex-col items-center gap-5 p-8 bg-blue-50 border border-blue-200 rounded-3xl max-w-md mx-auto shadow-sm text-center animate-kiosk-page', className)}>
+        <ShieldAlert className="w-12 h-12 text-blue-600" />
+        <div>
+          <h3 className="text-blue-950 font-extrabold text-lg sm:text-xl">Izin Kamera Diperlukan</h3>
+          <p className="text-slate-600 text-sm mt-1 leading-relaxed">
+            Kamera terhubung, namun browser memblokir akses izin kamera. Silakan klik ikon gembok/kamera di sebelah kiri bilah alamat (URL) browser dan pilih <span className="font-bold text-blue-700">"Izinkan" (Allow)</span>.
+          </p>
+        </div>
+        <Button variant="primary" size={buttonSize} onClick={() => webcam.start()} className="w-full">
+          <RefreshCw size={18} /> Coba Sambungkan Lagi
+        </Button>
+      </div>
+    )
+  }
+
+  // 3. Kondisi: Error Kamera Lainnya
   if (webcam.error) {
     return (
-      <div className={cn('flex flex-col items-center gap-4 p-8 bg-rose-50 border border-rose-200 rounded-3xl max-w-md mx-auto shadow-sm', className)}>
+      <div className={cn('flex flex-col items-center gap-4 p-8 bg-rose-50 border border-rose-200 rounded-3xl max-w-md mx-auto shadow-sm text-center', className)}>
         <AlertCircle className="w-12 h-12 text-rose-600" />
         <p className="text-center text-rose-800 font-bold text-base sm:text-lg">{webcam.error}</p>
-        <p className="text-center text-slate-500 text-xs">
-          Pastikan kamera terhubung dan izin browser telah diaktifkan.
-        </p>
         <Button variant="outline" size={buttonSize} onClick={() => webcam.start()} className="mt-2">
           <RefreshCw size={18} /> Coba Sambungkan Lagi
         </Button>
@@ -136,7 +173,7 @@ export function WebcamCapture({
     )
   }
 
-  // Captured Image Preview State
+  // 4. Kondisi: Foto Berhasil Diambil (Preview)
   if (webcam.capturedImage) {
     return (
       <div className={cn('flex flex-col items-center gap-6 w-full max-w-md mx-auto animate-kiosk-page', className)}>
@@ -171,7 +208,7 @@ export function WebcamCapture({
     )
   }
 
-  // Active Camera View with Clean, Non-AI, Professional Kiosk Framing
+  // 5. Tampilan Kamera Aktif
   const isReadyOrCounting = face.status === 'ready' || (countdown !== null && countdown > 0)
 
   return (
@@ -199,7 +236,7 @@ export function WebcamCapture({
           </div>
         )}
 
-        {/* ─── CLEAN, NATURAL OVAL GUIDE (NO SCI-FI / NO GAMER HUD) ─── */}
+        {/* ─── CLEAN, NATURAL OVAL GUIDE ─── */}
         {webcam.isReady && faceDetection && kioskMode && (
           <div className="absolute inset-0 pointer-events-none z-20 flex flex-col items-center justify-center">
             {/* Elegant SVG Cutout Mask */}
@@ -211,7 +248,7 @@ export function WebcamCapture({
                 </mask>
               </defs>
 
-              {/* Soft, calm dark vignette outside oval */}
+              {/* Soft dark vignette outside oval */}
               <rect
                 width="100%"
                 height="100%"
@@ -232,7 +269,7 @@ export function WebcamCapture({
               />
             </svg>
 
-            {/* Circular Countdown Badge (Clean & Centered) */}
+            {/* Circular Countdown Badge */}
             {countdown !== null && countdown > 0 && (
               <div className="relative z-30 flex flex-col items-center justify-center animate-in zoom-in-75 duration-200">
                 <div className="w-20 h-20 rounded-full bg-slate-900/80 backdrop-blur-md border-2 border-emerald-400 flex items-center justify-center shadow-lg">
@@ -246,54 +283,42 @@ export function WebcamCapture({
         )}
       </div>
 
-      {/* ─── CLEAN & PROFESSIONAL INSTRUCTION BANNER (SMK BRANDING) ─── */}
+      {/* ─── INSTRUCTION BANNER (SMK BRANDING) ─── */}
       <div
         className={cn(
-          'w-full rounded-2xl px-5 py-3.5 border transition-all duration-200 flex items-center justify-between gap-3 shadow-xs',
+          'w-full rounded-2xl px-5 py-3.5 border transition-all duration-200 flex items-center gap-3 shadow-xs',
           isReadyOrCounting
             ? 'bg-emerald-50/90 border-emerald-200 text-emerald-950'
             : 'bg-white border-slate-200 text-slate-800'
         )}
       >
-        <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-              isReadyOrCounting
-                ? 'bg-emerald-100 text-emerald-700'
-                : 'bg-slate-100 text-slate-600'
-            )}
-          >
-            {isReadyOrCounting ? (
-              <CheckCircle2 size={18} />
-            ) : (
-              <User size={18} />
-            )}
-          </div>
-
-          <div>
-            <p className="font-bold text-sm sm:text-base leading-tight">
-              {countdown !== null && countdown > 0
-                ? `Foto dalam ${countdown} detik... Tahan posisi`
-                : face.message}
-            </p>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {isReadyOrCounting
-                ? 'Wajah pas di tengah lingkaran. Jangan bergerak.'
-                : 'Posisikan wajah Anda tepat di dalam bingkai oval di atas.'}
-            </p>
-          </div>
+        <div
+          className={cn(
+            'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
+            isReadyOrCounting
+              ? 'bg-emerald-100 text-emerald-700'
+              : 'bg-slate-100 text-slate-600'
+          )}
+        >
+          {isReadyOrCounting ? (
+            <CheckCircle2 size={18} />
+          ) : (
+            <User size={18} />
+          )}
         </div>
 
-        {/* Quick Instant Snap Button */}
-        <button
-          type="button"
-          onClick={handleManualCapture}
-          className="flex-shrink-0 text-xs font-bold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
-        >
-          <Camera size={13} />
-          <span>Ambil Sekarang</span>
-        </button>
+        <div className="flex-1">
+          <p className="font-bold text-sm sm:text-base leading-tight">
+            {countdown !== null && countdown > 0
+              ? `Foto dalam ${countdown} detik... Tahan posisi`
+              : face.message}
+          </p>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {isReadyOrCounting
+              ? 'Wajah pas di tengah lingkaran. Jangan bergerak.'
+              : 'Posisikan wajah Anda tepat di dalam bingkai oval di atas.'}
+          </p>
+        </div>
       </div>
     </div>
   )

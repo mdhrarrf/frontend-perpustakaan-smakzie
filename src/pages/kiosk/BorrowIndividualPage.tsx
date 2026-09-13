@@ -417,15 +417,13 @@ export function KioskBorrowIndividual() {
                 <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Posisikan wajah di dalam lingkaran oval untuk verifikasi otomatis</p>
               </div>
 
-              <WebcamCapture onCapture={handlePhotoCapture} autoCapture autoCaptureDelay={5} kioskMode />
-
-              <button
-                onClick={() => setStep('confirm')}
-                className="text-slate-600 hover:text-slate-900 text-sm sm:text-base font-bold bg-white hover:bg-slate-50 border border-slate-200 px-6 py-2.5 rounded-full shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <span>Lewati Foto</span>
-                <ArrowRight size={18} />
-              </button>
+              <WebcamCapture
+                onCapture={handlePhotoCapture}
+                onNoWebcam={() => setStep('confirm')}
+                autoCapture
+                autoCaptureDelay={5}
+                kioskMode
+              />
             </div>
           )}
 
