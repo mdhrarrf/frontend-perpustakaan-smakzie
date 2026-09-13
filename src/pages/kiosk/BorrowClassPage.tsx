@@ -50,6 +50,7 @@ export function KioskBorrowClass() {
 
   const [books, setBooks] = useState<{ book: Book; quantity: number }[]>([])
   const [photoPath, setPhotoPath] = useState<string | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState('Memproses...')
@@ -1031,10 +1032,12 @@ export function KioskBorrowClass() {
               </div>
 
               <WebcamCapture
-                onCapture={async (b64) => {
-                  const { path } = await uploadService.photo(b64, 'borrow')
-                  setPhotoPath(path)
+                onCapture={(b64) => {
+                  setPhotoPreview(b64)
                   setStep('confirm')
+                  uploadService.photo(b64, 'borrow')
+                    .then(({ path }) => setPhotoPath(path))
+                    .catch((err) => console.warn('Gagal upload foto kelas:', err))
                 }}
                 onNoWebcam={() => setStep('confirm')}
                 kioskMode
@@ -1056,6 +1059,22 @@ export function KioskBorrowClass() {
               </div>
 
               <div className="bg-white rounded-3xl p-6 sm:p-8 w-full space-y-3 border border-slate-200/80 shadow-xl shadow-slate-200/50">
+                {photoPreview && (
+                  <div className="flex items-center gap-4 p-3 bg-slate-50 border border-slate-200/80 rounded-2xl mb-2">
+                    <img
+                      src={photoPreview}
+                      alt="Foto Perwakilan Kelas"
+                      className="w-16 h-16 rounded-xl object-cover border border-slate-200 shadow-xs"
+                    />
+                    <div>
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Perwakilan Peminjam</p>
+                      <p className="text-sm font-bold text-slate-900">{student?.nama}</p>
+                      <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
+                        <CheckCircle2 size={13} /> Terlampir Otomatis
+                      </span>
+                    </div>
+                  </div>
+                )}
                 {[
                   { label: 'Siswa',          value: `${student?.nama} (${student?.nis})` },
                   { label: 'Kelas',          value: classInfo.class_name },

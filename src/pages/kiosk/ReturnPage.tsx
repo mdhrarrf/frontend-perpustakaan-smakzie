@@ -9,7 +9,7 @@ import { WebcamCapture } from '@/components/kiosk/WebcamCapture'
 import { useKioskStore } from '@/store/kiosk.store'
 import { getErrorMessage } from '@/api/client'
 import { formatDateTime, formatDate } from '@/utils'
-import { ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Loader2, RotateCcw, BookOpen, Clock, Check } from 'lucide-react'
+import { ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Loader2, RotateCcw, BookOpen, Clock, Check, User, Camera } from 'lucide-react'
 import type { Student, Loan } from '@/types'
 
 type Step = 'scan-student' | 'select-loan' | 'photo' | 'confirm'
@@ -18,11 +18,12 @@ export function KioskReturnPage() {
   const navigate  = useNavigate()
   const stationId = useKioskStore((s) => s.stationId)
 
-  const [step,         setStep]       = useState<Step>('scan-student')
-  const [student,      setStudent]    = useState<Student | null>(null)
-  const [activeLoans,  setActiveLoans] = useState<Loan[]>([])
-  const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null)
-  const [photoPath,    setPhotoPath]  = useState<string | null>(null)
+  const [step,               setStep]               = useState<Step>('scan-student')
+  const [student,            setStudent]            = useState<Student | null>(null)
+  const [activeLoans,        setActiveLoans]        = useState<Loan[]>([])
+  const [selectedLoan,       setSelectedLoan]       = useState<Loan | null>(null)
+  const [photoPath,          setPhotoPath]          = useState<string | null>(null)
+  const [returnPhotoPreview, setReturnPhotoPreview] = useState<string | null>(null)
   const [error,        setError]      = useState<string | null>(null)
   const [isLoading,    setIsLoading]  = useState(false)
 
@@ -89,7 +90,7 @@ export function KioskReturnPage() {
 
   function reset() {
     setStep('scan-student'); setStudent(null); setActiveLoans([])
-    setSelectedLoan(null); setPhotoPath(null); setError(null)
+    setSelectedLoan(null); setPhotoPath(null); setReturnPhotoPreview(null); setError(null)
   }
 
   // Cek apakah pinjaman terlambat (toleransi 30 menit)
@@ -223,12 +224,12 @@ export function KioskReturnPage() {
           </div>
 
           <WebcamCapture
-            onCapture={async (base64) => {
-              try {
-                const { path } = await uploadService.photo(base64, 'return')
-                setPhotoPath(path)
-              } catch { /* optional */ }
+            onCapture={(base64) => {
+              setReturnPhotoPreview(base64)
               setStep('confirm')
+              uploadService.photo(base64, 'return')
+                .then(({ path }) => setPhotoPath(path))
+                .catch((err) => console.warn('Gagal upload foto kembali:', err))
             }}
             onNoWebcam={() => setStep('confirm')}
             autoCapture
@@ -255,8 +256,62 @@ export function KioskReturnPage() {
             </div>
           )}
 
-          <div className="bg-white rounded-3xl p-8 w-full space-y-4 border border-slate-200/80 shadow-xl shadow-slate-200/50">
-            <h2 className="text-2xl font-extrabold text-slate-900 text-center mb-4 tracking-tight">Konfirmasi Pengembalian</h2>
+          <div className="bg-white rounded-3xl p-6 sm:p-8 w-full space-y-4 border border-slate-200/80 shadow-xl shadow-slate-200/50">
+            <h2 className="text-2xl font-extrabold text-slate-900 text-center mb-2 tracking-tight">Konfirmasi Pengembalian</h2>
+
+            {/* Komparasi Foto: Peminjaman (Kiri) vs Pengembalian (Kanan) */}
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider text-center mb-3">
+                Verifikasi Foto Peminjam & Pengembali
+              </p>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                {/* KIRI: Foto Saat Peminjaman */}
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-1 text-xs font-bold text-slate-700 mb-1.5">
+                    <Clock size={13} className="text-blue-600" />
+                    <span>Saat Peminjaman</span>
+                  </div>
+                  <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-200 border border-slate-300 shadow-inner flex items-center justify-center">
+                    {selectedLoan.borrow_photo ? (
+                      <img
+                        src={selectedLoan.borrow_photo}
+                        alt="Foto Saat Peminjaman"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
+                        <User size={28} className="text-slate-300" />
+                        <span className="text-[11px] mt-1 font-medium">Tidak ada foto</span>
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-slate-400 mt-1 font-medium">Foto Arsip Pinjam</span>
+                </div>
+
+                {/* KANAN: Foto Saat Pengembalian */}
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-1 text-xs font-bold text-emerald-700 mb-1.5">
+                    <CheckCircle2 size={13} className="text-emerald-600" />
+                    <span>Saat Pengembalian</span>
+                  </div>
+                  <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-200 border-2 border-emerald-500 shadow-sm flex items-center justify-center">
+                    {returnPhotoPreview ? (
+                      <img
+                        src={returnPhotoPreview}
+                        alt="Foto Saat Pengembalian"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
+                        <Camera size={28} className="text-slate-300" />
+                        <span className="text-[11px] mt-1 font-medium">Kamera dilewati</span>
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-emerald-600 mt-1 font-semibold">Foto Saat Ini</span>
+                </div>
+              </div>
+            </div>
             {[
               { label: 'Nama',        value: student.nama },
               { label: 'NIS',         value: student.nis },

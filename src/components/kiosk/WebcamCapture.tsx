@@ -21,6 +21,7 @@ interface WebcamCaptureProps {
   className?: string
   kioskMode?: boolean
   faceDetection?: boolean
+  showPreview?: boolean
 }
 
 export function WebcamCapture({
@@ -32,6 +33,7 @@ export function WebcamCapture({
   className,
   kioskMode = false,
   faceDetection = true,
+  showPreview = false,
 }: WebcamCaptureProps) {
   const [countdown, setCountdown] = useState<number | null>(null)
   const [isFlashing, setIsFlashing] = useState(false)
@@ -173,8 +175,8 @@ export function WebcamCapture({
     )
   }
 
-  // 4. Kondisi: Foto Berhasil Diambil (Preview)
-  if (webcam.capturedImage) {
+  // 4. Kondisi: Foto Berhasil Diambil (Preview) - Hanya jika showPreview bernilai true
+  if (showPreview && webcam.capturedImage) {
     return (
       <div className={cn('flex flex-col items-center gap-6 w-full max-w-md mx-auto animate-kiosk-page', className)}>
         <div className="relative rounded-3xl overflow-hidden bg-slate-900 border-2 border-emerald-500 shadow-xl w-full aspect-[4/3]">
