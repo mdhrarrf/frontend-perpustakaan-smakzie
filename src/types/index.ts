@@ -136,6 +136,8 @@ export interface Loan {
   station_id: string | null
   items: LoanItem[]
   violation: ViolationSummary | null
+  slims_loan_id?: number | null
+  sync_source?: string | null
   created_at: string
   updated_at: string
 }

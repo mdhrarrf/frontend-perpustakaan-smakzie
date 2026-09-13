@@ -37,6 +37,14 @@ export interface ReturnResult {
   } | null
 }
 
+export interface SlimsSyncResult {
+  success: boolean
+  pulled: number
+  updated: number
+  pushed: number
+  message: string
+}
+
 export const loanService = {
   async list(params: Record<string, unknown> = {}): Promise<ApiResponse<PaginatedResponse<Loan>>> {
     const { data } = await apiClient.get(BASE, { params })
@@ -75,5 +83,10 @@ export const loanService = {
 
   async markLost(id: number, payload: { harga_buku?: number; compensation_type?: string; notes?: string }): Promise<void> {
     await apiClient.post(`${BASE}/${id}/mark-lost`, payload)
+  },
+
+  async syncSlims(): Promise<ApiResponse<SlimsSyncResult>> {
+    const { data } = await apiClient.post<ApiResponse<SlimsSyncResult>>(`${BASE}/sync-slims`)
+    return data
   },
 }
