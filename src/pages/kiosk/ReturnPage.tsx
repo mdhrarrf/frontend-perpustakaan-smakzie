@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { studentService } from '@/api/student.service'
@@ -9,10 +9,15 @@ import { WebcamCapture } from '@/components/kiosk/WebcamCapture'
 import { useKioskStore } from '@/store/kiosk.store'
 import { getErrorMessage } from '@/api/client'
 import { formatDateTime, formatDate } from '@/utils'
-import { ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Loader2, RotateCcw, BookOpen, Clock, Check, User, Camera } from 'lucide-react'
+import { compareFaces } from '@/utils/faceCompare'
+import {
+  ArrowLeft, AlertTriangle, CheckCircle2, Loader2, RotateCcw,
+  Clock, Check, User, Camera, ShieldCheck, ShieldX, ShieldAlert,
+} from 'lucide-react'
 import type { Student, Loan } from '@/types'
 
 type Step = 'scan-student' | 'select-loan' | 'photo' | 'confirm'
+type FaceMatchStatus = 'idle' | 'checking' | 'match' | 'mismatch' | 'no_face' | 'unknown'
 
 export function KioskReturnPage() {
   const navigate  = useNavigate()
@@ -27,7 +32,44 @@ export function KioskReturnPage() {
   const [error,        setError]      = useState<string | null>(null)
   const [isLoading,    setIsLoading]  = useState(false)
 
-  const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-xl px-8 py-5 min-h-[80px] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2'
+  // Face match verification state
+  const [faceMatchStatus, setFaceMatchStatus] = useState<FaceMatchStatus>('idle')
+  const [faceMatchScore,  setFaceMatchScore]  = useState<number>(0)
+  const faceCheckDoneRef = useRef(false)
+
+  const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-xl px-8 py-5 min-h-[80px] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none'
+
+  // Trigger face comparison once when entering confirm step
+  useEffect(() => {
+    if (step !== 'confirm') { faceCheckDoneRef.current = false; return }
+    if (faceCheckDoneRef.current) return
+    faceCheckDoneRef.current = true
+
+    const borrowPhoto   = selectedLoan?.borrow_photo
+    const returnPreview = returnPhotoPreview
+
+    if (!borrowPhoto || !returnPreview) {
+      setFaceMatchStatus('unknown')
+      return
+    }
+
+    setFaceMatchStatus('checking')
+    compareFaces(borrowPhoto, returnPreview, 0.80)
+      .then((result) => {
+        setFaceMatchScore(result.score)
+        if (result.hasNoFace1 || result.hasNoFace2) {
+          setFaceMatchStatus('no_face')
+        } else if (result.match) {
+          setFaceMatchStatus('match')
+        } else {
+          setFaceMatchStatus('mismatch')
+        }
+      })
+      .catch((err) => {
+        console.warn('Face comparison failed:', err)
+        setFaceMatchStatus('unknown')
+      })
+  }, [step, selectedLoan, returnPhotoPreview])
 
   async function handleStudentScan(code: string) {
     setIsLoading(true); setError(null)
@@ -57,7 +99,6 @@ export function KioskReturnPage() {
     }
   }
 
-  // Helper: ambil judul buku dari loan item (support SLiMS books yang book = null)
   function getLoanBookTitle(loan: Loan | null): string {
     if (!loan) return '—'
     const item = loan.items?.[0] as any
@@ -78,7 +119,6 @@ export function KioskReturnPage() {
     }),
     onError: (err) => {
       const msg = getErrorMessage(err)
-      // Jika buku sudah dikembalikan → reset otomatis ke awal
       if (msg.toLowerCase().includes('dikembalikan') || msg.toLowerCase().includes('returned')) {
         reset()
         setError('Buku ini sudah tercatat dikembalikan. Silakan scan kartu pelajar kembali untuk melihat peminjaman aktif.')
@@ -91,14 +131,69 @@ export function KioskReturnPage() {
   function reset() {
     setStep('scan-student'); setStudent(null); setActiveLoans([])
     setSelectedLoan(null); setPhotoPath(null); setReturnPhotoPreview(null); setError(null)
+    setFaceMatchStatus('idle'); setFaceMatchScore(0)
+    faceCheckDoneRef.current = false
   }
 
-  // Cek apakah pinjaman terlambat (toleransi 30 menit)
   const isLoanOverdue = (l: Loan) => {
     if (l.status === 'overdue') return true
     const dueTime = new Date(l.due_at).getTime()
     return Date.now() > dueTime + 30 * 60 * 1000
   }
+
+  // Badge UI for face match result
+  function FaceMatchBadge() {
+    switch (faceMatchStatus) {
+      case 'checking':
+        return (
+          <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 mt-3">
+            <Loader2 size={16} className="text-blue-600 animate-spin flex-shrink-0" />
+            <span className="text-blue-800 text-sm font-semibold">Memverifikasi identitas pengembali...</span>
+          </div>
+        )
+      case 'match':
+        return (
+          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 mt-3">
+            <ShieldCheck size={16} className="text-emerald-600 flex-shrink-0" />
+            <div>
+              <span className="text-emerald-800 text-sm font-bold">Identitas Terverifikasi</span>
+              <span className="text-emerald-600 text-xs ml-2">({Math.round(faceMatchScore * 100)}% sesuai)</span>
+            </div>
+          </div>
+        )
+      case 'mismatch':
+        return (
+          <div className="flex items-start gap-2 bg-rose-50 border border-rose-300 rounded-xl px-4 py-3 mt-3">
+            <ShieldX size={16} className="text-rose-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-rose-800 text-sm font-bold">Wajah Tidak Sesuai Peminjam</p>
+              <p className="text-rose-700 text-xs mt-0.5 font-medium">
+                Pengembalian tidak dapat dilanjutkan. Hubungi petugas perpustakaan.
+              </p>
+            </div>
+          </div>
+        )
+      case 'no_face':
+        return (
+          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mt-3">
+            <ShieldAlert size={16} className="text-amber-600 flex-shrink-0" />
+            <span className="text-amber-800 text-sm font-semibold">Foto kurang jelas untuk verifikasi wajah</span>
+          </div>
+        )
+      case 'unknown':
+        return (
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 mt-3">
+            <ShieldAlert size={16} className="text-slate-400 flex-shrink-0" />
+            <span className="text-slate-600 text-sm font-medium">Verifikasi wajah tidak tersedia</span>
+          </div>
+        )
+      default:
+        return null
+    }
+  }
+
+  // Block return button only on confirmed mismatch
+  const isReturnBlocked = faceMatchStatus === 'mismatch'
 
   return (
     <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-teal-50/40 to-emerald-50/40 flex flex-col p-8 text-slate-900">
@@ -258,72 +353,72 @@ export function KioskReturnPage() {
 
           <div className="bg-white rounded-3xl p-6 sm:p-8 w-full border border-slate-200/80 shadow-xl shadow-slate-200/50">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch">
-              {/* ─── KOLOM KIRI: KOMPARASI FOTO ─── */}
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Verifikasi Foto Peminjam
-                    </p>
-                    <span className="text-[11px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-md">
-                      Arsip vs Realtime
-                    </span>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* KIRI: Foto Saat Peminjaman */}
-                    <div className="flex flex-col items-center">
-                      <div className="flex items-center gap-1 text-xs font-bold text-slate-700 mb-1.5">
-                        <Clock size={13} className="text-blue-600" />
-                        <span>Saat Pinjam</span>
-                      </div>
-                      <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-200 border border-slate-300 shadow-inner flex items-center justify-center">
-                        {selectedLoan.borrow_photo ? (
-                          <img
-                            src={selectedLoan.borrow_photo}
-                            alt="Foto Saat Peminjaman"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
-                            <User size={28} className="text-slate-300" />
-                            <span className="text-[11px] mt-1 font-medium">Tidak ada foto</span>
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-[11px] text-slate-400 mt-1 font-medium">Foto Peminjam</span>
-                    </div>
-
-                    {/* KANAN: Foto Saat Pengembalian */}
-                    <div className="flex flex-col items-center">
-                      <div className="flex items-center gap-1 text-xs font-bold text-emerald-700 mb-1.5">
-                        <CheckCircle2 size={13} className="text-emerald-600" />
-                        <span>Saat Kembali</span>
-                      </div>
-                      <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-200 border-2 border-emerald-500 shadow-sm flex items-center justify-center">
-                        {returnPhotoPreview ? (
-                          <img
-                            src={returnPhotoPreview}
-                            alt="Foto Saat Pengembalian"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
-                            <Camera size={28} className="text-slate-300" />
-                            <span className="text-[11px] mt-1 font-medium">Kamera dilewati</span>
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-[11px] text-emerald-600 mt-1 font-semibold">Pengembali</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-200/60 text-center">
-                  <p className="text-xs text-slate-500 font-medium">
-                    Pastikan wajah pengembali sesuai dengan data peminjam di sebelah kiri.
+              {/* ─── KOLOM KIRI: KOMPARASI FOTO & VERIFIKASI ─── */}
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 flex flex-col">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Verifikasi Identitas
                   </p>
+                  <span className="text-[11px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-md">
+                    Arsip vs Realtime
+                  </span>
                 </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Foto Saat Peminjaman */}
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-1 text-xs font-bold text-slate-700 mb-1.5">
+                      <Clock size={13} className="text-blue-600" />
+                      <span>Saat Pinjam</span>
+                    </div>
+                    <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-200 border border-slate-300 shadow-inner flex items-center justify-center">
+                      {selectedLoan.borrow_photo ? (
+                        <img
+                          src={selectedLoan.borrow_photo}
+                          alt="Foto Saat Peminjaman"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
+                          <User size={28} className="text-slate-300" />
+                          <span className="text-[11px] mt-1 font-medium">Tidak ada foto</span>
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-slate-400 mt-1 font-medium">Foto Peminjam</span>
+                  </div>
+
+                  {/* Foto Saat Pengembalian */}
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-1 text-xs font-bold text-emerald-700 mb-1.5">
+                      <CheckCircle2 size={13} className="text-emerald-600" />
+                      <span>Saat Kembali</span>
+                    </div>
+                    <div className={`w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-200 border-2 shadow-sm flex items-center justify-center ${
+                      faceMatchStatus === 'mismatch' ? 'border-rose-500' :
+                      faceMatchStatus === 'match'    ? 'border-emerald-500' :
+                      'border-slate-300'
+                    }`}>
+                      {returnPhotoPreview ? (
+                        <img
+                          src={returnPhotoPreview}
+                          alt="Foto Saat Pengembalian"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
+                          <Camera size={28} className="text-slate-300" />
+                          <span className="text-[11px] mt-1 font-medium">Kamera dilewati</span>
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-emerald-600 mt-1 font-semibold">Pengembali</span>
+                  </div>
+                </div>
+
+                {/* Face Match Badge */}
+                <FaceMatchBadge />
               </div>
 
               {/* ─── KOLOM KANAN: INFORMASI & AKSI ─── */}
@@ -356,6 +451,21 @@ export function KioskReturnPage() {
                   </div>
                 </div>
 
+                {/* Mismatch Warning (full-width in right column) */}
+                {isReturnBlocked && (
+                  <div className="bg-rose-50 border border-rose-300 rounded-2xl p-4">
+                    <div className="flex items-start gap-3">
+                      <ShieldX size={20} className="text-rose-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-rose-900 font-bold text-sm">Pengembalian Diblokir</p>
+                        <p className="text-rose-700 text-xs mt-1 font-medium leading-relaxed">
+                          Wajah pengembali tidak sesuai dengan peminjam. Segera hubungi petugas perpustakaan untuk bantuan.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Tombol Aksi */}
                 <div className="flex gap-3 pt-2">
                   <button
@@ -366,12 +476,19 @@ export function KioskReturnPage() {
                   </button>
                   <button
                     onClick={() => returnMutation.mutate()}
-                    disabled={returnMutation.isPending}
-                    className={`${kBtn} flex-[1.4] bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/30 py-3 text-base`}
+                    disabled={returnMutation.isPending || isReturnBlocked}
+                    title={isReturnBlocked ? 'Hubungi petugas — wajah tidak sesuai peminjam' : undefined}
+                    className={`${kBtn} flex-[1.4] py-3 text-base ${
+                      isReturnBlocked
+                        ? 'bg-slate-200 text-slate-400 border-2 border-slate-300 cursor-not-allowed hover:translate-y-0 hover:shadow-none'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/30'
+                    }`}
                   >
                     {returnMutation.isPending
                       ? <><Loader2 className="animate-spin" size={20} /> Memproses...</>
-                      : <><CheckCircle2 size={20} /> Kembalikan Buku</>}
+                      : isReturnBlocked
+                        ? <><ShieldX size={20} /> Diblokir</>
+                        : <><CheckCircle2 size={20} /> Kembalikan Buku</>}
                   </button>
                 </div>
               </div>
