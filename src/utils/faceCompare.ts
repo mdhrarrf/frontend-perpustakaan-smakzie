@@ -1,6 +1,8 @@
 ﻿/**
  * faceCompare.ts
  * Membandingkan 2 foto menggunakan MediaPipe FaceLandmarker (mode IMAGE).
+ * Menggunakan fetch() untuk download gambar sebagai blob agar tidak ada
+ * masalah CORS "tainted canvas" saat MediaPipe membaca pixel.
  */
 import { FilesetResolver, FaceLandmarker } from '@mediapipe/tasks-vision'
 
@@ -37,13 +39,52 @@ async function getLandmarker(): Promise<FaceLandmarker> {
   return initPromise
 }
 
-function loadImage(src: string): Promise<HTMLImageElement> {
+/**
+ * Load an image from either a base64 data URL or a remote URL.
+ * For remote URLs: uses fetch() to get a blob ObjectURL so MediaPipe
+ * can safely read pixels without CORS "tainted canvas" issues.
+ */
+async function loadImage(src: string): Promise<HTMLImageElement> {
+  // Base64 data URLs load directly — no CORS issue
+  if (src.startsWith('data:')) {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => resolve(img)
+      img.onerror = (e) => reject(new Error(`Failed to load base64 image: ${e}`))
+      img.src = src
+    })
+  }
+
+  // Remote URL: fetch as blob to avoid canvas taint
+  let objectUrl: string | null = null
+  try {
+    const res = await fetch(src, { mode: 'cors', credentials: 'omit' })
+    if (!res.ok) throw new Error(`HTTP ${res.status} fetching image`)
+    const blob = await res.blob()
+    objectUrl = URL.createObjectURL(blob)
+  } catch (fetchErr) {
+    // Fallback: try loading with crossOrigin attribute
+    console.warn('[faceCompare] fetch failed, trying crossOrigin img:', fetchErr)
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => resolve(img)
+      img.onerror = () => reject(new Error(`Cannot load image: ${src}`))
+      img.src = src
+    })
+  }
+
   return new Promise((resolve, reject) => {
     const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => resolve(img)
-    img.onerror = reject
-    img.src = src
+    img.onload = () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+      resolve(img)
+    }
+    img.onerror = () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+      reject(new Error(`Failed to decode blob image from: ${src}`))
+    }
+    img.src = objectUrl!
   })
 }
 
@@ -88,19 +129,30 @@ export async function compareFaces(
   threshold = 0.80
 ): Promise<FaceCompareResult> {
   const landmarker = await getLandmarker()
+
+  // Load both images (parallel for speed)
   const [img1, img2] = await Promise.all([loadImage(src1), loadImage(src2)])
+
   const r1 = landmarker.detect(img1)
   const r2 = landmarker.detect(img2)
+
   const lms1 = r1.faceLandmarks?.[0] ?? []
   const lms2 = r2.faceLandmarks?.[0] ?? []
+
+  console.log(`[faceCompare] lms1=${lms1.length} lms2=${lms2.length}`)
+
   if (lms1.length === 0 && lms2.length === 0)
     return { match: false, score: 0, hasNoFace1: true, hasNoFace2: true }
   if (lms1.length === 0)
     return { match: false, score: 0, hasNoFace1: true, hasNoFace2: false }
   if (lms2.length === 0)
     return { match: false, score: 0, hasNoFace1: false, hasNoFace2: true }
+
   const v1 = normalizeLandmarks(lms1 as Landmark[])
   const v2 = normalizeLandmarks(lms2 as Landmark[])
   const score = cosineSimilarity(v1, v2)
+
+  console.log(`[faceCompare] score=${score.toFixed(4)} threshold=${threshold} match=${score >= threshold}`)
+
   return { match: score >= threshold, score, hasNoFace1: false, hasNoFace2: false }
 }
