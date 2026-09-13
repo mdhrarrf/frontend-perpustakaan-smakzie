@@ -509,6 +509,23 @@ export function KioskBorrowClass() {
                         </p>
                       </div>
                     </div>
+                    {/* Perwakilan — hanya tampil untuk peminjaman kelas */}
+                    {activeLoanReason === 'class' && activeLoan.student && (
+                      <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
+                        <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                          <span className="text-blue-700 font-extrabold text-sm">
+                            {activeLoan.student.nama?.charAt(0) ?? '?'}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Perwakilan Peminjam</p>
+                          <p className="text-slate-900 font-bold text-sm sm:text-base leading-tight">
+                            {activeLoan.student.nama}
+                          </p>
+                          <p className="text-slate-400 text-xs font-medium">{activeLoan.student.kelas}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
