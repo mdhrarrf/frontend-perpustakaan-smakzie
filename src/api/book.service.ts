@@ -59,4 +59,38 @@ export const bookService = {
     const { data } = await apiClient.get<ApiResponse<BookCategory[]>>(`${BASE}/categories`)
     return data.data!
   },
+
+  async authors(q?: string): Promise<string[]> {
+    const { data } = await apiClient.get<ApiResponse<string[]>>(`${BASE}/authors`, { params: { q } })
+    return data.data ?? []
+  },
+
+  async publishers(q?: string): Promise<string[]> {
+    const { data } = await apiClient.get<ApiResponse<string[]>>(`${BASE}/publishers`, { params: { q } })
+    return data.data ?? []
+  },
+
+  async getItems(id: number): Promise<BookItemsResponse> {
+    const { data } = await apiClient.get<ApiResponse<BookItemsResponse>>(`${BASE}/${id}/items`)
+    return data.data!
+  },
+}
+
+export interface BookItem {
+  item_id: number
+  item_code: string
+  call_number: string
+  coll_type: string
+  status: string
+  status_label: string
+}
+
+export interface BookItemsResponse {
+  biblio_id: number
+  judul: string
+  penulis: string
+  isbn: string
+  call_number?: string
+  lokasi_rak: string
+  items: BookItem[]
 }

@@ -8,6 +8,7 @@ export interface CreateLoanPayload {
   student_id: number
   book_id?: number           // Untuk buku lokal
   slims_biblio_id?: number   // Untuk buku SLiMS
+  slims_item_code?: string   // Barcode fisik yang di-scan — untuk audit trail
   due_at: string
   borrow_photo?: string
   station_id?: string
@@ -43,6 +44,12 @@ export interface SlimsSyncResult {
   updated: number
   pushed: number
   message: string
+}
+
+export interface FixBookPayload {
+  slims_biblio_id?: number
+  book_title_snapshot?: string
+  book_author_snapshot?: string
 }
 
 export const loanService = {
@@ -88,5 +95,10 @@ export const loanService = {
   async syncSlims(): Promise<ApiResponse<SlimsSyncResult>> {
     const { data } = await apiClient.post<ApiResponse<SlimsSyncResult>>(`${BASE}/sync-slims`)
     return data
+  },
+
+  async fixBook(id: number, payload: FixBookPayload): Promise<Loan> {
+    const { data } = await apiClient.patch<ApiResponse<Loan>>(`${BASE}/${id}/fix-book`, payload)
+    return data.data!
   },
 }

@@ -1,11 +1,12 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { bookService } from '@/api/book.service'
+import type { BookItem } from '@/api/book.service'
 import { Card, CardHeader, CardBody } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { BookStatusBadge, LoanStatusBadge } from '@/components/ui/Badge'
-import { formatCurrency, formatDate, formatDateTime } from '@/utils'
-import { ArrowLeft, Edit, BookOpen, QrCode } from 'lucide-react'
+import { BookStatusBadge } from '@/components/ui/Badge'
+import { formatCurrency, formatDate } from '@/utils'
+import { ArrowLeft, Edit, BookOpen, Printer } from 'lucide-react'
 
 export function AdminBookDetail() {
   const { id } = useParams<{ id: string }>()
@@ -14,6 +15,12 @@ export function AdminBookDetail() {
   const { data: book, isLoading } = useQuery({
     queryKey: ['book', id],
     queryFn: () => bookService.get(Number(id)),
+    enabled: !!id,
+  })
+
+  const { data: itemsData } = useQuery({
+    queryKey: ['book-items', id],
+    queryFn: () => bookService.getItems(Number(id)),
     enabled: !!id,
   })
 
@@ -29,11 +36,14 @@ export function AdminBookDetail() {
           <h1 className="text-xl font-bold text-slate-900">{book.judul}</h1>
           <p className="text-sm text-slate-500">{book.kode_buku}</p>
         </div>
+        <Link to={`/admin/books/${id}/print-labels`}>
+          <Button size="sm" variant="outline"><Printer size={14} /> Cetak Label</Button>
+        </Link>
         <Link to={`/admin/books/${id}/edit`}><Button size="sm"><Edit size={14} /> Edit</Button></Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Cover & QR */}
+        {/* Cover & Kode */}
         <Card>
           <CardBody className="flex flex-col items-center gap-4">
             {book.cover ? (
@@ -56,14 +66,14 @@ export function AdminBookDetail() {
           <CardBody>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
               {[
-                { label: 'Judul',       value: book.judul },
-                { label: 'Penulis',     value: book.penulis },
-                { label: 'Penerbit',    value: book.penerbit ?? '—' },
+                { label: 'Judul',        value: book.judul },
+                { label: 'Penulis',      value: book.penulis },
+                { label: 'Penerbit',     value: book.penerbit ?? '—' },
                 { label: 'Tahun Terbit', value: book.tahun_terbit ?? '—' },
-                { label: 'ISBN',        value: book.isbn ?? '—' },
-                { label: 'Kategori',    value: book.kategori?.nama ?? '—' },
-                { label: 'Lokasi Rak',  value: book.lokasi_rak ?? '—' },
-                { label: 'Harga Buku',  value: formatCurrency(book.harga) },
+                { label: 'ISBN',         value: book.isbn ?? '—' },
+                { label: 'Kategori',     value: book.kategori?.nama ?? '—' },
+                { label: 'Lokasi Rak',   value: book.lokasi_rak ?? '—' },
+                { label: 'Harga Buku',   value: formatCurrency(book.harga) },
               ].map(({ label, value }) => (
                 <div key={label}>
                   <dt className="text-slate-500">{label}</dt>
@@ -71,7 +81,6 @@ export function AdminBookDetail() {
                 </div>
               ))}
             </dl>
-
             {book.sinopsis && (
               <div className="mt-4 pt-4 border-t border-slate-100">
                 <dt className="text-xs text-slate-500 mb-1">Sinopsis</dt>
@@ -82,7 +91,7 @@ export function AdminBookDetail() {
         </Card>
       </div>
 
-      {/* Stock Info */}
+      {/* Stok */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Total Eksemplar',  value: book.jumlah_total,    color: 'text-slate-800' },
@@ -96,6 +105,51 @@ export function AdminBookDetail() {
           </Card>
         ))}
       </div>
+
+      {/* Daftar Eksemplar */}
+      {itemsData && itemsData.items.length > 0 && (
+        <Card>
+          <CardHeader className="flex items-center justify-between">
+            <h2 className="font-semibold text-slate-800">Daftar Eksemplar (Kode Barcode)</h2>
+            <Link to={`/admin/books/${id}/print-labels`}>
+              <Button size="sm" variant="outline"><Printer size={13} /> Cetak Label</Button>
+            </Link>
+          </CardHeader>
+          <CardBody className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 border-b border-slate-100">
+                  <tr>
+                    <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider">Kode Item</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider">Tipe Koleksi</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider">Lokasi Rak</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {itemsData.items.map((item: BookItem) => (
+                    <tr key={item.item_id} className="hover:bg-slate-50">
+                      <td className="px-4 py-2.5 font-mono font-bold text-slate-800">{item.item_code}</td>
+                      <td className="px-4 py-2.5 text-slate-600">{item.coll_type}</td>
+                      <td className="px-4 py-2.5 text-slate-600">{item.call_number !== 'AUTO' ? item.call_number : '—'}</td>
+                      <td className="px-4 py-2.5">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                          item.status_label === 'Tersedia'
+                            ? 'bg-green-100 text-green-700'
+                            : item.status_label === 'Hilang'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}>{item.status_label}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardBody>
+        </Card>
+      )}
     </div>
   )
 }
+

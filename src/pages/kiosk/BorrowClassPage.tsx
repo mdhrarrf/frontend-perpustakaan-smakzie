@@ -329,6 +329,8 @@ export function KioskBorrowClass() {
             ? { slims_biblio_id: book.id }
             : { book_id: book.id }
           ),
+          // Barcode yang di-scan untuk audit trail
+          slims_item_code: isSlims ? (book.kode_barcode ?? book.kode_qr ?? undefined) : undefined,
           due_at:       dueAt.toISOString().slice(0, 16),
           borrow_photo: photoPath ?? undefined,
           station_id:   stationId,

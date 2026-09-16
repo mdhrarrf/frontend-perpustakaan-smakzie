@@ -14,6 +14,7 @@ import { AdminDashboard }   from '@/pages/admin/DashboardPage'
 import { AdminBooksPage }   from '@/pages/admin/books/BooksPage'
 import { AdminBookDetail }  from '@/pages/admin/books/BookDetailPage'
 import { AdminBookForm }    from '@/pages/admin/books/BookFormPage'
+import { PrintLabelsPage }  from '@/pages/admin/books/PrintLabelsPage'
 import { AdminStudentsPage } from '@/pages/admin/students/StudentsPage'
 import { AdminLoansPage }   from '@/pages/admin/loans/LoansPage'
 import { AdminLoanDetail }  from '@/pages/admin/loans/LoanDetailPage'
@@ -72,6 +73,7 @@ export function AppRouter() {
         <Route path="books/create" element={<AdminBookForm />} />
         <Route path="books/:id"   element={<AdminBookDetail />} />
         <Route path="books/:id/edit" element={<AdminBookForm />} />
+        <Route path="books/:id/print-labels" element={<PrintLabelsPage />} />
         <Route path="students"    element={<AdminStudentsPage />} />
         <Route path="loans"       element={<AdminLoansPage />} />
         <Route path="loans/:id"   element={<AdminLoanDetail />} />

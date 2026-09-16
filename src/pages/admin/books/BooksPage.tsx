@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { BookStatusBadge } from '@/components/ui/Badge'
 import { Pagination } from '@/components/ui/Pagination'
 import { formatCurrency, formatDate } from '@/utils'
-import { BookOpen, Plus, Search, Filter, Trash2, Edit } from 'lucide-react'
+import { BookOpen, Plus, Search, Filter, Trash2, Edit, Printer } from 'lucide-react'
 import { getErrorMessage } from '@/api/client'
 
 export function AdminBooksPage() {
@@ -140,12 +140,16 @@ export function AdminBooksPage() {
                       <td className="px-6 py-4"><BookStatusBadge status={book.status} label={book.status_label} /></td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-1">
-                          <Link to={`/admin/books/${book.id}/edit`}>
+                          <Link to={`/admin/books/${book.id}/print-labels`} title="Cetak Label Barcode">
+                            <Button size="sm" variant="ghost"><Printer size={14} /></Button>
+                          </Link>
+                          <Link to={`/admin/books/${book.id}/edit`} title="Edit Buku">
                             <Button size="sm" variant="ghost"><Edit size={14} /></Button>
                           </Link>
                           <Button
                             size="sm" variant="ghost"
                             className="text-red-500 hover:bg-red-50"
+                            title="Arsipkan Buku"
                             onClick={() => { if (confirm('Arsipkan buku ini?')) deleteMutation.mutate(book.id) }}
                           >
                             <Trash2 size={14} />

@@ -167,6 +167,8 @@ export function KioskBorrowIndividual() {
           ? { slims_biblio_id: book!.id }
           : { book_id: book!.id }
         ),
+        // Kirim barcode yang di-scan agar tersimpan di loan_items untuk keperluan audit
+        slims_item_code: isSlimsBook ? (book!.kode_barcode ?? book!.kode_qr ?? undefined) : undefined,
         due_at:       getDueAt().toISOString().slice(0, 16),
         borrow_photo: photoPath ?? undefined,
         station_id:   stationId,
@@ -456,11 +458,20 @@ export function KioskBorrowIndividual() {
                     </div>
                   </div>
                 )}
+                {book.judul === 'Unknown' || !book.judul ? (
+                  <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3 mb-2">
+                    <span className="text-red-500 text-lg">⚠️</span>
+                    <p className="text-sm text-red-700 font-semibold">
+                      Data buku tidak terbaca. Coba scan ulang barcode, atau hubungi petugas.
+                    </p>
+                  </div>
+                ) : null}
                 {[
                   { label: 'Siswa',       value: `${student.nama} (${student.nis})` },
                   { label: 'Kelas',       value: student.kelas ?? '—' },
                   { label: 'Judul Buku',  value: book.judul },
                   { label: 'Penulis',     value: book.penulis || '—' },
+                  { label: 'Kode Buku',  value: book.kode_buku || book.isbn || '—' },
                   { label: 'Lama Pinjam', value: `${dueDays} hari` },
                   { label: 'Jatuh Tempo', value: formatDate(getDueAt().toISOString()) + ' (23:59)' },
                 ].map(({ label, value }) => (
