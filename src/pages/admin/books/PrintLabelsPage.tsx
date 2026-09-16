@@ -238,6 +238,7 @@ export function PrintLabelsPage() {
               overflow: hidden;
               background: #ffffff;
               box-sizing: border-box;
+              padding: 10px 4px;
             }
             .slims-barcode-rotator {
               transform: rotate(-90deg);
@@ -245,19 +246,35 @@ export function PrintLabelsPage() {
               flex-direction: column;
               align-items: center;
               justify-content: center;
-              width: 185px;
+              width: 155px;
               text-align: center;
               flex-shrink: 0;
               gap: 3px;
             }
+            .slims-barcode-meta {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              line-height: 1.1;
+              text-align: center;
+            }
             .slims-barcode-digits {
               font-family: Arial, Helvetica, sans-serif;
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: bold;
               color: #000000;
               letter-spacing: 0.5px;
-              line-height: 1;
               white-space: nowrap;
+            }
+            .slims-barcode-isbn {
+              font-family: Arial, Helvetica, sans-serif;
+              font-size: 7.5px;
+              font-weight: normal;
+              color: #222222;
+              letter-spacing: 0.2px;
+              white-space: nowrap;
+              margin-top: 1px;
             }
             .slims-barcode-svg {
               display: flex;
@@ -267,11 +284,11 @@ export function PrintLabelsPage() {
             }
             .slims-barcode-title {
               font-family: Arial, Helvetica, sans-serif;
-              font-size: 8.5px;
+              font-size: 8px;
               font-weight: 600;
               color: #000000;
-              line-height: 1.2;
-              max-width: 180px;
+              line-height: 1.15;
+              max-width: 150px;
               display: -webkit-box;
               -webkit-line-clamp: 2;
               -webkit-box-orient: vertical;
@@ -333,7 +350,7 @@ export function PrintLabelsPage() {
             }
             @page {
               size: A4 portrait;
-              margin: 6mm 6mm;
+              margin: 8mm 6mm;
             }
             .preview-and-print-container {
               margin: 0 !important;
@@ -348,14 +365,14 @@ export function PrintLabelsPage() {
             }
             .slims-grid {
               display: grid !important;
-              grid-template-columns: repeat(2, 96mm) !important;
-              gap: 4mm 6mm !important;
+              grid-template-columns: repeat(2, 94mm) !important;
+              gap: 5mm 8mm !important;
               justify-content: center !important;
               margin: 0 auto !important;
             }
             .slims-label-card {
-              width: 96mm !important;
-              height: 48mm !important;
+              width: 94mm !important;
+              height: 46mm !important;
               border: 1px solid #000000 !important;
               border-radius: 0 !important;
               display: flex !important;
@@ -368,7 +385,7 @@ export function PrintLabelsPage() {
             }
             .slims-barcode-col {
               width: 35mm !important;
-              height: 48mm !important;
+              height: 46mm !important;
               border-right: 1px solid #000000 !important;
               display: flex !important;
               align-items: center !important;
@@ -376,6 +393,7 @@ export function PrintLabelsPage() {
               overflow: hidden !important;
               box-sizing: border-box !important;
               background: #ffffff !important;
+              padding: 2mm 1mm !important;
             }
             .slims-barcode-rotator {
               transform: rotate(-90deg) !important;
@@ -383,18 +401,34 @@ export function PrintLabelsPage() {
               flex-direction: column !important;
               align-items: center !important;
               justify-content: center !important;
-              width: 44mm !important;
+              width: 38mm !important;
               text-align: center !important;
-              gap: 1.2mm !important;
+              gap: 1mm !important;
+            }
+            .slims-barcode-meta {
+              display: flex !important;
+              flex-direction: column !important;
+              align-items: center !important;
+              justify-content: center !important;
+              line-height: 1.1 !important;
+              text-align: center !important;
             }
             .slims-barcode-digits {
               font-family: Arial, Helvetica, sans-serif !important;
-              font-size: 8pt !important;
+              font-size: 7.5pt !important;
               font-weight: bold !important;
               color: #000000 !important;
-              letter-spacing: 0.5pt !important;
-              line-height: 1 !important;
+              letter-spacing: 0.4pt !important;
               white-space: nowrap !important;
+            }
+            .slims-barcode-isbn {
+              font-family: Arial, Helvetica, sans-serif !important;
+              font-size: 5.5pt !important;
+              font-weight: normal !important;
+              color: #222222 !important;
+              letter-spacing: 0.2pt !important;
+              white-space: nowrap !important;
+              margin-top: 0.2mm !important;
             }
             .slims-barcode-svg {
               display: flex !important;
@@ -404,10 +438,10 @@ export function PrintLabelsPage() {
             }
             .slims-barcode-title {
               font-family: Arial, Helvetica, sans-serif !important;
-              font-size: 6pt !important;
+              font-size: 5.5pt !important;
               font-weight: 600 !important;
               line-height: 1.15 !important;
-              max-width: 43mm !important;
+              max-width: 36mm !important;
               display: -webkit-box !important;
               -webkit-line-clamp: 2 !important;
               -webkit-box-orient: vertical !important;
@@ -417,8 +451,8 @@ export function PrintLabelsPage() {
               text-align: left !important;
             }
             .slims-label-col {
-              width: 61mm !important;
-              height: 48mm !important;
+              width: 59mm !important;
+              height: 46mm !important;
               display: flex !important;
               flex-direction: column !important;
               box-sizing: border-box !important;
@@ -486,24 +520,31 @@ export function PrintLabelsPage() {
                     {/* SISI KIRI: Barcode & Judul (Rotasi -90°) */}
                     <div className="slims-barcode-col">
                       <div className="slims-barcode-rotator">
-                        {/* 1. DIGITS / ISBN: Pertama di DOM -> Rotasi -90° menempatkannya di sisi KIRI barcode */}
-                        <div className="slims-barcode-digits">
-                          {item.item_code}
+                        {/* 1. KODE BUKU + ISBN: Diposisikan di sebelah KIRI barcode */}
+                        <div className="slims-barcode-meta">
+                          <div className="slims-barcode-digits">
+                            {item.item_code}
+                          </div>
+                          {data.isbn && item.item_code !== data.isbn && (
+                            <div className="slims-barcode-isbn">
+                              ISBN {data.isbn}
+                            </div>
+                          )}
                         </div>
 
-                        {/* 2. BARCODE: Di tengah, garis membentang tinggi, tidak gepeng */}
+                        {/* 2. BARCODE: Garis tajam dan halus (width=1.0, height=36), tidak tebal/nge-bold */}
                         <div className="slims-barcode-svg">
                           <Barcode
                             value={item.item_code}
-                            width={getBarcodeWidth(item.item_code)}
-                            height={44}
+                            width={1.0}
+                            height={36}
                             margin={0}
                             displayValue={false}
                             format="CODE128"
                           />
                         </div>
 
-                        {/* 3. JUDUL BUKU: Terakhir di DOM -> Rotasi -90° menempatkannya di sisi KANAN barcode */}
+                        {/* 3. JUDUL BUKU: Di sebelah KANAN barcode */}
                         <div className="slims-barcode-title" title={data.judul}>
                           {data.judul}
                         </div>
