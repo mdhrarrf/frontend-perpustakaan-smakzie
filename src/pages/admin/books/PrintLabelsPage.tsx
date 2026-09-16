@@ -8,10 +8,12 @@ import { Card, CardHeader, CardBody } from "@/components/ui/Card"
 import { ArrowLeft, Printer, CheckSquare, Square, Eye } from "lucide-react"
 import Barcode from "react-barcode"
 
-function truncateTitle(title: string, maxLen = 34): string {
-  if (!title) return ""
-  if (title.length <= maxLen) return title
-  return title.slice(0, maxLen).trim() + "..."
+function getBarcodeWidth(code: string): number {
+  const len = code.length
+  if (len <= 8) return 1.85
+  if (len <= 10) return 1.65
+  if (len <= 13) return 1.45
+  return 1.3
 }
 
 function parseCallNumber(
@@ -243,35 +245,39 @@ export function PrintLabelsPage() {
               flex-direction: column;
               align-items: center;
               justify-content: center;
-              width: 180px;
+              width: 185px;
               text-align: center;
               flex-shrink: 0;
+              gap: 3px;
             }
-            .slims-barcode-title {
+            .slims-barcode-digits {
               font-family: Arial, Helvetica, sans-serif;
-              font-size: 7.5pt;
+              font-size: 11px;
+              font-weight: bold;
               color: #000000;
-              line-height: 1.15;
-              max-width: 175px;
+              letter-spacing: 0.5px;
+              line-height: 1;
               white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              margin-bottom: 2px;
             }
             .slims-barcode-svg {
               display: flex;
               justify-content: center;
               align-items: center;
-              width: 100%;
+              line-height: 0;
             }
-            .slims-barcode-digits {
-              font-family: "Courier New", Courier, monospace;
-              font-size: 9pt;
-              font-weight: bold;
+            .slims-barcode-title {
+              font-family: Arial, Helvetica, sans-serif;
+              font-size: 8.5px;
+              font-weight: 600;
               color: #000000;
-              letter-spacing: 0.6pt;
-              line-height: 1;
-              margin-top: 2px;
+              line-height: 1.2;
+              max-width: 180px;
+              display: -webkit-box;
+              -webkit-line-clamp: 2;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              text-align: left;
             }
             .slims-label-col {
               width: 64%;
@@ -308,7 +314,7 @@ export function PrintLabelsPage() {
             }
             .slims-call-line {
               font-family: Arial, Helvetica, sans-serif;
-              font-size: 15pt;
+              font-size: 16pt;
               font-weight: bold;
               color: #000000;
               line-height: 1.25;
@@ -317,7 +323,7 @@ export function PrintLabelsPage() {
 
           /* Print styles */
           @media print {
-            body {
+            body, html {
               background: #ffffff !important;
               margin: 0 !important;
               padding: 0 !important;
@@ -327,12 +333,17 @@ export function PrintLabelsPage() {
             }
             @page {
               size: A4 portrait;
-              margin: 8mm 6mm;
+              margin: 6mm 6mm;
+            }
+            .preview-and-print-container {
+              margin: 0 !important;
+              padding: 0 !important;
             }
             .preview-sheet {
               background: transparent !important;
               border: none !important;
               padding: 0 !important;
+              margin: 0 !important;
               box-shadow: none !important;
             }
             .slims-grid {
@@ -340,6 +351,7 @@ export function PrintLabelsPage() {
               grid-template-columns: repeat(2, 96mm) !important;
               gap: 4mm 6mm !important;
               justify-content: center !important;
+              margin: 0 auto !important;
             }
             .slims-label-card {
               width: 96mm !important;
@@ -373,32 +385,36 @@ export function PrintLabelsPage() {
               justify-content: center !important;
               width: 44mm !important;
               text-align: center !important;
+              gap: 1.2mm !important;
             }
-            .slims-barcode-title {
+            .slims-barcode-digits {
               font-family: Arial, Helvetica, sans-serif !important;
-              font-size: 5.5pt !important;
-              line-height: 1.1 !important;
-              max-width: 42mm !important;
-              white-space: nowrap !important;
-              overflow: hidden !important;
-              text-overflow: ellipsis !important;
+              font-size: 8pt !important;
+              font-weight: bold !important;
               color: #000000 !important;
-              margin-bottom: 0.8mm !important;
+              letter-spacing: 0.5pt !important;
+              line-height: 1 !important;
+              white-space: nowrap !important;
             }
             .slims-barcode-svg {
               display: flex !important;
               justify-content: center !important;
               align-items: center !important;
-              width: 100% !important;
+              line-height: 0 !important;
             }
-            .slims-barcode-digits {
-              font-family: "Courier New", Courier, monospace !important;
-              font-size: 7.5pt !important;
-              font-weight: bold !important;
+            .slims-barcode-title {
+              font-family: Arial, Helvetica, sans-serif !important;
+              font-size: 6pt !important;
+              font-weight: 600 !important;
+              line-height: 1.15 !important;
+              max-width: 43mm !important;
+              display: -webkit-box !important;
+              -webkit-line-clamp: 2 !important;
+              -webkit-box-orient: vertical !important;
+              overflow: hidden !important;
+              text-overflow: ellipsis !important;
               color: #000000 !important;
-              letter-spacing: 0.5pt !important;
-              line-height: 1 !important;
-              margin-top: 0.8mm !important;
+              text-align: left !important;
             }
             .slims-label-col {
               width: 61mm !important;
@@ -440,7 +456,7 @@ export function PrintLabelsPage() {
             }
             .slims-call-line {
               font-family: Arial, Helvetica, sans-serif !important;
-              font-size: 13pt !important;
+              font-size: 13.5pt !important;
               font-weight: bold !important;
               color: #000000 !important;
               line-height: 1.25 !important;
@@ -470,23 +486,26 @@ export function PrintLabelsPage() {
                     {/* SISI KIRI: Barcode & Judul (Rotasi -90°) */}
                     <div className="slims-barcode-col">
                       <div className="slims-barcode-rotator">
-                        <div className="slims-barcode-title" title={data.judul}>
-                          {truncateTitle(data.judul)}
+                        {/* 1. DIGITS / ISBN: Pertama di DOM -> Rotasi -90° menempatkannya di sisi KIRI barcode */}
+                        <div className="slims-barcode-digits">
+                          {item.item_code}
                         </div>
 
+                        {/* 2. BARCODE: Di tengah, garis membentang tinggi, tidak gepeng */}
                         <div className="slims-barcode-svg">
                           <Barcode
                             value={item.item_code}
-                            width={1.15}
-                            height={28}
+                            width={getBarcodeWidth(item.item_code)}
+                            height={44}
                             margin={0}
                             displayValue={false}
                             format="CODE128"
                           />
                         </div>
 
-                        <div className="slims-barcode-digits">
-                          {item.item_code}
+                        {/* 3. JUDUL BUKU: Terakhir di DOM -> Rotasi -90° menempatkannya di sisi KANAN barcode */}
+                        <div className="slims-barcode-title" title={data.judul}>
+                          {data.judul}
                         </div>
                       </div>
                     </div>

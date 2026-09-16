@@ -104,10 +104,10 @@ export function AdminLayout() {
   )
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden print:h-auto print:overflow-visible print:bg-white">
       {/* Desktop Sidebar */}
       <aside className={cn(
-        'hidden lg:flex flex-col bg-white border-r border-slate-200 transition-all duration-200 relative',
+        'hidden lg:flex flex-col bg-white border-r border-slate-200 transition-all duration-200 relative print:hidden',
         collapsed ? 'w-16' : 'w-60'
       )}>
         {sidebarContent}
@@ -123,7 +123,7 @@ export function AdminLayout() {
 
       {/* Mobile Sidebar Overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
+        <div className="fixed inset-0 z-40 lg:hidden print:hidden">
           <div className="absolute inset-0 bg-black/30" onClick={() => setMobileOpen(false)} />
           <aside className="relative w-64 h-full bg-white border-r border-slate-200">
             {sidebarContent}
@@ -132,8 +132,8 @@ export function AdminLayout() {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30">
+      <div className="flex-1 flex flex-col overflow-hidden print:overflow-visible print:h-auto">
+        <div className="h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 print:hidden">
           <div className="flex items-center gap-4">
             <button className="md:hidden text-slate-500 hover:text-slate-700" onClick={() => setMobileOpen(true)}>
               <Menu size={24} />
@@ -142,11 +142,13 @@ export function AdminLayout() {
           </div>
         </div>
 
-        <main className="flex-1 overflow-auto p-4 md:p-6 flex flex-col justify-between">
-          <div className="flex-1">
+        <main className="flex-1 overflow-auto p-4 md:p-6 flex flex-col justify-between print:p-0 print:m-0 print:overflow-visible">
+          <div className="flex-1 print:overflow-visible">
             <Outlet />
           </div>
-          <Footer />
+          <div className="print:hidden">
+            <Footer />
+          </div>
         </main>
       </div>
     </div>
