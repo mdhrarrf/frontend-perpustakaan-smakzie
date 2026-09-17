@@ -39,14 +39,14 @@ function formatIndoDate(dateStr: string) {
   }
 }
 
-// Vector Phone Icon resmi (bukan emoji)
+// Vector Phone Icon resmi (telepon kantor hitam sesuai kop surat asli)
 const PhoneIcon: React.FC = () => (
   <svg
     viewBox="0 0 24 24"
-    className="inline-block w-2.5 h-2.5 mx-1 text-black fill-current align-baseline"
+    className="inline-block w-[10px] h-[10px] mx-1 text-black fill-current align-baseline"
     xmlns="http://www.w3.org/2000/svg"
   >
-    <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-2.2 2.2a15.053 15.053 0 0 1-6.59-6.59l2.2-2.21a.96.96 0 0 0 .25-1A11.36 11.36 0 0 1 8.57 3.9c0-.55-.45-1-1-1H4.07c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.52c0-.55-.45-1-1.06-1z" />
+    <path d="M20 4H4c-1.1 0-2 .9-2 2v1c0 1.1.9 2 2 2h.6l1.6 9c.16.89.93 1.54 1.83 1.54h7.94c.9 0 1.67-.65 1.83-1.54l1.6-9h.6c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 12.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5zm0-5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z" />
   </svg>
 )
 
@@ -142,64 +142,69 @@ export const VisitorSheetPrint: React.FC<VisitorSheetPrintProps> = ({
                   breakInside: 'avoid',
                 }}
               >
-                {/* ── 1. KOP SURAT RESMI PEMPROV JABAR & SMKN 1 CIANJUR ── */}
-                <div className="sheet-kop-header relative w-full pb-1 mb-1">
-                  {/* Logo Pemda Jawa Barat (Kiri) */}
-                  <div className="absolute left-0 top-1 w-[68px] flex items-center justify-center">
-                    <img
-                      src="/report-assets/logo-jabar.png"
-                      alt="Logo Jawa Barat"
-                      className="w-full object-contain max-h-[86px]"
-                    />
-                  </div>
+                {/* ── 1. KOP SURAT RESMI PEMPROV JABAR & SMKN 1 CIANJUR (LOGO PRESISI & TENGAH) ── */}
+                <div className="sheet-kop-header w-full pb-1 mb-1">
+                  <div className="flex items-center justify-between gap-2 w-full">
+                    {/* Logo Pemda Jawa Barat (Kiri) - Vertically Centered */}
+                    <div className="w-[96px] flex-shrink-0 flex items-center justify-center">
+                      <img
+                        src="/report-assets/logo-jabar.png"
+                        alt="Logo Jawa Barat"
+                        className="w-[92px] h-auto object-contain max-h-[110px]"
+                      />
+                    </div>
 
-                  {/* Logo SMKN 1 Cianjur (Kanan) */}
-                  <div className="absolute right-0 top-1 w-[70px] flex items-center justify-center">
-                    <img
-                      src="/report-assets/logo-smakzie-kop.png"
-                      alt="Logo SMKN 1 Cianjur"
-                      className="w-full object-contain max-h-[86px]"
-                    />
-                  </div>
+                    {/* Teks Kop Tengah */}
+                    <div className="flex-1 text-center px-1 leading-[1.22] text-black">
+                      <h2 className="text-[10pt] font-bold tracking-wide uppercase">
+                        PEMERINTAH DAERAH PROVINSI JAWA BARAT
+                      </h2>
+                      <h2 className="text-[10pt] font-bold tracking-wide uppercase">
+                        DINAS PENDIDIKAN
+                      </h2>
+                      <h2 className="text-[10pt] font-bold tracking-wide uppercase">
+                        CABANG DINAS PENDIDIKAN WILAYAH VI
+                      </h2>
+                      <h1 className="text-[14.5pt] font-black tracking-wider uppercase my-0.5">
+                        SMK NEGERI 1 CIANJUR
+                      </h1>
+                      <p className="text-[7.2pt] font-bold tracking-tight text-black">
+                        BIDANG STUDI KEAHLIAN BISNIS MANAJEMEN & TEKNOLOGI INFORMASI DAN KOMUNIKASI
+                      </p>
+                      <p className="text-[7.8pt] text-black">
+                        Kampus I : Jalan Siliwangi No. 41 <PhoneIcon /> (0263) 261265
+                      </p>
+                      <p className="text-[7.8pt] text-black">
+                        Kampus 2 : Jalan Pangeran Hidayatullah No. 67 <PhoneIcon /> (0263) 261949
+                      </p>
+                      <p className="text-[7.8pt] text-black">
+                        Fax (0263) 272561 – Cianjur – 43212
+                      </p>
+                      <p className="text-[7.2pt] text-black">
+                        Facebook : <span className="underline">https://www.facebook.com/SMKN1CIANJUR/</span> Instagram : <span className="underline">https://www.instagram.com/smakzie/</span>
+                      </p>
+                      <p className="text-[7.2pt] text-black">
+                        Twitter : <span className="underline">https://twitter.com/CianjurSMKN?lang=en</span> Website: <span className="underline">http://www.smkn1cianjur.sch.id</span> E-mail :
+                      </p>
+                      <p className="text-[7.2pt] text-black">
+                        <span className="underline">info@smkn1cianjur.sch.id</span>
+                      </p>
+                      <p
+                        className="text-[9pt] italic text-black mt-0.5"
+                        style={{ fontFamily: '"Brush Script MT", "Segoe Script", "Dancing Script", cursive, "Times New Roman", Times, serif' }}
+                      >
+                        “The Right Place To Get Succes For The Future”
+                      </p>
+                    </div>
 
-                  {/* Teks Kop Tengah */}
-                  <div className="text-center px-16 leading-[1.25] text-black">
-                    <h2 className="text-[11pt] font-bold tracking-wide uppercase">
-                      PEMERINTAH DAERAH PROVINSI JAWA BARAT
-                    </h2>
-                    <h2 className="text-[11pt] font-bold tracking-wide uppercase">
-                      DINAS PENDIDIKAN
-                    </h2>
-                    <h2 className="text-[11pt] font-bold tracking-wide uppercase">
-                      CABANG DINAS PENDIDIKAN WILAYAH VI
-                    </h2>
-                    <h1 className="text-[15pt] font-black tracking-wider uppercase my-0.5">
-                      SMK NEGERI 1 CIANJUR
-                    </h1>
-                    <p className="text-[7.5pt] font-bold tracking-tight text-black">
-                      BIDANG STUDI KEAHLIAN BISNIS MANAJEMEN & TEKNOLOGI INFORMASI DAN KOMUNIKASI
-                    </p>
-                    <p className="text-[8pt] text-black">
-                      Kampus I : Jalan Siliwangi No. 41 <PhoneIcon /> (0263) 261265
-                    </p>
-                    <p className="text-[8pt] text-black">
-                      Kampus 2 : Jalan Pangeran Hidayatullah No. 67 <PhoneIcon /> (0263) 261949
-                    </p>
-                    <p className="text-[8pt] text-black">
-                      Fax (0263) 272561 – Cianjur – 43212
-                    </p>
-                    <p className="text-[7.5pt] text-black">
-                      Facebook : https://www.facebook.com/SMKN1CIANJUR/ Instagram : https://www.instagram.com/smakzie/
-                    </p>
-                    <p className="text-[7.5pt] text-black">
-                      Twitter : https://twitter.com/CianjurSMKN?lang=en Website: http://www.smkn1cianjur.sch.id E-mail : info@smkn1cianjur.sch.id
-                    </p>
-                    <p
-                      className="text-[9pt] italic text-black mt-0.5"
-                      style={{ fontFamily: '"Times New Roman", Times, Georgia, serif' }}
-                    >
-                      “The Right Place To Get Succes For The Future”
-                    </p>
+                    {/* Logo SMKN 1 Cianjur (Kanan) - Vertically Centered */}
+                    <div className="w-[84px] flex-shrink-0 flex items-center justify-center">
+                      <img
+                        src="/report-assets/logo-smakzie-kop.png"
+                        alt="Logo SMKN 1 Cianjur"
+                        className="w-[80px] h-auto object-contain max-h-[105px]"
+                      />
+                    </div>
                   </div>
 
                   {/* Garis Ganda Pemisah Kop (Garis tebal atas 2.5px, garis tipis bawah 1px) */}
