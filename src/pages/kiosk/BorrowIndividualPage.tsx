@@ -424,7 +424,7 @@ export function KioskBorrowIndividual() {
                 onCapture={handlePhotoCapture}
                 onNoWebcam={() => setStep('confirm')}
                 autoCapture
-                autoCaptureDelay={5}
+                autoCaptureDelay={1}
                 kioskMode
               />
             </div>

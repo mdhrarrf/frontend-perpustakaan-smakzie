@@ -29,7 +29,7 @@ export function WebcamCapture({
   onRetake,
   onNoWebcam,
   autoCapture = true,
-  autoCaptureDelay = 5,
+  autoCaptureDelay = 1,
   className,
   kioskMode = false,
   faceDetection = true,

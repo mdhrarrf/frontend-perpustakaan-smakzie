@@ -1044,7 +1044,7 @@ export function KioskBorrowClass() {
                 onNoWebcam={() => setStep('confirm')}
                 kioskMode
                 autoCapture
-                autoCaptureDelay={5}
+                autoCaptureDelay={1}
               />
             </div>
           )}

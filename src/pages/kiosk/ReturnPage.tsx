@@ -328,7 +328,7 @@ export function KioskReturnPage() {
             }}
             onNoWebcam={() => setStep('confirm')}
             autoCapture
-            autoCaptureDelay={5}
+            autoCaptureDelay={1}
             kioskMode
           />
         </div>
