@@ -282,9 +282,6 @@ export function KioskBorrowIndividual() {
           {step === 'scan-student' && (
             <div key="scan-student" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
-                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
-                  Langkah 1 dari {steps.length} • Scan Siswa
-                </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">
                   Scan Kartu Pelajar
                 </h2>
@@ -303,9 +300,6 @@ export function KioskBorrowIndividual() {
           {step === 'confirm-student' && student && (
             <div key="confirm-student" className="animate-kiosk-step flex flex-col items-center justify-center gap-3 sm:gap-5 max-w-xl mx-auto w-full my-auto">
               <div className="text-center">
-                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-3.5 py-1 rounded-full mb-1.5 border border-blue-200/60">
-                  Langkah 1 dari {steps.length} • Verifikasi Siswa
-                </span>
                 <h2 className="text-slate-900 text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
                   Periksa Identitas Siswa
                 </h2>
@@ -428,9 +422,6 @@ export function KioskBorrowIndividual() {
           {step === 'scan-book' && student && (
             <div key="scan-book" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
-                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
-                  Langkah 2 dari {steps.length} • Scan Buku
-                </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Scan Barcode Buku</h2>
                 <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Arahkan barcode atau QR pada buku ke scanner</p>
               </div>
@@ -445,9 +436,6 @@ export function KioskBorrowIndividual() {
           {step === 'pick-duration' && student && book && (
             <div key="pick-duration" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
-                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
-                  Langkah 3 dari {steps.length} • Durasi
-                </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Durasi Peminjaman</h2>
                 <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Pilih berapa hari Anda ingin meminjam buku ini</p>
               </div>
@@ -501,9 +489,6 @@ export function KioskBorrowIndividual() {
           {step === 'photo' && book && (
             <div key="photo" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
-                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
-                  Langkah 4 dari {steps.length} • Foto
-                </span>
                 <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Verifikasi & Foto Siswa</h2>
                 <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Posisikan wajah di dalam lingkaran oval untuk verifikasi otomatis</p>
               </div>
@@ -522,9 +507,6 @@ export function KioskBorrowIndividual() {
           {step === 'confirm' && student && book && (
             <div key="confirm" className="animate-kiosk-step flex flex-col items-center justify-center gap-3 sm:gap-5 lg:gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
-                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-3.5 py-1 rounded-full mb-1 sm:mb-2 border border-blue-200/60">
-                  Langkah 5 dari {steps.length} • Konfirmasi
-                </span>
                 <h2 className="text-slate-900 text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight">Konfirmasi Peminjaman</h2>
                 <p className="text-slate-600 text-xs sm:text-base mt-0.5 font-medium">Pastikan data peminjaman sudah sesuai</p>
               </div>

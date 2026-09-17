@@ -286,9 +286,6 @@ export function KioskReturnPage() {
       {step === 'confirm-student' && student && !isLoading && (
         <div key="confirm-student" className="animate-kiosk-step flex flex-col items-center justify-center gap-3 sm:gap-5 max-w-xl mx-auto w-full my-auto">
           <div className="text-center">
-            <span className="inline-block bg-emerald-50 text-emerald-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-3.5 py-1 rounded-full mb-1.5 border border-emerald-200/60">
-              Verifikasi Siswa Pengembali
-            </span>
             <h2 className="text-slate-900 text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
               Periksa Identitas Anda
             </h2>
