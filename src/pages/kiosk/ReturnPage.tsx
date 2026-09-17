@@ -11,12 +11,12 @@ import { getErrorMessage } from '@/api/client'
 import { formatDateTime, formatDate } from '@/utils'
 import { compareFaces } from '@/utils/faceCompare'
 import {
-  ArrowLeft, AlertTriangle, CheckCircle2, Loader2, RotateCcw,
+  ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Loader2, RotateCcw,
   Clock, Check, User, Camera, ShieldCheck, ShieldX, ShieldAlert,
 } from 'lucide-react'
 import type { Student, Loan } from '@/types'
 
-type Step = 'scan-student' | 'select-loan' | 'photo' | 'confirm'
+type Step = 'scan-student' | 'confirm-student' | 'select-loan' | 'photo' | 'confirm'
 type FaceMatchStatus = 'idle' | 'checking' | 'match' | 'mismatch' | 'no_face' | 'unknown'
 
 export function KioskReturnPage() {
@@ -71,6 +71,14 @@ export function KioskReturnPage() {
       })
   }, [step, selectedLoan, returnPhotoPreview])
 
+  function handleBack() {
+    if (step === 'confirm') setStep('photo')
+    else if (step === 'photo') setStep('select-loan')
+    else if (step === 'select-loan') setStep('confirm-student')
+    else if (step === 'confirm-student') reset()
+    else navigate('/kiosk')
+  }
+
   async function handleStudentScan(code: string) {
     setIsLoading(true); setError(null)
     try {
@@ -80,9 +88,25 @@ export function KioskReturnPage() {
         setError('Siswa tidak ditemukan. Pastikan NIS/NISN yang Anda masukkan sudah benar atau kartu pelajar terbaca dengan jelas.')
         return
       }
+      if (s.status !== 'active') {
+        setError('Kartu siswa tidak aktif. Hubungi petugas perpustakaan.')
+        return
+      }
       setStudent(s)
+      setStep('confirm-student')
+    } catch (err) {
+      setError(getErrorMessage(err) || 'Siswa tidak ditemukan. Pastikan NIS/NISN yang Anda masukkan sudah benar atau kartu pelajar terbaca dengan jelas.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-      const loanData = await studentService.loans(s.id, { status: 'active,overdue' })
+  // ─── Step 1.5: Konfirmasi Siswa & Cek Pinjaman Aktif untuk Kembali ───
+  async function handleProceedFromStudentConfirm() {
+    if (!student) return
+    setIsLoading(true); setError(null)
+    try {
+      const loanData = await studentService.loans(student.id, { status: 'active,overdue' })
       const rawLoans = loanData.data?.data ?? []
       const loans = rawLoans.filter((l: Loan) => l.status === 'active' || l.status === 'overdue')
 
@@ -93,7 +117,7 @@ export function KioskReturnPage() {
       setActiveLoans(loans)
       setStep('select-loan')
     } catch (err) {
-      setError(getErrorMessage(err) || 'Siswa tidak ditemukan. Pastikan NIS/NISN yang Anda masukkan sudah benar atau kartu pelajar terbaca dengan jelas.')
+      setError(getErrorMessage(err) || 'Gagal memuat data peminjaman siswa.')
     } finally {
       setIsLoading(false)
     }
@@ -200,8 +224,9 @@ export function KioskReturnPage() {
       {/* Header */}
       <div className="flex items-center gap-4 mb-3 sm:mb-5 lg:mb-8">
         <button
-          onClick={() => navigate('/kiosk')}
+          onClick={handleBack}
           className="p-3 bg-white hover:bg-slate-100 rounded-2xl border border-slate-200 text-slate-700 shadow-sm transition-all cursor-pointer"
+          title="Kembali"
         >
           <ArrowLeft size={24} />
         </button>
@@ -253,6 +278,75 @@ export function KioskReturnPage() {
               kioskMode
               autoFocus
             />
+          </div>
+        </div>
+      )}
+
+      {/* ─── Step 1.5: Confirm Student Identity ─── */}
+      {step === 'confirm-student' && student && !isLoading && (
+        <div key="confirm-student" className="animate-kiosk-step flex flex-col items-center justify-center gap-3 sm:gap-5 max-w-xl mx-auto w-full my-auto">
+          <div className="text-center">
+            <span className="inline-block bg-emerald-50 text-emerald-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-3.5 py-1 rounded-full mb-1.5 border border-emerald-200/60">
+              Verifikasi Siswa Pengembali
+            </span>
+            <h2 className="text-slate-900 text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
+              Periksa Identitas Anda
+            </h2>
+            <p className="text-slate-600 text-xs sm:text-base mt-0.5 font-medium">
+              Pastikan data siswa di bawah ini benar sebelum mengembalikan buku
+            </p>
+          </div>
+
+          <div className="bg-white rounded-3xl p-5 sm:p-7 w-full border border-slate-200/80 shadow-xl shadow-slate-200/50 space-y-4">
+            {/* Profile Header */}
+            <div className="flex items-center gap-4 p-3 bg-emerald-50/60 border border-emerald-200/70 rounded-2xl">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-emerald-100 border border-emerald-200 shadow-inner flex items-center justify-center flex-shrink-0">
+                {student.foto ? (
+                  <img src={student.foto} alt={student.nama} className="w-full h-full object-cover" />
+                ) : (
+                  <User className="text-emerald-600 w-8 h-8 sm:w-9 sm:h-9" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Siswa Terdeteksi</p>
+                <h3 className="text-base sm:text-lg font-extrabold text-slate-900 truncate mt-0.5">{student.nama}</h3>
+                <p className="text-xs text-slate-500 font-medium">Status: <span className="text-emerald-600 font-bold">Aktif Terdaftar</span></p>
+              </div>
+            </div>
+
+            {/* Data Fields */}
+            <div className="divide-y divide-slate-100 border-t border-slate-100">
+              {[
+                { label: 'Nama Lengkap', value: student.nama },
+                { label: 'NIS',          value: student.nis },
+                { label: 'NISN',         value: student.nisn || '—' },
+                { label: 'Kelas',        value: student.kelas || '—' },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex justify-between items-center py-2.5 sm:py-3">
+                  <span className="text-slate-500 text-xs sm:text-sm font-semibold">{label}</span>
+                  <span className="text-slate-900 text-xs sm:text-sm sm:text-base font-bold text-right truncate max-w-[65%]">{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 sm:gap-4 w-full">
+            <button
+              type="button"
+              onClick={reset}
+              className={`${kBtn} flex-1 bg-white hover:bg-slate-100 text-slate-700 border-2 border-slate-200 shadow-sm`}
+            >
+              <ArrowLeft size={20} /> Bukan Saya / Ganti
+            </button>
+            <button
+              type="button"
+              onClick={handleProceedFromStudentConfirm}
+              className={`${kBtn} flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/30`}
+            >
+              <span>Benar, Lanjutkan</span>
+              <ArrowRight size={20} />
+            </button>
           </div>
         </div>
       )}

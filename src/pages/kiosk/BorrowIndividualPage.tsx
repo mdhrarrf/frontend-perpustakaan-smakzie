@@ -9,11 +9,11 @@ import { WebcamCapture } from '@/components/kiosk/WebcamCapture'
 import { BarcodeScanner } from '@/components/kiosk/BarcodeScanner'
 import { useKioskStore } from '@/store/kiosk.store'
 import { getErrorMessage } from '@/api/client'
-import { ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Loader2, BookOpen, Clock, AlertCircle, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Loader2, BookOpen, Clock, AlertCircle, X, User } from 'lucide-react'
 import type { Student, Book, Loan } from '@/types'
 import { formatDate } from '@/utils'
 
-type Step = 'scan-student' | 'active-loan-warning' | 'scan-book' | 'pick-duration' | 'photo' | 'confirm'
+type Step = 'scan-student' | 'confirm-student' | 'active-loan-warning' | 'scan-book' | 'pick-duration' | 'photo' | 'confirm'
 
 const MAX_DUE_DAYS = 7
 
@@ -43,6 +43,7 @@ export function KioskBorrowIndividual() {
   const currentStepIndex = (() => {
     switch (step) {
       case 'scan-student':
+      case 'confirm-student':
       case 'active-loan-warning':
         return 0
       case 'scan-book':
@@ -64,12 +65,14 @@ export function KioskBorrowIndividual() {
     else if (step === 'photo') setStep('pick-duration')
     else if (step === 'pick-duration') setStep('scan-book')
     else if (step === 'scan-book') {
-      setStudent(null)
       setBook(null)
-      setStep('scan-student')
+      setStep('confirm-student')
     }
     else if (step === 'active-loan-warning') {
       setActiveLoan(null)
+      setStep('confirm-student')
+    }
+    else if (step === 'confirm-student') {
       setStudent(null)
       setStep('scan-student')
     }
@@ -101,9 +104,20 @@ export function KioskBorrowIndividual() {
       }
 
       setStudent(s)
+      setStep('confirm-student')
+    } catch (err) {
+      setError(getErrorMessage(err) || 'Siswa tidak ditemukan. Pastikan NIS/NISN yang Anda masukkan sudah benar atau kartu pelajar terbaca dengan jelas.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-      setLoadingMessage('Mengecek riwayat peminjaman...')
-      const loansRes = await studentService.loans(s.id, { status: 'active,overdue', per_page: 1 })
+  // ─── Step 1.5: Konfirmasi Siswa & Cek Pinjaman Aktif ───
+  async function handleProceedFromStudentConfirm() {
+    if (!student) return
+    setIsLoading(true); setError(null); setLoadingMessage('Mengecek riwayat peminjaman...')
+    try {
+      const loansRes = await studentService.loans(student.id, { status: 'active,overdue', per_page: 1 })
       const rawLoans = loansRes.data?.data ?? []
       const activeLoans = rawLoans.filter((l: Loan) => l.status === 'active' || l.status === 'overdue')
 
@@ -114,10 +128,15 @@ export function KioskBorrowIndividual() {
         setStep('scan-book')
       }
     } catch (err) {
-      setError(getErrorMessage(err) || 'Siswa tidak ditemukan. Pastikan NIS/NISN yang Anda masukkan sudah benar atau kartu pelajar terbaca dengan jelas.')
+      setError(getErrorMessage(err) || 'Gagal memeriksa riwayat peminjaman siswa.')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  function handleCancelStudent() {
+    setStudent(null)
+    setStep('scan-student')
   }
 
   // ─── Step 2: Scan Buku ───
@@ -276,6 +295,75 @@ export function KioskBorrowIndividual() {
 
               <div className="w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
                 <BarcodeScanner onScan={handleStudentScan} placeholder="Masukan NIS/NISN Anda" kioskMode autoFocus />
+              </div>
+            </div>
+          )}
+
+          {/* ─── Step 1.5: Confirm Student Identity ─── */}
+          {step === 'confirm-student' && student && (
+            <div key="confirm-student" className="animate-kiosk-step flex flex-col items-center justify-center gap-3 sm:gap-5 max-w-xl mx-auto w-full my-auto">
+              <div className="text-center">
+                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-3.5 py-1 rounded-full mb-1.5 border border-blue-200/60">
+                  Langkah 1 dari {steps.length} • Verifikasi Siswa
+                </span>
+                <h2 className="text-slate-900 text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
+                  Periksa Identitas Siswa
+                </h2>
+                <p className="text-slate-600 text-xs sm:text-base mt-0.5 font-medium">
+                  Pastikan data siswa di bawah ini benar sebelum melanjutkan
+                </p>
+              </div>
+
+              <div className="bg-white rounded-3xl p-5 sm:p-7 w-full border border-slate-200/80 shadow-xl shadow-slate-200/50 space-y-4">
+                {/* Profile Header */}
+                <div className="flex items-center gap-4 p-3 bg-blue-50/60 border border-blue-200/70 rounded-2xl">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-blue-100 border border-blue-200 shadow-inner flex items-center justify-center flex-shrink-0">
+                    {student.foto ? (
+                      <img src={student.foto} alt={student.nama} className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="text-blue-600 w-8 h-8 sm:w-9 sm:h-9" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Siswa Terdeteksi</p>
+                    <h3 className="text-base sm:text-lg font-extrabold text-slate-900 truncate mt-0.5">{student.nama}</h3>
+                    <p className="text-xs text-slate-500 font-medium">Status: <span className="text-emerald-600 font-bold">Aktif Terdaftar</span></p>
+                  </div>
+                </div>
+
+                {/* Data Fields */}
+                <div className="divide-y divide-slate-100 border-t border-slate-100">
+                  {[
+                    { label: 'Nama Lengkap', value: student.nama },
+                    { label: 'NIS',          value: student.nis },
+                    { label: 'NISN',         value: student.nisn || '—' },
+                    { label: 'Kelas',        value: student.kelas || '—' },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="flex justify-between items-center py-2.5 sm:py-3">
+                      <span className="text-slate-500 text-xs sm:text-sm font-semibold">{label}</span>
+                      <span className="text-slate-900 text-xs sm:text-sm sm:text-base font-bold text-right truncate max-w-[65%]">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 sm:gap-4 w-full">
+                <button
+                  type="button"
+                  onClick={handleCancelStudent}
+                  className={`${kBtn} flex-1 bg-white hover:bg-slate-100 text-slate-700 border-2 border-slate-200 shadow-sm`}
+                >
+                  <ArrowLeft size={20} /> Bukan Saya / Ganti
+                </button>
+                <button
+                  type="button"
+                  onClick={handleProceedFromStudentConfirm}
+                  className={`${kBtn} flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30`}
+                >
+                  <span>Benar, Lanjutkan</span>
+                  <ArrowRight size={20} />
+                </button>
               </div>
             </div>
           )}
