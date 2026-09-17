@@ -196,7 +196,7 @@ export function KioskReturnPage() {
   const isReturnBlocked = faceMatchStatus === 'mismatch'
 
   return (
-    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-teal-50/40 to-emerald-50/40 flex flex-col p-3 sm:p-5 lg:p-8 text-slate-900 justify-between">
+    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-teal-50/40 to-emerald-50/40 flex flex-col p-3 sm:p-5 lg:p-8 text-slate-900">
       {/* Header */}
       <div className="flex items-center gap-4 mb-3 sm:mb-5 lg:mb-8">
         <button
@@ -238,7 +238,7 @@ export function KioskReturnPage() {
 
       {/* ─── Step 1: Scan Student ─── */}
       {step === 'scan-student' && !isLoading && (
-        <div key="scan-student" className="animate-kiosk-step flex flex-col items-center gap-6 py-4 max-w-lg mx-auto w-full">
+        <div key="scan-student" className="animate-kiosk-step flex flex-col items-center gap-6 py-4 max-w-lg mx-auto w-full my-auto">
           <div className="text-center">
             <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-100 rounded-3xl flex items-center justify-center mx-auto mb-4 text-emerald-600 shadow-sm">
               <RotateCcw size={36} />
@@ -259,7 +259,7 @@ export function KioskReturnPage() {
 
       {/* ─── Step 2: Select Loan ─── */}
       {step === 'select-loan' && student && !isLoading && (
-        <div key="select-loan" className="animate-kiosk-step flex flex-col gap-6 max-w-2xl mx-auto w-full py-4">
+        <div key="select-loan" className="animate-kiosk-step flex flex-col gap-6 max-w-2xl mx-auto w-full py-4 my-auto">
           <div className="text-center">
             <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-6 py-2.5 mb-3 shadow-sm">
               <CheckCircle2 size={20} className="text-emerald-600" />
@@ -309,7 +309,7 @@ export function KioskReturnPage() {
 
       {/* ─── Step 3: Photo ─── */}
       {step === 'photo' && selectedLoan && (
-        <div key="photo" className="animate-kiosk-step flex flex-col items-center gap-6 max-w-xl mx-auto w-full py-4">
+        <div key="photo" className="animate-kiosk-step flex flex-col items-center gap-6 max-w-xl mx-auto w-full py-4 my-auto">
           <div className="text-center">
             <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Dokumentasi Pengembalian</h2>
             <div className="inline-block bg-white border border-slate-200 rounded-xl px-5 py-2 mt-2 shadow-sm">
@@ -336,7 +336,7 @@ export function KioskReturnPage() {
 
       {/* ─── Step 4: Confirm (Landscape 2-Column Layout) ─── */}
       {step === 'confirm' && student && selectedLoan && (
-        <div key="confirm" className="animate-kiosk-step flex flex-col items-center gap-4 max-w-4xl lg:max-w-5xl mx-auto w-full py-4 px-0">
+        <div key="confirm" className="animate-kiosk-step flex flex-col items-center gap-4 max-w-4xl lg:max-w-5xl mx-auto w-full py-4 px-0 my-auto">
           {isLoanOverdue(selectedLoan) && (
             <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-sm">
               <div className="flex items-center gap-3">

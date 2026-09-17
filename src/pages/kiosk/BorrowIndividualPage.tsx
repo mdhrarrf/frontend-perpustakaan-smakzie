@@ -187,7 +187,7 @@ export function KioskBorrowIndividual() {
   const isOverdue = activeLoan?.status === 'overdue'
 
   return (
-    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-sky-50/40 to-blue-50/40 flex flex-col p-3 sm:p-5 lg:p-8 text-slate-900 justify-between">
+    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-sky-50/40 to-blue-50/40 flex flex-col p-3 sm:p-5 lg:p-8 text-slate-900">
       {/* ── Header ── */}
       <div className="flex items-center justify-between gap-4 mb-3 sm:mb-5 lg:mb-6">
         <div className="flex items-center gap-3 sm:gap-4">
@@ -257,7 +257,7 @@ export function KioskBorrowIndividual() {
 
       {/* ── Main Content Area ── */}
       {!isLoading && (
-        <div className="flex flex-col items-center w-full py-4">
+        <div className="flex-1 flex flex-col justify-center items-center my-auto w-full">
 
           {/* ─── Step 1: Scan Siswa ─── */}
           {step === 'scan-student' && (
