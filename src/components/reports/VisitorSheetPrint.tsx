@@ -21,8 +21,8 @@ const MONTH_NAMES = [
 ]
 
 const ROMAN_WEEKS = ['', 'I', 'II', 'III', 'IV', 'V']
-// 20 baris per halaman menjamin 1 lembar F4 pas sempurna dan blok tanda tangan tidak akan pernah loncat ke page 2
-const ROWS_PER_PAGE = 20
+// 25 baris per halaman menjamin 1 lembar F4 pas sempurna dan blok tanda tangan tidak akan pernah loncat ke page 2
+const ROWS_PER_PAGE = 25
 
 function formatIndoDate(dateStr: string) {
   try {
@@ -293,42 +293,42 @@ export const VisitorSheetPrint: React.FC<VisitorSheetPrintProps> = ({
                         const isPinjam = v.keperluan === 'pinjam'
                         const isKembali = v.keperluan === 'kembali'
                         return (
-                          <tr key={v.id || i} className="border-b border-black h-[22px]">
-                            <td className="border-r border-black text-center px-1">
+                          <tr key={v.id || i} className="border-b border-black h-[21px]">
+                            <td className="border-r border-black text-center px-1 text-[8.5pt]">
                               {rowNo}
                             </td>
-                            <td className="border-r border-black px-2 text-center whitespace-nowrap text-[8.5pt]">
+                            <td className="border-r border-black px-2 text-center whitespace-nowrap text-[8pt]">
                               {formatIndoDate(v.visited_at)}
                             </td>
-                            <td className="border-r border-black px-3 font-medium truncate max-w-[260px]">
+                            <td className="border-r border-black px-2.5 font-medium truncate max-w-[260px] text-[8.5pt]">
                               {v.nama}
                             </td>
-                            <td className="border-r border-black text-center px-2 text-[8.5pt] truncate max-w-[110px]">
+                            <td className="border-r border-black text-center px-2 text-[8pt] truncate max-w-[110px]">
                               {v.kelas || '—'}
                             </td>
-                            <td className="border-r border-black text-center font-bold text-sm">
+                            <td className="border-r border-black text-center font-bold text-xs">
                               {isBaca ? '✓' : ''}
                             </td>
-                            <td className="border-r border-black text-center font-bold text-sm">
+                            <td className="border-r border-black text-center font-bold text-xs">
                               {isPinjam ? '✓' : ''}
                             </td>
-                            <td className="text-center font-bold text-sm">
+                            <td className="text-center font-bold text-xs">
                               {isKembali ? '✓' : ''}
                             </td>
                           </tr>
                         )
                       })}
 
-                      {/* Empty Padding Rows up to exactly 20 rows per page */}
+                      {/* Empty Padding Rows up to exactly 25 rows per page */}
                       {emptyRows.map((_, i) => {
                         const rowNo = pageRows.length + startNo + i
                         return (
-                          <tr key={`empty-${i}`} className="border-b border-black h-[22px]">
-                            <td className="border-r border-black text-center px-1 text-gray-400">
+                          <tr key={`empty-${i}`} className="border-b border-black h-[21px]">
+                            <td className="border-r border-black text-center px-1 text-gray-400 text-[8.5pt]">
                               {rowNo}
                             </td>
                             <td className="border-r border-black px-2"></td>
-                            <td className="border-r border-black px-3"></td>
+                            <td className="border-r border-black px-2.5"></td>
                             <td className="border-r border-black px-2"></td>
                             <td className="border-r border-black"></td>
                             <td className="border-r border-black"></td>
@@ -342,7 +342,7 @@ export const VisitorSheetPrint: React.FC<VisitorSheetPrintProps> = ({
 
                 {/* ── 5. TANDA TANGAN RESMI (DIJAMIN PAS DI HALAMAN YANG SAMA) ── */}
                 <div
-                  className="sheet-signatures w-full mt-3 text-[10pt] leading-snug flex justify-between items-start text-black"
+                  className="sheet-signatures w-full mt-2.5 text-[9.5pt] leading-snug flex justify-between items-start text-black"
                   style={{
                     pageBreakInside: 'avoid',
                     breakInside: 'avoid',
@@ -352,9 +352,9 @@ export const VisitorSheetPrint: React.FC<VisitorSheetPrintProps> = ({
                   <div className="w-[45%] text-left pl-2">
                     <p className="font-normal">Mengetahui:</p>
                     <p className="font-normal">Kepala Perpustakaan,</p>
-                    <div className="h-[48px]"></div>
+                    <div className="h-[42px]"></div>
                     <p className="font-bold text-black uppercase tracking-wide">{kepalaPerpusName}</p>
-                    <p className="text-[9.5pt] text-black tracking-normal">{kepalaPerpusNip}</p>
+                    <p className="text-[9pt] text-black tracking-normal">{kepalaPerpusNip}</p>
                   </div>
 
                   {/* Kolom Kanan: Koordinator Pengelola Perpustakaan */}
@@ -362,9 +362,9 @@ export const VisitorSheetPrint: React.FC<VisitorSheetPrintProps> = ({
                     <p className="font-normal">{currentDateCity}</p>
                     <p className="font-normal">Koordinator Pengelola Perpustakaan</p>
                     <p className="font-normal">Kampus 1 dan 2,</p>
-                    <div className="h-[32px]"></div>
+                    <div className="h-[28px]"></div>
                     <p className="font-bold text-black uppercase tracking-wide">{koordinatorName}</p>
-                    <p className="text-[9.5pt] text-black tracking-normal">{koordinatorNip}</p>
+                    <p className="text-[9pt] text-black tracking-normal">{koordinatorNip}</p>
                   </div>
                 </div>
               </div>

@@ -784,7 +784,7 @@ export function AdminReportsPage() {
             <div className="no-print mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 px-1">
               <span>
                 {isPrintBlank ? (
-                  <strong className="text-primary-700">Mode: Cetak Blanko Fisik Kosong (20 baris format resmi F4)</strong>
+                  <strong className="text-primary-700">Mode: Cetak Blanko Fisik Kosong (25 baris format resmi F4)</strong>
                 ) : (
                   <span>Mode: Cetak Data Kunjungan Sistem ({visitors.length} data pengunjung)</span>
                 )}
