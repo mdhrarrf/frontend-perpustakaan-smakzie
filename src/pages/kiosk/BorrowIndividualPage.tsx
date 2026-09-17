@@ -178,7 +178,7 @@ export function KioskBorrowIndividual() {
     onError:   (err) => setError(getErrorMessage(err)),
   })
 
-  const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-lg sm:text-xl px-8 py-4 sm:py-5 min-h-[64px] sm:min-h-[72px] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2'
+  const kBtn = 'flex items-center justify-center gap-2 sm:gap-3 rounded-2xl font-bold text-base sm:text-lg lg:text-xl px-5 sm:px-8 py-3 sm:py-4 lg:py-5 min-h-[50px] sm:min-h-[58px] lg:min-h-[68px] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2'
 
   const activeLoanBookTitle = activeLoan?.items?.[0]?.book?.judul
     ?? (activeLoan?.items?.[0] as any)?.book_title_snapshot
@@ -187,9 +187,9 @@ export function KioskBorrowIndividual() {
   const isOverdue = activeLoan?.status === 'overdue'
 
   return (
-    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-sky-50/40 to-blue-50/40 flex flex-col p-4 sm:p-6 lg:p-8 text-slate-900 justify-between">
+    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-sky-50/40 to-blue-50/40 flex flex-col p-3 sm:p-5 lg:p-8 text-slate-900 justify-between">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between gap-4 mb-4 sm:mb-6">
+      <div className="flex items-center justify-between gap-4 mb-3 sm:mb-5 lg:mb-6">
         <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={handleBack}
@@ -257,7 +257,7 @@ export function KioskBorrowIndividual() {
 
       {/* ── Main Content Area ── */}
       {!isLoading && (
-        <div className="flex-1 flex flex-col justify-center items-center my-auto w-full">
+        <div className="flex flex-col items-center w-full py-4">
 
           {/* ─── Step 1: Scan Siswa ─── */}
           {step === 'scan-student' && (
@@ -432,36 +432,36 @@ export function KioskBorrowIndividual() {
 
           {/* ─── Step 5: Confirm ─── */}
           {step === 'confirm' && student && book && (
-            <div key="confirm" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
+            <div key="confirm" className="animate-kiosk-step flex flex-col items-center justify-center gap-3 sm:gap-5 lg:gap-6 max-w-xl mx-auto w-full">
               <div className="text-center">
-                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-4 py-1.5 rounded-full mb-2 border border-blue-200/60">
+                <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-wider px-3.5 py-1 rounded-full mb-1 sm:mb-2 border border-blue-200/60">
                   Langkah 5 dari {steps.length} • Konfirmasi
                 </span>
-                <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Konfirmasi Peminjaman</h2>
-                <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Pastikan data peminjaman sudah sesuai</p>
+                <h2 className="text-slate-900 text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight">Konfirmasi Peminjaman</h2>
+                <p className="text-slate-600 text-xs sm:text-base mt-0.5 font-medium">Pastikan data peminjaman sudah sesuai</p>
               </div>
 
-              <div className="bg-white rounded-3xl p-6 sm:p-8 w-full space-y-3 border border-slate-200/80 shadow-xl shadow-slate-200/50">
+              <div className="bg-white rounded-3xl p-4 sm:p-6 lg:p-8 w-full space-y-2 sm:space-y-3 border border-slate-200/80 shadow-xl shadow-slate-200/50">
                 {photoPreview && (
-                  <div className="flex items-center gap-4 p-3 bg-slate-50 border border-slate-200/80 rounded-2xl mb-2">
+                  <div className="flex items-center gap-3 sm:gap-4 p-2 sm:p-3 bg-slate-50 border border-slate-200/80 rounded-2xl mb-1 sm:mb-2">
                     <img
                       src={photoPreview}
                       alt="Foto Siswa"
-                      className="w-16 h-16 rounded-xl object-cover border border-slate-200 shadow-xs"
+                      className="w-11 h-11 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl object-cover border border-slate-200 shadow-xs flex-shrink-0"
                     />
-                    <div>
-                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Foto Peminjam</p>
-                      <p className="text-sm font-bold text-slate-900">{student.nama}</p>
-                      <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
-                        <CheckCircle2 size={13} /> Terlampir Otomatis
+                    <div className="min-w-0">
+                      <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Foto Peminjam</p>
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">{student.nama}</p>
+                      <span className="text-[10px] sm:text-xs text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
+                        <CheckCircle2 size={12} /> Terlampir Otomatis
                       </span>
                     </div>
                   </div>
                 )}
                 {book.judul === 'Unknown' || !book.judul ? (
-                  <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3 mb-2">
-                    <AlertTriangle size={18} className="text-red-500 shrink-0 mt-0.5" />
-                    <p className="text-sm text-red-700 font-semibold">
+                  <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-2.5 sm:p-3 mb-2">
+                    <AlertTriangle size={16} className="text-red-500 shrink-0 mt-0.5" />
+                    <p className="text-xs sm:text-sm text-red-700 font-semibold">
                       Data buku tidak terbaca. Coba scan ulang barcode, atau hubungi petugas.
                     </p>
                   </div>
@@ -475,26 +475,26 @@ export function KioskBorrowIndividual() {
                   { label: 'Lama Pinjam', value: `${dueDays} hari` },
                   { label: 'Jatuh Tempo', value: formatDate(getDueAt().toISOString()) + ' (23:59)' },
                 ].map(({ label, value }) => (
-                  <div key={label} className="flex justify-between items-start gap-4 py-2.5 border-b border-slate-100 last:border-0">
-                    <span className="text-slate-500 text-sm sm:text-base font-medium">{label}</span>
-                    <span className="text-slate-900 text-sm sm:text-base font-bold text-right">{value}</span>
+                  <div key={label} className="flex justify-between items-start gap-3 py-1.5 sm:py-2 lg:py-2.5 border-b border-slate-100 last:border-0">
+                    <span className="text-slate-500 text-xs sm:text-sm lg:text-base font-medium">{label}</span>
+                    <span className="text-slate-900 text-xs sm:text-sm lg:text-base font-bold text-right truncate max-w-[65%]">{value}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="flex gap-4 w-full">
+              <div className="flex gap-3 sm:gap-4 w-full">
                 <button
                   onClick={() => setStep('pick-duration')}
                   className={`${kBtn} flex-1 bg-white hover:bg-slate-100 text-slate-700 border-2 border-slate-200 shadow-sm`}
                 >
-                  <ArrowLeft size={22} /> Batal / Ubah
+                  <ArrowLeft size={20} /> Batal / Ubah
                 </button>
                 <button
                   onClick={() => borrowMutation.mutate()}
                   disabled={borrowMutation.isPending}
                   className={`${kBtn} flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30`}
                 >
-                  {borrowMutation.isPending ? <Loader2 className="animate-spin" size={24} /> : <CheckCircle2 size={24} />}
+                  {borrowMutation.isPending ? <Loader2 className="animate-spin" size={20} /> : <CheckCircle2 size={20} />}
                   {borrowMutation.isPending ? 'Memproses...' : 'Konfirmasi Pinjam'}
                 </button>
               </div>

@@ -37,7 +37,7 @@ export function KioskReturnPage() {
   const [faceMatchScore,  setFaceMatchScore]  = useState<number>(0)
   const faceCheckDoneRef = useRef(false)
 
-  const kBtn = 'flex items-center justify-center gap-3 rounded-2xl font-bold text-xl px-8 py-5 min-h-[80px] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none'
+  const kBtn = 'flex items-center justify-center gap-2 sm:gap-3 rounded-2xl font-bold text-base sm:text-lg lg:text-xl px-5 sm:px-8 py-3 sm:py-4 lg:py-5 min-h-[50px] sm:min-h-[58px] lg:min-h-[68px] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none'
 
   // Trigger face comparison once when entering confirm step
   useEffect(() => {
@@ -196,9 +196,9 @@ export function KioskReturnPage() {
   const isReturnBlocked = faceMatchStatus === 'mismatch'
 
   return (
-    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-teal-50/40 to-emerald-50/40 flex flex-col p-8 text-slate-900">
+    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-teal-50/40 to-emerald-50/40 flex flex-col p-3 sm:p-5 lg:p-8 text-slate-900 justify-between">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex items-center gap-4 mb-3 sm:mb-5 lg:mb-8">
         <button
           onClick={() => navigate('/kiosk')}
           className="p-3 bg-white hover:bg-slate-100 rounded-2xl border border-slate-200 text-slate-700 shadow-sm transition-all cursor-pointer"
@@ -206,10 +206,10 @@ export function KioskReturnPage() {
           <ArrowLeft size={24} />
         </button>
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">
             Pengembalian Buku Mandiri
           </h1>
-          <p className="text-slate-500 text-sm font-medium">Layanan mandiri pengembalian buku perpustakaan</p>
+          <p className="text-slate-500 text-xs sm:text-sm font-medium">Layanan mandiri pengembalian buku perpustakaan</p>
         </div>
       </div>
 
@@ -238,15 +238,15 @@ export function KioskReturnPage() {
 
       {/* ─── Step 1: Scan Student ─── */}
       {step === 'scan-student' && !isLoading && (
-        <div key="scan-student" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6">
+        <div key="scan-student" className="animate-kiosk-step flex flex-col items-center gap-6 py-4 max-w-lg mx-auto w-full">
           <div className="text-center">
-            <div className="w-20 h-20 bg-emerald-100 rounded-3xl flex items-center justify-center mx-auto mb-4 text-emerald-600 shadow-sm">
-              <RotateCcw size={40} />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-100 rounded-3xl flex items-center justify-center mx-auto mb-4 text-emerald-600 shadow-sm">
+              <RotateCcw size={36} />
             </div>
-            <h2 className="text-slate-900 text-3xl font-extrabold tracking-tight">Scan Kartu Pelajar</h2>
-            <p className="text-slate-600 text-lg mt-1 font-medium">Tempelkan kartu pelajar ke scanner atau ketik NIS Anda</p>
+            <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Scan Kartu Pelajar</h2>
+            <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Tempelkan kartu pelajar ke scanner atau ketik NIS Anda</p>
           </div>
-          <div className="w-full max-w-lg bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
+          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
             <BarcodeScanner
               onScan={handleStudentScan}
               placeholder="Scan kartu / NIS / NISN"
@@ -259,13 +259,13 @@ export function KioskReturnPage() {
 
       {/* ─── Step 2: Select Loan ─── */}
       {step === 'select-loan' && student && !isLoading && (
-        <div key="select-loan" className="animate-kiosk-step flex-1 flex flex-col gap-6 max-w-2xl mx-auto w-full">
+        <div key="select-loan" className="animate-kiosk-step flex flex-col gap-6 max-w-2xl mx-auto w-full py-4">
           <div className="text-center">
             <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-6 py-2.5 mb-3 shadow-sm">
               <CheckCircle2 size={20} className="text-emerald-600" />
               <span className="text-slate-800 text-base font-bold">{student.nama} ({student.nis})</span>
             </div>
-            <h2 className="text-slate-900 text-3xl font-extrabold tracking-tight">Pilih Buku yang Dikembalikan</h2>
+            <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Pilih Buku yang Dikembalikan</h2>
             <p className="text-slate-600 text-base mt-1 font-medium">Ketuk buku yang sedang Anda bawa untuk dikembalikan</p>
           </div>
 
@@ -309,13 +309,13 @@ export function KioskReturnPage() {
 
       {/* ─── Step 3: Photo ─── */}
       {step === 'photo' && selectedLoan && (
-        <div key="photo" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-6">
+        <div key="photo" className="animate-kiosk-step flex flex-col items-center gap-6 max-w-xl mx-auto w-full py-4">
           <div className="text-center">
-            <h2 className="text-slate-900 text-3xl font-extrabold tracking-tight">Dokumentasi Pengembalian</h2>
+            <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Dokumentasi Pengembalian</h2>
             <div className="inline-block bg-white border border-slate-200 rounded-xl px-5 py-2 mt-2 shadow-sm">
               <p className="text-slate-900 font-bold">{getLoanBookTitle(selectedLoan)}</p>
             </div>
-            <p className="text-slate-600 text-base mt-2 font-medium">Foto diambil otomatis dalam 5 detik</p>
+            <p className="text-slate-600 text-base mt-2 font-medium">Posisikan wajah di dalam lingkaran untuk foto otomatis</p>
           </div>
 
           <WebcamCapture
@@ -336,7 +336,7 @@ export function KioskReturnPage() {
 
       {/* ─── Step 4: Confirm (Landscape 2-Column Layout) ─── */}
       {step === 'confirm' && student && selectedLoan && (
-        <div key="confirm" className="animate-kiosk-step flex-1 flex flex-col items-center justify-center gap-4 max-w-4xl lg:max-w-5xl mx-auto w-full my-auto px-4">
+        <div key="confirm" className="animate-kiosk-step flex flex-col items-center gap-4 max-w-4xl lg:max-w-5xl mx-auto w-full py-4 px-0">
           {isLoanOverdue(selectedLoan) && (
             <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-sm">
               <div className="flex items-center gap-3">
@@ -351,11 +351,11 @@ export function KioskReturnPage() {
             </div>
           )}
 
-          <div className="bg-white rounded-3xl p-6 sm:p-8 w-full border border-slate-200/80 shadow-xl shadow-slate-200/50">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 lg:p-8 w-full border border-slate-200/80 shadow-xl shadow-slate-200/50">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 items-stretch">
 
               {/* ─── KOLOM KIRI: KOMPARASI FOTO & VERIFIKASI ─── */}
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 flex flex-col">
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 sm:p-5 flex flex-col">
                 <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
                   Verifikasi Identitas
                 </p>

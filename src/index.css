@@ -76,9 +76,10 @@
   .kiosk-body {
     background-color: #f8fafc;
     color: #0f172a;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     user-select: none;
-    height: 100dvh;
+    min-height: 100dvh;
   }
 
   /* Kiosk button base styles */

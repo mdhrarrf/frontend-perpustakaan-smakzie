@@ -4,7 +4,7 @@ import { BookOpen, Users, ArrowLeft } from 'lucide-react'
 export function KioskBorrowPage() {
   const navigate = useNavigate()
   return (
-    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-sky-50/40 to-blue-50/50 flex flex-col items-center justify-center gap-8 p-8 relative">
+    <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-sky-50/40 to-blue-50/50 flex flex-col items-center justify-center gap-6 sm:gap-8 p-4 sm:p-8 relative">
       {/* Decorative ambient background */}
       <div className="absolute top-10 left-10 w-72 h-72 bg-blue-200/30 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-72 h-72 bg-emerald-200/25 rounded-full blur-3xl pointer-events-none" />

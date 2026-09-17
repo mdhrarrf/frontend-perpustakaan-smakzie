@@ -26,53 +26,53 @@ export function KioskStandby() {
       <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-sky-200/30 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header (Absolute Top) */}
-      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-10 py-8 z-10">
-        <div className="flex items-center gap-4">
-          <img src="/logo-smakzie.png" alt="Logo SMK Negeri 1 Cianjur" className="w-16 h-16 object-contain drop-shadow" />
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 sm:px-10 py-4 sm:py-8 z-10">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <img src="/logo-smakzie.png" alt="Logo SMK Negeri 1 Cianjur" className="w-12 h-12 sm:w-16 sm:h-16 object-contain drop-shadow" />
           <div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Perpustakaan SMK Negeri 1 Cianjur</h1>
-            <p className="text-slate-500 text-sm font-medium">Self-Service Kiosk Pelajar</p>
+            <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight">Perpustakaan SMK Negeri 1 Cianjur</h1>
+            <p className="text-slate-500 text-xs sm:text-sm font-medium">Self-Service Kiosk Pelajar</p>
           </div>
         </div>
-        <div className="text-right bg-white/80 backdrop-blur-sm px-6 py-3 rounded-2xl border border-slate-200/80 shadow-sm">
-          <p className="text-3xl font-extrabold text-slate-900 tabular-nums">{timeStr}</p>
-          <p className="text-slate-500 text-xs font-semibold mt-0.5 uppercase tracking-wider">{dateStr}</p>
+        <div className="text-right bg-white/80 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-2xl border border-slate-200/80 shadow-sm">
+          <p className="text-xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">{timeStr}</p>
+          <p className="text-slate-500 text-[10px] sm:text-xs font-semibold mt-0.5 uppercase tracking-wider">{dateStr}</p>
         </div>
       </div>
 
       {/* Main CTA Buttons (Centered in whole screen) */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-8 px-10 z-0">
+      <div className="flex-1 flex flex-col items-center justify-center gap-5 sm:gap-8 px-6 sm:px-10 z-0 pt-16 pb-20">
         <div className="text-center">
-          <span className="inline-block bg-blue-50 text-blue-700 text-sm font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-3 border border-blue-200/60">
+          <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-widest px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full mb-2 sm:mb-3 border border-blue-200/60">
             Layanan Mandiri
           </span>
-          <p className="text-slate-800 text-2xl font-bold tracking-tight">Selamat datang! Apa yang ingin Anda lakukan?</p>
+          <p className="text-slate-800 text-lg sm:text-2xl font-bold tracking-tight">Selamat datang! Apa yang ingin Anda lakukan?</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-8 w-full max-w-3xl">
+        <div className="grid grid-cols-2 gap-4 sm:gap-8 w-full max-w-3xl">
           <button
             onClick={() => navigate('/kiosk/borrow')}
-            className="group flex flex-col items-center gap-5 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 active:scale-95 text-white rounded-[2.5rem] p-10 transition-all duration-200 shadow-xl shadow-blue-500/25 cursor-pointer focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-2 border border-blue-400/20"
+            className="group flex flex-col items-center gap-3 sm:gap-5 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 active:scale-95 text-white rounded-3xl lg:rounded-[2.5rem] p-6 sm:p-8 lg:p-10 transition-all duration-200 shadow-xl shadow-blue-500/25 cursor-pointer focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-2 border border-blue-400/20"
           >
-            <div className="p-4 bg-white/10 rounded-2xl group-hover:scale-110 transition-transform">
-              <BookOpen size={56} />
+            <div className="p-3 sm:p-4 bg-white/10 rounded-2xl group-hover:scale-110 transition-transform">
+              <BookOpen className="w-10 h-10 sm:w-14 sm:h-14" />
             </div>
             <div className="text-center">
-              <span className="text-3xl font-black tracking-wide block">Pinjam Buku</span>
-              <span className="text-blue-100 text-sm font-medium mt-1 block">Individu atau rombongan kelas</span>
+              <span className="text-xl sm:text-3xl font-black tracking-wide block">Pinjam Buku</span>
+              <span className="text-blue-100 text-xs sm:text-sm font-medium mt-0.5 sm:mt-1 block">Individu atau rombongan kelas</span>
             </div>
           </button>
 
           <button
             onClick={() => navigate('/kiosk/return')}
-            className="group flex flex-col items-center gap-5 bg-gradient-to-br from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-95 text-white rounded-[2.5rem] p-10 transition-all duration-200 shadow-xl shadow-emerald-500/25 cursor-pointer focus:outline-none focus:ring-4 focus:ring-emerald-300 focus:ring-offset-2 border border-emerald-400/20"
+            className="group flex flex-col items-center gap-3 sm:gap-5 bg-gradient-to-br from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-95 text-white rounded-3xl lg:rounded-[2.5rem] p-6 sm:p-8 lg:p-10 transition-all duration-200 shadow-xl shadow-emerald-500/25 cursor-pointer focus:outline-none focus:ring-4 focus:ring-emerald-300 focus:ring-offset-2 border border-emerald-400/20"
           >
-            <div className="p-4 bg-white/10 rounded-2xl group-hover:scale-110 transition-transform">
-              <RotateCcw size={56} />
+            <div className="p-3 sm:p-4 bg-white/10 rounded-2xl group-hover:scale-110 transition-transform">
+              <RotateCcw className="w-10 h-10 sm:w-14 sm:h-14" />
             </div>
             <div className="text-center">
-              <span className="text-3xl font-black tracking-wide block">Kembalikan Buku</span>
-              <span className="text-emerald-100 text-sm font-medium mt-1 block">Scan kartu dan kembalikan</span>
+              <span className="text-xl sm:text-3xl font-black tracking-wide block">Kembalikan Buku</span>
+              <span className="text-emerald-100 text-xs sm:text-sm font-medium mt-0.5 sm:mt-1 block">Scan kartu dan kembalikan</span>
             </div>
           </button>
         </div>
