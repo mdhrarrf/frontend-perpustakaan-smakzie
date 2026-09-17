@@ -16,6 +16,7 @@ import {
   SlidersHorizontal,
   Check,
   RotateCcw,
+  Calendar,
 } from 'lucide-react'
 import {
   reportService,
@@ -51,13 +52,45 @@ function SelectFilter({
   )
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+// ── Constants & Helpers ───────────────────────────────────────────────────────
 const MONTHS = [
   { v: 1,  l: 'Januari' },  { v: 2,  l: 'Februari' }, { v: 3,  l: 'Maret' },
   { v: 4,  l: 'April' },    { v: 5,  l: 'Mei' },       { v: 6,  l: 'Juni' },
   { v: 7,  l: 'Juli' },     { v: 8,  l: 'Agustus' },   { v: 9,  l: 'September' },
   { v: 10, l: 'Oktober' },  { v: 11, l: 'November' },  { v: 12, l: 'Desember' },
 ]
+
+export function getWeekOfMonth(date: Date): number {
+  return Math.min(5, Math.ceil(date.getDate() / 7))
+}
+
+export function getWeeksForMonth(year: number, month: number) {
+  const daysInMonth = new Date(year, month, 0).getDate()
+  const mName = MONTHS[month - 1]?.l || ''
+  const romans = ['', 'I', 'II', 'III', 'IV', 'V']
+  const today = new Date()
+  const isCurrentMonth = today.getFullYear() === year && (today.getMonth() + 1) === month
+  const currentWeek = isCurrentMonth ? getWeekOfMonth(today) : null
+
+  const list = []
+  for (let w = 1; w <= 5; w++) {
+    const startDay = (w - 1) * 7 + 1
+    if (startDay > daysInMonth) break
+    const endDay = Math.min(daysInMonth, w * 7)
+    const isThisWeek = w === currentWeek
+
+    list.push({
+      value: String(w),
+      roman: romans[w],
+      label: `Minggu ${romans[w]} (${startDay} - ${endDay} ${mName})${isThisWeek ? ' • Minggu Ini' : ''}`,
+      startDay,
+      endDay,
+      isThisWeek,
+    })
+  }
+
+  return { list, daysInMonth, mName }
+}
 
 export const DEFAULT_SETTINGS: ReportSettings = {
   kepala_nama: 'RUBAETUL ADAWIYAH, S.Pd.',
@@ -105,9 +138,15 @@ export function AdminReportsPage() {
   const [isPrintBlank,      setIsPrintBlank]      = useState(false)
 
   // ── Tab 1 State ──────────────────────────────────────────────────────────
-  const [year,        setYear]        = useState(now.getFullYear())
-  const [month,       setMonth]       = useState(now.getMonth() + 1)
-  const [week,        setWeek]        = useState('')
+  const initialYear = now.getFullYear()
+  const initialMonth = now.getMonth() + 1
+  const initialWeek = String(getWeekOfMonth(now)) // Otomatis pilih minggu aktif hari ini
+
+  const [year,        setYear]        = useState(initialYear)
+  const [month,       setMonth]       = useState(initialMonth)
+  const [week,        setWeek]        = useState(initialWeek) // '1'..'5' or 'all'
+  const [monthInput,  setMonthInput]  = useState(`${initialYear}-${String(initialMonth).padStart(2, '0')}`)
+  const [dateInput,   setDateInput]   = useState(now.toISOString().slice(0, 10))
   const [keperluan,   setKeperluan]   = useState('')
   const [searchQ,     setSearchQ]     = useState('')
   const [viewMode,    setViewMode]    = useState<'preview' | 'table'>('preview')
@@ -133,6 +172,50 @@ export function AdminReportsPage() {
   const [loadingL,      setLoadingL]      = useState(false)
   const [copies,        setCopies]        = useState(1)
   const [schoolYear,    setSchoolYear]    = useState(settings.school_year || '2026 / 2027')
+
+  // ── Date & Period Handlers ────────────────────────────────────────────────
+  const handleMonthInputChange = (val: string) => {
+    setMonthInput(val)
+    if (!val) return
+    const [y, m] = val.split('-').map(Number)
+    if (y && m) {
+      setYear(y)
+      setMonth(m)
+      const today = new Date()
+      if (today.getFullYear() === y && (today.getMonth() + 1) === m) {
+        setWeek(String(getWeekOfMonth(today)))
+      } else {
+        setWeek('1')
+      }
+    }
+  }
+
+  const handleDateInputChange = (val: string) => {
+    setDateInput(val)
+    if (!val) return
+    const d = new Date(val)
+    if (!isNaN(d.getTime())) {
+      const y = d.getFullYear()
+      const m = d.getMonth() + 1
+      const w = String(getWeekOfMonth(d))
+      setYear(y)
+      setMonth(m)
+      setWeek(w)
+      setMonthInput(`${y}-${String(m).padStart(2, '0')}`)
+    }
+  }
+
+  const handleSetToday = () => {
+    const today = new Date()
+    const y = today.getFullYear()
+    const m = today.getMonth() + 1
+    const w = String(getWeekOfMonth(today))
+    setYear(y)
+    setMonth(m)
+    setWeek(w)
+    setMonthInput(`${y}-${String(m).padStart(2, '0')}`)
+    setDateInput(today.toISOString().slice(0, 10))
+  }
 
   // ── Load Server Settings ──────────────────────────────────────────────────
   useEffect(() => {
@@ -183,11 +266,12 @@ export function AdminReportsPage() {
     setLoadingV(true)
     try {
       const res = await reportService.getVisitors({
-        year, month,
-        week:      week ? Number(week) : undefined,
+        year,
+        month,
+        week: week === 'all' || !week ? undefined : Number(week),
         keperluan: keperluan || undefined,
-        q:         searchQ   || undefined,
-        all:       true,
+        q: searchQ || undefined,
+        all: true,
       })
       const list = Array.isArray(res.visitors)
         ? res.visitors
@@ -234,17 +318,59 @@ export function AdminReportsPage() {
     } finally { setSaving(false) }
   }
 
+  // Weeks for selected month
+  const { list: weekList, mName: currentMonthName, daysInMonth } = getWeeksForMonth(year, month)
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-5">
-      {/* ── Print CSS ── */}
+      {/* ── Print CSS: Memastikan Kop Surat Muncul Sempurna & Ukuran Kertas F4 ── */}
       <style>{`
         @media print {
-          @page { size: 215.9mm 330mm; margin: 0; }
-          body { background: #fff !important; margin: 0 !important; }
-          .no-print, aside, header, nav, .app-sidebar, .app-header { display: none !important; }
-          .print-area { display: block !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
-          .sheet-page { box-shadow: none !important; border: none !important; margin: 0 auto !important; }
+          @page {
+            size: 215.9mm 330mm;
+            margin: 0;
+          }
+          html, body {
+            background: #fff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          /* Hanya sembunyikan navigasi UI web, JANGAN sembunyikan kop surat dokumen */
+          .no-print, aside, nav, .app-sidebar, .app-header {
+            display: none !important;
+          }
+          .print-area {
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 215.9mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .sheet-page {
+            box-shadow: none !important;
+            border: none !important;
+            margin: 0 !important;
+            width: 215.9mm !important;
+            height: 330mm !important;
+            page-break-after: always !important;
+            break-after: page !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .sheet-kop-header {
+            display: block !important;
+            visibility: visible !important;
+          }
+          .sheet-page img {
+            max-width: 100% !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
         }
       `}</style>
 
@@ -298,25 +424,56 @@ export function AdminReportsPage() {
           {/* Filter Bar */}
           <Card className="no-print">
             <CardBody>
-              <div className="flex flex-wrap items-center gap-3">
-                {/* Filters */}
-                <SelectFilter value={String(month)} onChange={(v) => setMonth(Number(v))}>
-                  {MONTHS.map((m) => <option key={m.v} value={m.v}>{m.l}</option>)}
-                </SelectFilter>
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* 1. Month Picker */}
+                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+                  <Calendar size={14} className="text-slate-500 shrink-0" />
+                  <span className="text-xs font-medium text-slate-600">Bulan:</span>
+                  <input
+                    type="month"
+                    value={monthInput}
+                    onChange={(e) => handleMonthInputChange(e.target.value)}
+                    className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer"
+                  />
+                </div>
 
-                <SelectFilter value={String(year)} onChange={(v) => setYear(Number(v))}>
-                  {[2024,2025,2026,2027,2028].map((y) => <option key={y} value={y}>{y}</option>)}
-                </SelectFilter>
+                {/* 2. Week Selector (Otomatis menampilkan rentang tanggal akurat) */}
+                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+                  <span className="text-xs font-medium text-slate-600">Periode:</span>
+                  <select
+                    value={week}
+                    onChange={(e) => setWeek(e.target.value)}
+                    className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer pr-1"
+                  >
+                    <option value="all">Semua Minggu (1 - {daysInMonth} {currentMonthName} {year})</option>
+                    {weekList.map((w) => (
+                      <option key={w.value} value={w.value}>
+                        {w.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                <SelectFilter value={week} onChange={setWeek}>
-                  <option value="">Semua Minggu</option>
-                  <option value="1">Minggu I</option>
-                  <option value="2">Minggu II</option>
-                  <option value="3">Minggu III</option>
-                  <option value="4">Minggu IV</option>
-                  <option value="5">Minggu V</option>
-                </SelectFilter>
+                {/* 3. Quick Date Picker (Pilih berdasarkan tanggal spesifik) */}
+                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+                  <span className="text-xs font-medium text-slate-500">Tanggal:</span>
+                  <input
+                    type="date"
+                    value={dateInput}
+                    onChange={(e) => handleDateInputChange(e.target.value)}
+                    className="text-xs text-slate-700 bg-transparent focus:outline-none cursor-pointer"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSetToday}
+                    className="text-[11px] px-2 py-0.5 rounded bg-white border border-slate-200 text-primary-700 font-medium hover:bg-primary-50 transition-colors"
+                    title="Pilih tanggal & minggu hari ini"
+                  >
+                    Hari Ini
+                  </button>
+                </div>
 
+                {/* 4. Keperluan Filter */}
                 <SelectFilter value={keperluan} onChange={setKeperluan}>
                   <option value="">Semua Keperluan</option>
                   <option value="baca">Baca</option>
@@ -324,7 +481,8 @@ export function AdminReportsPage() {
                   <option value="kembali">Kembali</option>
                 </SelectFilter>
 
-                <div className="flex-1 min-w-48">
+                {/* 5. Search */}
+                <div className="flex-1 min-w-40">
                   <Input
                     placeholder="Cari nama, kelas, NIS..."
                     leftIcon={<Search size={15} />}
@@ -336,7 +494,7 @@ export function AdminReportsPage() {
 
                 <button
                   onClick={fetchVisitors}
-                  title="Segarkan"
+                  title="Segarkan data"
                   className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
                 >
                   <RefreshCw size={15} className={loadingV ? 'animate-spin' : ''} />
@@ -484,11 +642,11 @@ export function AdminReportsPage() {
             <div className="no-print mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 px-1">
               <span>
                 {isPrintBlank ? (
-                  <strong className="text-primary-700">Mode: Cetak Blanko Fisik Kosong (23 baris bertitik-titik tanda tangan)</strong>
+                  <strong className="text-primary-700">Mode: Cetak Blanko Fisik Kosong (25 baris format resmi F4)</strong>
                 ) : (
                   <span>Mode: Cetak Data Kunjungan Sistem ({visitors.length} data pengunjung)</span>
                 )}
-                {' • '}Ukuran Kertas F4 (Folio)
+                {' • '}Ukuran Kertas F4 (Folio 215.9 x 330 mm)
               </span>
               <span className="text-slate-400 hidden sm:inline">
                 Penandatangan: {settings.kepala_nama} & {settings.koordinator_nama}
@@ -500,7 +658,7 @@ export function AdminReportsPage() {
                   visitors={visitors}
                   year={year}
                   month={month}
-                  week={week ? Number(week) : null}
+                  week={week === 'all' || !week ? null : Number(week)}
                   schoolYear={settings.school_year}
                   dateCityText={computeDateCity(settings)}
                   kepalaPerpusName={settings.kepala_nama}
