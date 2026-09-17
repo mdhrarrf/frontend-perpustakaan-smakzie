@@ -152,8 +152,21 @@ export function AdminLoansPage() {
                         <p className="text-xs text-slate-400">{loan.student?.nis}</p>
                       </td>
                       <td className="px-6 py-3">
-                        <p className="line-clamp-1">{loan.items?.[0]?.book?.judul ?? '—'}</p>
-                        {(loan.items?.[0]?.quantity ?? 1) > 1 && <p className="text-xs text-slate-400">{loan.items[0].quantity} eks</p>}
+                        {(() => {
+                          const title = loan.items?.[0]?.book?.judul ?? '—'
+                          const isPlaceholder = title.startsWith('Buku [') || loan.items?.some((i) => (i.book?.judul ?? '').startsWith('Buku ['))
+                          return (
+                            <div>
+                              <p className="line-clamp-1 font-medium text-slate-800">{title}</p>
+                              {isPlaceholder && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 mt-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                                  Perlu Koreksi
+                                </span>
+                              )}
+                              {(loan.items?.[0]?.quantity ?? 1) > 1 && <p className="text-xs text-slate-400 mt-0.5">{loan.items[0].quantity} eks</p>}
+                            </div>
+                          )
+                        })()}
                       </td>
                       <td className="px-6 py-3">{loan.loan_type_label}</td>
                       <td className="px-6 py-3 text-xs">{formatDateTime(loan.borrowed_at)}</td>
@@ -163,7 +176,20 @@ export function AdminLoansPage() {
                         {loan.late_days > 0 && <span className="ml-1 text-xs text-red-500">+{loan.late_days}h</span>}
                       </td>
                       <td className="px-6 py-3">
-                        <Link to={`/admin/loans/${loan.id}`}><Button size="sm" variant="ghost">Lihat</Button></Link>
+                        {(() => {
+                          const isPlaceholder = (loan.items?.[0]?.book?.judul ?? '').startsWith('Buku [') || loan.items?.some((i) => (i.book?.judul ?? '').startsWith('Buku ['))
+                          return (
+                            <Link to={`/admin/loans/${loan.id}`}>
+                              <Button
+                                size="sm"
+                                variant={isPlaceholder ? "outline" : "ghost"}
+                                className={isPlaceholder ? "border-amber-400 text-amber-700 bg-amber-50/60 hover:bg-amber-100 text-xs font-semibold" : ""}
+                              >
+                                {isPlaceholder ? 'Koreksi' : 'Lihat'}
+                              </Button>
+                            </Link>
+                          )
+                        })()}
                       </td>
                     </tr>
                   ))}

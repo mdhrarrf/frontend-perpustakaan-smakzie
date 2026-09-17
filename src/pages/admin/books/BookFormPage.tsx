@@ -167,6 +167,61 @@ function YearPicker({ value, onChange, label = 'Tahun Terbit' }: YearPickerProps
   )
 }
 
+function computeLiveCallNumber(judul?: string, penulis?: string, lokasi?: string): string {
+  let classNum = '000'
+  if (lokasi && lokasi.trim()) {
+    const parts = lokasi.trim().split(/\s+/)
+    classNum = parts[0]
+  } else if (judul) {
+    const t = judul.toLowerCase()
+    if (/(bahasa jepang|jlpt|nihongo)/i.test(t)) classNum = '495.6'
+    else if (/(bahasa inggris|english|splash smart)/i.test(t)) classNum = '420'
+    else if (/(basa sunda|bahasa sunda|panggelar)/i.test(t)) classNum = '499.2232'
+    else if (/(bahasa indonesia|cerdas cergas|bersastra indonesia)/i.test(t)) classNum = '410'
+    else if (/(matematika|kalkulus|aljabar|tka matematika)/i.test(t)) classNum = '510'
+    else if (/(fisika)/i.test(t)) classNum = '530'
+    else if (/(kimia)/i.test(t)) classNum = '660'
+    else if (/(biologi|ipa|ilmu pengetahuan alam)/i.test(t)) classNum = '500'
+    else if (/(pancasila|kewarganegaraan|ppkn)/i.test(t)) classNum = '320'
+    else if (/(agama islam|pendidikan agama|budi pekerti|allah|tuhan)/i.test(t)) classNum = '297'
+    else if (/(sejarah)/i.test(t)) classNum = '959.8'
+    else if (/(penduduk|demografi|sensus|supas)/i.test(t)) classNum = '312'
+    else if (/(akuntansi|myob)/i.test(t)) classNum = '657'
+    else if (/(pemasaran|marketing|bisnis)/i.test(t)) classNum = '658.8'
+    else if (/(manajemen perkantoran|humas|kearsipan)/i.test(t)) classNum = '650'
+    else if (/(ekonomi)/i.test(t)) classNum = '330'
+    else if (/(jaringan|komputer|informatika|pemrograman)/i.test(t)) classNum = '004.6'
+    else if (/(desain grafis|seni)/i.test(t)) classNum = '741.6'
+    else if (/(psikologi|motivasi)/i.test(t)) classNum = '153.2'
+    else if (/(novel|fiksi|cerpen|guru aini|matahari|bumi)/i.test(t)) classNum = '813'
+  }
+
+  let authorCutter = 'XXX'
+  if (penulis && penulis.trim()) {
+    const firstAuthor = penulis.split(/[,&]|(\s+dan\s+)/i)[0]
+    const cleaned = firstAuthor
+      .replace(/\b(drs|dra|prof|dr|ir|h|hj|s\.pd|m\.pd|s\.e|m\.m|m\.kom|m\.hum|s\.t|s\.si|m\.si|mf|dkk|et al)\b/gi, '')
+      .replace(/\b(al-|el-)/gi, '')
+      .replace(/[^a-zA-Z\s]/g, '')
+      .trim()
+    const words = cleaned.split(/\s+/).filter(Boolean)
+    if (words.length > 0) {
+      const target = words.length > 1 && words[words.length - 1].length >= 2 ? words[words.length - 1] : words[0]
+      authorCutter = target.slice(0, 3).toUpperCase().padEnd(3, 'X')
+    }
+  }
+
+  let titleCutter = 'x'
+  if (judul && judul.trim()) {
+    const cleanTitle = judul.replace(/^[^a-zA-Z]+/, '')
+    if (cleanTitle.length > 0) {
+      titleCutter = cleanTitle.charAt(0).toLowerCase()
+    }
+  }
+
+  return `${classNum} ${authorCutter} ${titleCutter}`
+}
+
 export function AdminBookForm() {
   const { id } = useParams<{ id: string }>()
   const isEdit   = !!id
@@ -187,7 +242,12 @@ export function AdminBookForm() {
     queryFn: bookService.categories,
   })
 
-  const { register, handleSubmit, reset, setValue } = useForm<BookFormData>()
+  const { register, handleSubmit, reset, setValue, watch } = useForm<BookFormData>()
+  const watchJudul   = watch('judul')
+  const watchPenulis = watch('penulis')
+  const watchLokasi  = watch('lokasi_rak')
+  const liveCallNumber = computeLiveCallNumber(watchJudul, watchPenulis, watchLokasi)
+
   const [displayHarga, setDisplayHarga] = useState<string>('')
   const [rawHarga, setRawHarga]         = useState<string>('')
   const [displayIsbn, setDisplayIsbn]   = useState<string>('')
@@ -388,9 +448,24 @@ export function AdminBookForm() {
               </div>
               <Input
                 {...register('lokasi_rak')}
-                label="Lokasi Rak"
-                placeholder="Contoh: RAK-A-01, RAK-F-03"
+                label="Klasifikasi DDC / Lokasi Rak"
+                placeholder="Contoh: 813, 153.2, 420, atau RAK-A-01"
               />
+
+              {/* Live Preview Nomor Panggil */}
+              <div className="col-span-2 p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-slate-800">Nomor Panggil SLiMS (Call Number)</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Format: [Klasifikasi DDC] [3 Huruf Pengarang] [1 Huruf Judul]</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">Otomatis dicetak:</span>
+                  <span className="font-mono text-sm font-bold bg-white px-3 py-1.5 rounded-lg border border-slate-300 shadow-sm text-primary-700 tracking-wide">
+                    {liveCallNumber}
+                  </span>
+                </div>
+              </div>
+
               <Input
                 {...register('jumlah_total', { required: true })}
                 label="Jumlah Eksemplar"
