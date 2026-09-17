@@ -70,6 +70,7 @@ export const reportService = {
     year?: number
     month?: number
     week?: number
+    date?: string
     keperluan?: string
     q?: string
     all?: boolean

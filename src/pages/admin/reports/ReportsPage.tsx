@@ -141,12 +141,14 @@ export function AdminReportsPage() {
   const initialYear = now.getFullYear()
   const initialMonth = now.getMonth() + 1
   const initialWeek = String(getWeekOfMonth(now)) // Otomatis pilih minggu aktif hari ini
+  const todayDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 
+  const [filterMode,  setFilterMode]  = useState<'today' | 'week' | 'month' | 'date'>('today')
   const [year,        setYear]        = useState(initialYear)
   const [month,       setMonth]       = useState(initialMonth)
   const [week,        setWeek]        = useState(initialWeek) // '1'..'5' or 'all'
   const [monthInput,  setMonthInput]  = useState(`${initialYear}-${String(initialMonth).padStart(2, '0')}`)
-  const [dateInput,   setDateInput]   = useState(now.toISOString().slice(0, 10))
+  const [dateInput,   setDateInput]   = useState(todayDateStr)
   const [keperluan,   setKeperluan]   = useState('')
   const [searchQ,     setSearchQ]     = useState('')
   const [viewMode,    setViewMode]    = useState<'preview' | 'table'>('preview')
@@ -193,11 +195,10 @@ export function AdminReportsPage() {
   const handleDateInputChange = (val: string) => {
     setDateInput(val)
     if (!val) return
-    const d = new Date(val)
-    if (!isNaN(d.getTime())) {
-      const y = d.getFullYear()
-      const m = d.getMonth() + 1
-      const w = String(getWeekOfMonth(d))
+    const [y, m, d] = val.split('-').map(Number)
+    if (y && m && d) {
+      const dt = new Date(y, m - 1, d)
+      const w = String(getWeekOfMonth(dt))
       setYear(y)
       setMonth(m)
       setWeek(w)
@@ -206,6 +207,7 @@ export function AdminReportsPage() {
   }
 
   const handleSetToday = () => {
+    setFilterMode('today')
     const today = new Date()
     const y = today.getFullYear()
     const m = today.getMonth() + 1
@@ -214,7 +216,7 @@ export function AdminReportsPage() {
     setMonth(m)
     setWeek(w)
     setMonthInput(`${y}-${String(m).padStart(2, '0')}`)
-    setDateInput(today.toISOString().slice(0, 10))
+    setDateInput(todayDateStr)
   }
 
   // ── Load Server Settings ──────────────────────────────────────────────────
@@ -265,14 +267,28 @@ export function AdminReportsPage() {
   const fetchVisitors = async () => {
     setLoadingV(true)
     try {
-      const res = await reportService.getVisitors({
-        year,
-        month,
-        week: week === 'all' || !week ? undefined : Number(week),
+      const params: Parameters<typeof reportService.getVisitors>[0] = {
         keperluan: keperluan || undefined,
         q: searchQ || undefined,
         all: true,
-      })
+      }
+
+      if (filterMode === 'today') {
+        params.date = todayDateStr
+      } else if (filterMode === 'date') {
+        params.date = dateInput || todayDateStr
+      } else if (filterMode === 'week') {
+        params.year = year
+        params.month = month
+        if (week && week !== 'all') {
+          params.week = Number(week)
+        }
+      } else if (filterMode === 'month') {
+        params.year = year
+        params.month = month
+      }
+
+      const res = await reportService.getVisitors(params)
       const list = Array.isArray(res.visitors)
         ? res.visitors
         : (res.visitors as any).data ?? []
@@ -294,7 +310,7 @@ export function AdminReportsPage() {
   useEffect(() => {
     if (activeTab === 'visitors') fetchVisitors()
     else fetchLoans(loanQ)
-  }, [activeTab, year, month, week, keperluan])
+  }, [activeTab, filterMode, year, month, week, dateInput, keperluan])
 
   // ── Modal Submit ──────────────────────────────────────────────────────────
   const handleSaveVisitor = async (e: React.FormEvent) => {
@@ -321,6 +337,32 @@ export function AdminReportsPage() {
   // Weeks for selected month
   const { list: weekList, mName: currentMonthName, daysInMonth } = getWeeksForMonth(year, month)
 
+  // Calculate year, month, and week number to pass to VisitorSheetPrint
+  let currentWeekNum: number | null = null
+  if (filterMode === 'week') {
+    currentWeekNum = week === 'all' || !week ? null : Number(week)
+  } else if (filterMode === 'today') {
+    currentWeekNum = getWeekOfMonth(now)
+  } else if (filterMode === 'date' && dateInput) {
+    const [y, m, d] = dateInput.split('-').map(Number)
+    if (y && m && d) currentWeekNum = getWeekOfMonth(new Date(y, m - 1, d))
+  }
+
+  let displayYear = year
+  let displayMonth = month
+  if (filterMode === 'today') {
+    displayYear = now.getFullYear()
+    displayMonth = now.getMonth() + 1
+  } else if (filterMode === 'date' && dateInput) {
+    const [y, m] = dateInput.split('-').map(Number)
+    if (y && m) {
+      displayYear = y
+      displayMonth = m
+    }
+  }
+
+  const currentWeekInfo = weekList.find((w) => w.value === week)
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-5">
@@ -329,7 +371,7 @@ export function AdminReportsPage() {
         @media print {
           @page {
             size: 215.9mm 330mm;
-            margin: 0;
+            margin: 10mm 14mm 10mm 14mm;
           }
           html, body {
             background: #fff !important;
@@ -344,27 +386,37 @@ export function AdminReportsPage() {
           }
           .print-area {
             display: block !important;
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 215.9mm !important;
+            position: static !important;
+            width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
           }
           .sheet-page {
             box-shadow: none !important;
             border: none !important;
-            margin: 0 !important;
-            width: 215.9mm !important;
-            height: 330mm !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: auto !important;
             page-break-after: always !important;
             break-after: page !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+          }
+          .sheet-page:last-child {
+            page-break-after: auto !important;
+            break-after: auto !important;
           }
           .sheet-kop-header {
             display: block !important;
             visibility: visible !important;
+          }
+          .sheet-table, .sheet-signatures {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
           .sheet-page img {
             max-width: 100% !important;
@@ -423,57 +475,147 @@ export function AdminReportsPage() {
 
           {/* Filter Bar */}
           <Card className="no-print">
-            <CardBody>
-              <div className="flex flex-wrap items-center gap-2.5">
-                {/* 1. Month Picker */}
-                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                  <Calendar size={14} className="text-slate-500 shrink-0" />
-                  <span className="text-xs font-medium text-slate-600">Bulan:</span>
-                  <input
-                    type="month"
-                    value={monthInput}
-                    onChange={(e) => handleMonthInputChange(e.target.value)}
-                    className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer"
-                  />
-                </div>
+            <CardBody className="space-y-3">
+              {/* Row 1: Quick Filter Mode Pills & Active Info */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-2.5 border-b border-slate-100">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs font-semibold text-slate-500 mr-1">Periode:</span>
 
-                {/* 2. Week Selector (Otomatis menampilkan rentang tanggal akurat) */}
-                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                  <span className="text-xs font-medium text-slate-600">Periode:</span>
-                  <select
-                    value={week}
-                    onChange={(e) => setWeek(e.target.value)}
-                    className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer pr-1"
-                  >
-                    <option value="all">Semua Minggu (1 - {daysInMonth} {currentMonthName} {year})</option>
-                    {weekList.map((w) => (
-                      <option key={w.value} value={w.value}>
-                        {w.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 3. Quick Date Picker (Pilih berdasarkan tanggal spesifik) */}
-                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
-                  <span className="text-xs font-medium text-slate-500">Tanggal:</span>
-                  <input
-                    type="date"
-                    value={dateInput}
-                    onChange={(e) => handleDateInputChange(e.target.value)}
-                    className="text-xs text-slate-700 bg-transparent focus:outline-none cursor-pointer"
-                  />
+                  {/* Button: Hari Ini */}
                   <button
                     type="button"
-                    onClick={handleSetToday}
-                    className="text-[11px] px-2 py-0.5 rounded bg-white border border-slate-200 text-primary-700 font-medium hover:bg-primary-50 transition-colors"
-                    title="Pilih tanggal & minggu hari ini"
+                    onClick={() => {
+                      setFilterMode('today')
+                      setDateInput(todayDateStr)
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      filterMode === 'today'
+                        ? 'bg-primary-600 text-white shadow-sm ring-2 ring-primary-500/20'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                    }`}
                   >
-                    Hari Ini
+                    <Calendar size={13} />
+                    Hari Ini ({now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })})
+                  </button>
+
+                  {/* Button: Minggu Ini */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterMode('week')
+                      setWeek(String(getWeekOfMonth(now)))
+                      setYear(now.getFullYear())
+                      setMonth(now.getMonth() + 1)
+                      setMonthInput(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      filterMode === 'week'
+                        ? 'bg-primary-600 text-white shadow-sm ring-2 ring-primary-500/20'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                    }`}
+                  >
+                    Minggu Ini (Minggu {['', 'I', 'II', 'III', 'IV', 'V'][getWeekOfMonth(now)]})
+                  </button>
+
+                  {/* Button: Bulan Ini */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterMode('month')
+                      setYear(now.getFullYear())
+                      setMonth(now.getMonth() + 1)
+                      setMonthInput(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      filterMode === 'month'
+                        ? 'bg-primary-600 text-white shadow-sm ring-2 ring-primary-500/20'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                    }`}
+                  >
+                    Bulan Ini ({MONTHS[now.getMonth()]?.l})
+                  </button>
+
+                  {/* Button: Pilih Tanggal / Kustom */}
+                  <button
+                    type="button"
+                    onClick={() => setFilterMode('date')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      filterMode === 'date'
+                        ? 'bg-primary-600 text-white shadow-sm ring-2 ring-primary-500/20'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                    }`}
+                  >
+                    Pilih Tanggal Lain
                   </button>
                 </div>
 
-                {/* 4. Keperluan Filter */}
+                {/* Status Ringkas Kunjungan Aktif */}
+                <div className="text-xs text-slate-500 hidden md:block">
+                  {filterMode === 'today' && (
+                    <span>Menampilkan kunjungan hari ini: <strong className="text-slate-800">{now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong></span>
+                  )}
+                  {filterMode === 'week' && (
+                    <span>Menampilkan periode: <strong className="text-slate-800">{currentWeekInfo ? currentWeekInfo.label : `Minggu ${week}`}</strong></span>
+                  )}
+                  {filterMode === 'month' && (
+                    <span>Menampilkan seluruh kunjungan bulan: <strong className="text-slate-800">{MONTHS[month - 1]?.l} {year}</strong></span>
+                  )}
+                  {filterMode === 'date' && (
+                    <span>Menampilkan kunjungan tanggal: <strong className="text-slate-800">{dateInput ? new Date(dateInput).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '—'}</strong></span>
+                  )}
+                </div>
+              </div>
+
+              {/* Row 2: Dynamic Inputs based on mode & Filters */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* When filterMode === 'date' */}
+                {filterMode === 'date' && (
+                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+                    <Calendar size={14} className="text-slate-500 shrink-0" />
+                    <span className="text-xs font-medium text-slate-600">Pilih Tanggal:</span>
+                    <input
+                      type="date"
+                      value={dateInput}
+                      onChange={(e) => handleDateInputChange(e.target.value)}
+                      className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer"
+                    />
+                  </div>
+                )}
+
+                {/* When filterMode === 'week' or 'month' */}
+                {(filterMode === 'week' || filterMode === 'month') && (
+                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+                    <Calendar size={14} className="text-slate-500 shrink-0" />
+                    <span className="text-xs font-medium text-slate-600">Bulan:</span>
+                    <input
+                      type="month"
+                      value={monthInput}
+                      onChange={(e) => handleMonthInputChange(e.target.value)}
+                      className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer"
+                    />
+                  </div>
+                )}
+
+                {/* When filterMode === 'week': week dropdown */}
+                {filterMode === 'week' && (
+                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+                    <span className="text-xs font-medium text-slate-600">Minggu:</span>
+                    <select
+                      value={week}
+                      onChange={(e) => setWeek(e.target.value)}
+                      className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer pr-1"
+                    >
+                      <option value="all">Semua Minggu (1 - {daysInMonth} {currentMonthName} {year})</option>
+                      {weekList.map((w) => (
+                        <option key={w.value} value={w.value}>
+                          {w.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Keperluan Filter */}
                 <SelectFilter value={keperluan} onChange={setKeperluan}>
                   <option value="">Semua Keperluan</option>
                   <option value="baca">Baca</option>
@@ -481,7 +623,7 @@ export function AdminReportsPage() {
                   <option value="kembali">Kembali</option>
                 </SelectFilter>
 
-                {/* 5. Search */}
+                {/* Search */}
                 <div className="flex-1 min-w-40">
                   <Input
                     placeholder="Cari nama, kelas, NIS..."
@@ -642,7 +784,7 @@ export function AdminReportsPage() {
             <div className="no-print mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 px-1">
               <span>
                 {isPrintBlank ? (
-                  <strong className="text-primary-700">Mode: Cetak Blanko Fisik Kosong (25 baris format resmi F4)</strong>
+                  <strong className="text-primary-700">Mode: Cetak Blanko Fisik Kosong (20 baris format resmi F4)</strong>
                 ) : (
                   <span>Mode: Cetak Data Kunjungan Sistem ({visitors.length} data pengunjung)</span>
                 )}
@@ -653,21 +795,19 @@ export function AdminReportsPage() {
               </span>
             </div>
             <div className="flex justify-center overflow-x-auto pb-8">
-              <div className="bg-white shadow border border-slate-200 rounded-sm">
-                <VisitorSheetPrint
-                  visitors={visitors}
-                  year={year}
-                  month={month}
-                  week={week === 'all' || !week ? null : Number(week)}
-                  schoolYear={settings.school_year}
-                  dateCityText={computeDateCity(settings)}
-                  kepalaPerpusName={settings.kepala_nama}
-                  kepalaPerpusNip={settings.kepala_nip}
-                  koordinatorName={settings.koordinator_nama}
-                  koordinatorNip={settings.koordinator_nip}
-                  isPrintBlank={isPrintBlank}
-                />
-              </div>
+              <VisitorSheetPrint
+                visitors={visitors}
+                year={displayYear}
+                month={displayMonth}
+                week={currentWeekNum}
+                schoolYear={settings.school_year}
+                dateCityText={computeDateCity(settings)}
+                kepalaPerpusName={settings.kepala_nama}
+                kepalaPerpusNip={settings.kepala_nip}
+                koordinatorName={settings.koordinator_nama}
+                koordinatorNip={settings.koordinator_nip}
+                isPrintBlank={isPrintBlank}
+              />
             </div>
           </div>
         </>
