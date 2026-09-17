@@ -769,18 +769,9 @@ export function KioskBorrowClass() {
 
                 {/* 2. Mata Pelajaran */}
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs text-slate-700 font-bold uppercase tracking-wider block">
-                      Mata Pelajaran *
-                    </label>
-                    {selectedTeacher && selectedTeacher.subjects.length > 0 && (
-                      <span className="text-[11px] text-slate-500 font-semibold">
-                        {selectedTeacher.subjects.length === 1
-                          ? '1 mapel terdaftar'
-                          : `${selectedTeacher.subjects.length} mapel tersedia`}
-                      </span>
-                    )}
-                  </div>
+                  <label className="text-xs text-slate-700 font-bold uppercase tracking-wider mb-2 block">
+                    Mata Pelajaran *
+                  </label>
 
                   {!selectedTeacher ? (
                     <div className="w-full px-4 py-3 text-sm bg-slate-50 border border-dashed border-slate-300 rounded-2xl text-slate-400 select-none">
@@ -801,24 +792,13 @@ export function KioskBorrowClass() {
                       </p>
                     </div>
                   ) : selectedTeacher.subjects.length === 1 ? (
-                    /* ─── KASUS 3: Hanya 1 Mapel (Langsung Lock & Terisi Otomatis) ─── */
-                    <div className="flex items-center justify-between bg-slate-50 border-2 border-slate-200/90 rounded-2xl px-4 py-3.5">
-                      <div className="flex items-center gap-3 min-w-0 pr-2">
-                        <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0">
-                          <CheckCircle2 size={20} />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">
-                            Mata Pelajaran (Terkunci)
-                          </p>
-                          <p className="text-sm sm:text-base font-extrabold text-slate-900 truncate">
-                            {selectedTeacher.subjects[0].nama}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-3 py-1.5 rounded-xl flex-shrink-0">
-                        <Lock size={13} />
-                        <span>Otomatis (1 Mapel)</span>
+                    /* ─── KASUS 3: Hanya 1 Mapel ─── */
+                    <div className="w-full px-4 py-3 rounded-2xl border-2 border-blue-600 bg-blue-50/90 text-blue-950 flex items-center justify-between gap-3 shadow-xs">
+                      <span className="text-xs sm:text-sm font-extrabold leading-snug line-clamp-2">
+                        {selectedTeacher.subjects[0].nama}
+                      </span>
+                      <div className="w-5 h-5 rounded-full border-2 border-blue-600 bg-blue-600 text-white flex items-center justify-center flex-shrink-0">
+                        <div className="w-2 h-2 rounded-full bg-white" />
                       </div>
                     </div>
                   ) : selectedTeacher.subjects.length <= 3 ? (
