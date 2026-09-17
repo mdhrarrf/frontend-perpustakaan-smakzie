@@ -340,32 +340,47 @@ export const VisitorSheetPrint: React.FC<VisitorSheetPrintProps> = ({
                   </table>
                 </div>
 
-                {/* ── 5. TANDA TANGAN RESMI (DIJAMIN PAS DI HALAMAN YANG SAMA) ── */}
+                {/* ── 5. TANDA TANGAN RESMI (100% SEJAJAR & SPACE 1 KALI DARI TABEL) ── */}
                 <div
-                  className="sheet-signatures w-full mt-2.5 text-[9.5pt] leading-snug flex justify-between items-start text-black"
+                  className="sheet-signatures w-full mt-6 text-[9.5pt] leading-snug text-black"
                   style={{
                     pageBreakInside: 'avoid',
                     breakInside: 'avoid',
                   }}
                 >
-                  {/* Kolom Kiri: Kepala Perpustakaan */}
-                  <div className="w-[45%] text-left pl-2">
-                    <p className="font-normal">Mengetahui:</p>
-                    <p className="font-normal">Kepala Perpustakaan,</p>
-                    <div className="h-[42px]"></div>
-                    <p className="font-bold text-black uppercase tracking-wide">{kepalaPerpusName}</p>
-                    <p className="text-[9pt] text-black tracking-normal">{kepalaPerpusNip}</p>
-                  </div>
+                  <table className="w-full border-collapse border-none">
+                    <tbody>
+                      {/* Baris 1: Jabatan & Titimangsa */}
+                      <tr className="align-top">
+                        <td className="w-[48%] text-left pl-2 pb-0">
+                          <p className="font-normal">Mengetahui:</p>
+                          <p className="font-normal">Kepala Perpustakaan,</p>
+                        </td>
+                        <td className="w-[52%] text-left pl-6 pb-0">
+                          <p className="font-normal">{currentDateCity}</p>
+                          <p className="font-normal">Koordinator Pengelola Perpustakaan</p>
+                          <p className="font-normal">Kampus 1 dan 2,</p>
+                        </td>
+                      </tr>
 
-                  {/* Kolom Kanan: Koordinator Pengelola Perpustakaan */}
-                  <div className="w-[48%] text-left pl-6">
-                    <p className="font-normal">{currentDateCity}</p>
-                    <p className="font-normal">Koordinator Pengelola Perpustakaan</p>
-                    <p className="font-normal">Kampus 1 dan 2,</p>
-                    <div className="h-[28px]"></div>
-                    <p className="font-bold text-black uppercase tracking-wide">{koordinatorName}</p>
-                    <p className="text-[9pt] text-black tracking-normal">{koordinatorNip}</p>
-                  </div>
+                      {/* Spasi Tanda Tangan Fisik */}
+                      <tr>
+                        <td colSpan={2} className="h-[44px]"></td>
+                      </tr>
+
+                      {/* Baris 2: Nama & NIP (100% SEJAJAR PADA SATU GARIS HORISONTAL) */}
+                      <tr className="align-top">
+                        <td className="w-[48%] text-left pl-2">
+                          <p className="font-bold text-black uppercase tracking-wide">{kepalaPerpusName}</p>
+                          <p className="text-[9pt] text-black tracking-normal">{kepalaPerpusNip}</p>
+                        </td>
+                        <td className="w-[52%] text-left pl-6">
+                          <p className="font-bold text-black uppercase tracking-wide">{koordinatorName}</p>
+                          <p className="text-[9pt] text-black tracking-normal">{koordinatorNip}</p>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
