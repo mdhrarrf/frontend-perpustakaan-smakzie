@@ -1,5 +1,5 @@
 import React from 'react'
-import { Scissors } from 'lucide-react'
+import { Scissors, Check } from 'lucide-react'
 import type { TextbookLoanForm } from '@/api/report.service'
 
 interface TextbookLoanFormPrintProps {
@@ -165,8 +165,8 @@ export const TextbookLoanFormPrint: React.FC<TextbookLoanFormPrintProps> = ({
                 <td className="border-r border-black text-center px-1 text-[9px]">
                   {item.tanggal_kembali ? formatDate(item.tanggal_kembali) : ''}
                 </td>
-                <td className="text-center text-[8px] text-gray-400">
-                  {item.is_returned ? '✓' : ''}
+                <td className="text-center text-[8px]">
+                  {item.is_returned ? <Check size={12} className="mx-auto text-black stroke-[2.5]" /> : ''}
                 </td>
               </tr>
             )

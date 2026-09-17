@@ -1,4 +1,5 @@
 import React from 'react'
+import { FileText, Check } from 'lucide-react'
 import type { Visitor } from '@/api/report.service'
 
 interface VisitorSheetPrintProps {
@@ -120,8 +121,9 @@ export const VisitorSheetPrint: React.FC<VisitorSheetPrintProps> = ({
             <div key={pageIdx} className="w-full flex flex-col items-center">
               {/* Header Pemisah Halaman di Web Preview agar terlihat jelas per lembar */}
               <div className="no-print mb-2 flex items-center justify-between w-[215.9mm] px-1 text-xs text-slate-500">
-                <span className="font-semibold text-slate-700">
-                  📄 Lembar Fisik {pageIdx + 1} dari {totalPages}
+                <span className="font-semibold text-slate-700 flex items-center gap-1.5">
+                  <FileText size={13} className="text-slate-500 shrink-0" />
+                  Lembar Fisik {pageIdx + 1} dari {totalPages}
                 </span>
                 <span className="text-slate-400">
                   {pageRows.length > 0 ? `Data Baris ${startNo} - ${endNo}` : 'Lembar Blanko Kosong'} (Kertas F4 / Folio)
@@ -225,7 +227,7 @@ export const VisitorSheetPrint: React.FC<VisitorSheetPrintProps> = ({
 
                 {/* ── 2. JUDUL DOKUMEN & TAHUN PELAJARAN ── */}
                 <div className="text-center mb-2 text-black">
-                  <h2 className="text-[12.5pt] font-black tracking-wider uppercase underline decoration-1 underline-offset-2">
+                  <h2 className="text-[12.5pt] font-black tracking-wider uppercase">
                     DAFTAR PENGUNJUNG PERPUSTAKAAN
                   </h2>
                   <h3 className="text-[11pt] font-bold tracking-wide uppercase mt-0.5">
@@ -242,7 +244,7 @@ export const VisitorSheetPrint: React.FC<VisitorSheetPrintProps> = ({
                   <div className="flex items-center">
                     <span className="w-24 inline-block font-bold">MINGGU KE</span>
                     <span>
-                      : <strong className="font-black underline px-1">{weekDisplayText}</strong> (I/II/III/IV/V) *)
+                      : <strong className="font-bold px-1">{weekDisplayText}</strong> (I/II/III/IV/V) *)
                     </span>
                   </div>
                 </div>
@@ -307,13 +309,13 @@ export const VisitorSheetPrint: React.FC<VisitorSheetPrintProps> = ({
                               {v.kelas || '—'}
                             </td>
                             <td className="border-r border-black text-center font-bold text-xs">
-                              {isBaca ? '✓' : ''}
+                              {isBaca ? <Check size={13} className="mx-auto text-black stroke-[2.5]" /> : ''}
                             </td>
                             <td className="border-r border-black text-center font-bold text-xs">
-                              {isPinjam ? '✓' : ''}
+                              {isPinjam ? <Check size={13} className="mx-auto text-black stroke-[2.5]" /> : ''}
                             </td>
                             <td className="text-center font-bold text-xs">
-                              {isKembali ? '✓' : ''}
+                              {isKembali ? <Check size={13} className="mx-auto text-black stroke-[2.5]" /> : ''}
                             </td>
                           </tr>
                         )

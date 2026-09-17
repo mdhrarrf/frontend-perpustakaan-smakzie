@@ -460,7 +460,7 @@ export function KioskBorrowIndividual() {
                 )}
                 {book.judul === 'Unknown' || !book.judul ? (
                   <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3 mb-2">
-                    <span className="text-red-500 text-lg">⚠️</span>
+                    <AlertTriangle size={18} className="text-red-500 shrink-0 mt-0.5" />
                     <p className="text-sm text-red-700 font-semibold">
                       Data buku tidak terbaca. Coba scan ulang barcode, atau hubungi petugas.
                     </p>

@@ -476,29 +476,24 @@ export function AdminReportsPage() {
           {/* Filter Bar */}
           <Card className="no-print">
             <CardBody className="space-y-3">
-              {/* Row 1: Quick Filter Mode Pills & Active Info */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-2.5 border-b border-slate-100">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-xs font-semibold text-slate-500 mr-1">Periode:</span>
-
-                  {/* Button: Hari Ini */}
+              {/* Row 1: Periode Quick Filter */}
+              <div className="flex flex-wrap items-center gap-2 pb-2.5 border-b border-slate-100">
+                <span className="text-xs font-semibold text-slate-500 mr-1">Periode:</span>
+                <div className="flex gap-1 bg-slate-100 p-0.5 rounded-lg">
                   <button
                     type="button"
                     onClick={() => {
                       setFilterMode('today')
                       setDateInput(todayDateStr)
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                       filterMode === 'today'
-                        ? 'bg-primary-600 text-white shadow-sm ring-2 ring-primary-500/20'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                        ? 'bg-white text-slate-900 shadow-sm font-semibold'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    <Calendar size={13} />
-                    Hari Ini ({now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })})
+                    Hari Ini
                   </button>
-
-                  {/* Button: Minggu Ini */}
                   <button
                     type="button"
                     onClick={() => {
@@ -508,16 +503,14 @@ export function AdminReportsPage() {
                       setMonth(now.getMonth() + 1)
                       setMonthInput(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                       filterMode === 'week'
-                        ? 'bg-primary-600 text-white shadow-sm ring-2 ring-primary-500/20'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                        ? 'bg-white text-slate-900 shadow-sm font-semibold'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    Minggu Ini (Minggu {['', 'I', 'II', 'III', 'IV', 'V'][getWeekOfMonth(now)]})
+                    Minggu Ini
                   </button>
-
-                  {/* Button: Bulan Ini */}
                   <button
                     type="button"
                     onClick={() => {
@@ -526,96 +519,59 @@ export function AdminReportsPage() {
                       setMonth(now.getMonth() + 1)
                       setMonthInput(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                       filterMode === 'month'
-                        ? 'bg-primary-600 text-white shadow-sm ring-2 ring-primary-500/20'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                        ? 'bg-white text-slate-900 shadow-sm font-semibold'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    Bulan Ini ({MONTHS[now.getMonth()]?.l})
+                    Bulan Ini
                   </button>
-
-                  {/* Button: Pilih Tanggal / Kustom */}
                   <button
                     type="button"
                     onClick={() => setFilterMode('date')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                       filterMode === 'date'
-                        ? 'bg-primary-600 text-white shadow-sm ring-2 ring-primary-500/20'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                        ? 'bg-white text-slate-900 shadow-sm font-semibold'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    Pilih Tanggal Lain
+                    Pilih Tanggal
                   </button>
-                </div>
-
-                {/* Status Ringkas Kunjungan Aktif */}
-                <div className="text-xs text-slate-500 hidden md:block">
-                  {filterMode === 'today' && (
-                    <span>Menampilkan kunjungan hari ini: <strong className="text-slate-800">{now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong></span>
-                  )}
-                  {filterMode === 'week' && (
-                    <span>Menampilkan periode: <strong className="text-slate-800">{currentWeekInfo ? currentWeekInfo.label : `Minggu ${week}`}</strong></span>
-                  )}
-                  {filterMode === 'month' && (
-                    <span>Menampilkan seluruh kunjungan bulan: <strong className="text-slate-800">{MONTHS[month - 1]?.l} {year}</strong></span>
-                  )}
-                  {filterMode === 'date' && (
-                    <span>Menampilkan kunjungan tanggal: <strong className="text-slate-800">{dateInput ? new Date(dateInput).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '—'}</strong></span>
-                  )}
                 </div>
               </div>
 
-              {/* Row 2: Dynamic Inputs based on mode & Filters */}
-              <div className="flex flex-wrap items-center gap-2.5">
-                {/* When filterMode === 'date' */}
+              {/* Row 2: Inputs & Search */}
+              <div className="flex flex-wrap items-center gap-3">
                 {filterMode === 'date' && (
-                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                    <Calendar size={14} className="text-slate-500 shrink-0" />
-                    <span className="text-xs font-medium text-slate-600">Pilih Tanggal:</span>
-                    <input
-                      type="date"
-                      value={dateInput}
-                      onChange={(e) => handleDateInputChange(e.target.value)}
-                      className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer"
-                    />
-                  </div>
+                  <Input
+                    type="date"
+                    value={dateInput}
+                    onChange={(e) => handleDateInputChange(e.target.value)}
+                    className="w-44 text-sm"
+                  />
                 )}
 
-                {/* When filterMode === 'week' or 'month' */}
                 {(filterMode === 'week' || filterMode === 'month') && (
-                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                    <Calendar size={14} className="text-slate-500 shrink-0" />
-                    <span className="text-xs font-medium text-slate-600">Bulan:</span>
-                    <input
-                      type="month"
-                      value={monthInput}
-                      onChange={(e) => handleMonthInputChange(e.target.value)}
-                      className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer"
-                    />
-                  </div>
+                  <Input
+                    type="month"
+                    value={monthInput}
+                    onChange={(e) => handleMonthInputChange(e.target.value)}
+                    className="w-44 text-sm"
+                  />
                 )}
 
-                {/* When filterMode === 'week': week dropdown */}
                 {filterMode === 'week' && (
-                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                    <span className="text-xs font-medium text-slate-600">Minggu:</span>
-                    <select
-                      value={week}
-                      onChange={(e) => setWeek(e.target.value)}
-                      className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer pr-1"
-                    >
-                      <option value="all">Semua Minggu (1 - {daysInMonth} {currentMonthName} {year})</option>
-                      {weekList.map((w) => (
-                        <option key={w.value} value={w.value}>
-                          {w.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <SelectFilter value={week} onChange={setWeek}>
+                    <option value="all">Semua Minggu (1 - {daysInMonth} {currentMonthName} {year})</option>
+                    {weekList.map((w) => (
+                      <option key={w.value} value={w.value}>
+                        {w.label}
+                      </option>
+                    ))}
+                  </SelectFilter>
                 )}
 
-                {/* Keperluan Filter */}
                 <SelectFilter value={keperluan} onChange={setKeperluan}>
                   <option value="">Semua Keperluan</option>
                   <option value="baca">Baca</option>
@@ -623,8 +579,7 @@ export function AdminReportsPage() {
                   <option value="kembali">Kembali</option>
                 </SelectFilter>
 
-                {/* Search */}
-                <div className="flex-1 min-w-40">
+                <div className="flex-1 min-w-48">
                   <Input
                     placeholder="Cari nama, kelas, NIS..."
                     leftIcon={<Search size={15} />}
@@ -634,25 +589,25 @@ export function AdminReportsPage() {
                   />
                 </div>
 
-                <button
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={fetchVisitors}
                   title="Segarkan data"
-                  className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
                 >
-                  <RefreshCw size={15} className={loadingV ? 'animate-spin' : ''} />
-                </button>
+                  <RefreshCw size={14} className={loadingV ? 'animate-spin' : ''} />
+                </Button>
               </div>
 
               {/* Action Row */}
-              <div className="flex flex-wrap items-center justify-between gap-3 mt-3 pt-3 border-t border-slate-100">
-                {/* View toggle & Print Data Mode */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex gap-1 bg-slate-100 p-0.5 rounded-lg">
                     <button
                       type="button"
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                         viewMode === 'preview'
-                          ? 'bg-white text-slate-900 shadow-sm'
+                          ? 'bg-white text-slate-900 shadow-sm font-semibold'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                       onClick={() => setViewMode('preview')}
@@ -664,7 +619,7 @@ export function AdminReportsPage() {
                       type="button"
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                         viewMode === 'table'
-                          ? 'bg-white text-slate-900 shadow-sm'
+                          ? 'bg-white text-slate-900 shadow-sm font-semibold'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                       onClick={() => setViewMode('table')}
@@ -674,40 +629,33 @@ export function AdminReportsPage() {
                     </button>
                   </div>
 
-                  {/* Mode Cetak Toggle: Data Sistem vs Blanko Kosong */}
-                  <div className="flex items-center gap-1 bg-primary-50 border border-primary-100 p-0.5 rounded-lg">
+                  <div className="flex gap-1 bg-slate-100 p-0.5 rounded-lg">
                     <button
                       type="button"
                       onClick={() => setIsPrintBlank(false)}
-                      className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                         !isPrintBlank
-                          ? 'bg-primary-600 text-white shadow-sm'
-                          : 'text-primary-700 hover:bg-primary-100/60'
+                          ? 'bg-white text-slate-900 shadow-sm font-semibold'
+                          : 'text-slate-600 hover:text-slate-900'
                       }`}
-                      title="Mencetak daftar pengunjung dengan data dari sistem"
                     >
-                      Isi Data Sistem ({visitors.length})
+                      Data Pengunjung ({visitors.length})
                     </button>
                     <button
                       type="button"
                       onClick={() => setIsPrintBlank(true)}
-                      className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                         isPrintBlank
-                          ? 'bg-primary-600 text-white shadow-sm'
-                          : 'text-primary-700 hover:bg-primary-100/60'
+                          ? 'bg-white text-slate-900 shadow-sm font-semibold'
+                          : 'text-slate-600 hover:text-slate-900'
                       }`}
-                      title="Mencetak blanko fisik kosong resmi untuk paraf langsung pengunjung di perpustakaan"
                     >
-                      Blanko Kosong Fisik
+                      Blanko Kosong
                     </button>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Button size="sm" variant="outline" onClick={openSettingsModal} title="Ubah Kepala & Koordinator Perpustakaan">
-                    <SlidersHorizontal size={14} />
-                    Atur Penandatangan
-                  </Button>
                   <Button size="sm" variant="outline" onClick={() => setModalOpen(true)}>
                     <Plus size={14} />
                     Catat Manual
@@ -781,19 +729,6 @@ export function AdminReportsPage() {
 
           {/* ── Print Preview (Visitor Sheet) ── */}
           <div className={`print-area ${viewMode === 'preview' ? 'block' : 'hidden print:block'}`}>
-            <div className="no-print mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 px-1">
-              <span>
-                {isPrintBlank ? (
-                  <strong className="text-primary-700">Mode: Cetak Blanko Fisik Kosong (25 baris format resmi F4)</strong>
-                ) : (
-                  <span>Mode: Cetak Data Kunjungan Sistem ({visitors.length} data pengunjung)</span>
-                )}
-                {' • '}Ukuran Kertas F4 (Folio 215.9 x 330 mm)
-              </span>
-              <span className="text-slate-400 hidden sm:inline">
-                Penandatangan: {settings.kepala_nama} & {settings.koordinator_nama}
-              </span>
-            </div>
             <div className="flex justify-center overflow-x-auto pb-8">
               <VisitorSheetPrint
                 visitors={visitors}
