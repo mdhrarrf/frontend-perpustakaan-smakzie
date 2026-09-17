@@ -104,4 +104,25 @@ export const reportService = {
     const { data } = await apiClient.get(`${BASE}/textbook-loans`, { params })
     return data.data!
   },
+
+  async getSettings(): Promise<ReportSettings> {
+    const { data } = await apiClient.get<ApiResponse<ReportSettings>>(`${BASE}/settings`)
+    return data.data!
+  },
+
+  async saveSettings(payload: ReportSettings): Promise<ReportSettings> {
+    const { data } = await apiClient.post<ApiResponse<ReportSettings>>(`${BASE}/settings`, payload)
+    return data.data!
+  },
+}
+
+export interface ReportSettings {
+  kepala_nama: string
+  kepala_nip: string
+  koordinator_nama: string
+  koordinator_nip: string
+  titimangsa_mode: 'blank' | 'today' | 'custom'
+  titimangsa_custom: string
+  school_year: string
+  print_blank?: boolean
 }

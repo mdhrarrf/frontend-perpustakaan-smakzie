@@ -13,12 +13,16 @@ import {
   AlertCircle,
   Eye,
   List,
+  SlidersHorizontal,
+  Check,
+  RotateCcw,
 } from 'lucide-react'
 import {
   reportService,
   type Visitor,
   type VisitorStats,
   type TextbookLoanForm,
+  type ReportSettings,
 } from '@/api/report.service'
 import { VisitorSheetPrint } from '@/components/reports/VisitorSheetPrint'
 import { TextbookLoanFormPrint } from '@/components/reports/TextbookLoanFormPrint'
@@ -55,10 +59,50 @@ const MONTHS = [
   { v: 10, l: 'Oktober' },  { v: 11, l: 'November' },  { v: 12, l: 'Desember' },
 ]
 
+export const DEFAULT_SETTINGS: ReportSettings = {
+  kepala_nama: 'RUBAETUL ADAWIYAH, S.Pd.',
+  kepala_nip: 'NIP. 19800424 201407 2 003',
+  koordinator_nama: 'ROSSY RAKHMATU’LAILA, SH.',
+  koordinator_nip: 'NIP. 19830121 202521 2 054',
+  titimangsa_mode: 'blank',
+  titimangsa_custom: 'Cianjur, _________________ 20___',
+  school_year: '2026 / 2027',
+  print_blank: false,
+}
+
+function computeDateCity(st: ReportSettings): string {
+  if (st.titimangsa_mode === 'blank') {
+    return 'Cianjur, _________________ 20___'
+  }
+  if (st.titimangsa_mode === 'today') {
+    const d = new Date()
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ]
+    return `Cianjur, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
+  }
+  return st.titimangsa_custom || 'Cianjur, _________________ 20___'
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export function AdminReportsPage() {
   const now = new Date()
   const [activeTab, setActiveTab] = useState<'visitors' | 'textbook'>('visitors')
+
+  // ── Settings State (Signatories & Print format) ───────────────────────────
+  const [settings, setSettings] = useState<ReportSettings>(() => {
+    try {
+      const saved = localStorage.getItem('smakzie_perpustakaan_report_settings')
+      if (saved) return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }
+    } catch {}
+    return DEFAULT_SETTINGS
+  })
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false)
+  const [savingSettings,    setSavingSettings]    = useState(false)
+  const [settingsForm,      setSettingsForm]      = useState<ReportSettings>(DEFAULT_SETTINGS)
+  const [settingsToast,     setSettingsToast]     = useState(false)
+  const [isPrintBlank,      setIsPrintBlank]      = useState(false)
 
   // ── Tab 1 State ──────────────────────────────────────────────────────────
   const [year,        setYear]        = useState(now.getFullYear())
@@ -88,7 +132,51 @@ export function AdminReportsPage() {
   const [loanQ,         setLoanQ]         = useState('')
   const [loadingL,      setLoadingL]      = useState(false)
   const [copies,        setCopies]        = useState(1)
-  const [schoolYear,    setSchoolYear]    = useState('2026 / 2027')
+  const [schoolYear,    setSchoolYear]    = useState(settings.school_year || '2026 / 2027')
+
+  // ── Load Server Settings ──────────────────────────────────────────────────
+  useEffect(() => {
+    reportService.getSettings().then((remote) => {
+      if (remote && remote.kepala_nama) {
+        setSettings(remote)
+        if (remote.school_year) setSchoolYear(remote.school_year)
+        localStorage.setItem('smakzie_perpustakaan_report_settings', JSON.stringify(remote))
+      }
+    }).catch(() => {})
+  }, [])
+
+  // ── Settings Handlers ─────────────────────────────────────────────────────
+  const openSettingsModal = () => {
+    setSettingsForm({ ...settings })
+    setSettingsModalOpen(true)
+  }
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSavingSettings(true)
+    try {
+      await reportService.saveSettings(settingsForm)
+      setSettings(settingsForm)
+      if (settingsForm.school_year) setSchoolYear(settingsForm.school_year)
+      localStorage.setItem('smakzie_perpustakaan_report_settings', JSON.stringify(settingsForm))
+      setSettingsModalOpen(false)
+      setSettingsToast(true)
+      setTimeout(() => setSettingsToast(false), 3000)
+    } catch {
+      setSettings(settingsForm)
+      if (settingsForm.school_year) setSchoolYear(settingsForm.school_year)
+      localStorage.setItem('smakzie_perpustakaan_report_settings', JSON.stringify(settingsForm))
+      setSettingsModalOpen(false)
+      setSettingsToast(true)
+      setTimeout(() => setSettingsToast(false), 3000)
+    } finally {
+      setSavingSettings(false)
+    }
+  }
+
+  const handleResetSettings = () => {
+    setSettingsForm({ ...DEFAULT_SETTINGS })
+  }
 
   // ── Data Fetchers ─────────────────────────────────────────────────────────
   const fetchVisitors = async () => {
@@ -152,7 +240,7 @@ export function AdminReportsPage() {
       {/* ── Print CSS ── */}
       <style>{`
         @media print {
-          @page { size: 215.9mm 355.6mm; margin: 0; }
+          @page { size: 215.9mm 330mm; margin: 0; }
           body { background: #fff !important; margin: 0 !important; }
           .no-print, aside, header, nav, .app-sidebar, .app-header { display: none !important; }
           .print-area { display: block !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
@@ -165,6 +253,12 @@ export function AdminReportsPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Laporan</h1>
           <p className="text-sm text-slate-500">Cetak daftar pengunjung & formulir peminjaman buku teks</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={openSettingsModal}>
+            <SlidersHorizontal size={14} />
+            Atur Penandatangan
+          </Button>
         </div>
       </div>
 
@@ -251,27 +345,69 @@ export function AdminReportsPage() {
 
               {/* Action Row */}
               <div className="flex flex-wrap items-center justify-between gap-3 mt-3 pt-3 border-t border-slate-100">
-                {/* View toggle */}
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant={viewMode === 'preview' ? 'secondary' : 'ghost'}
-                    onClick={() => setViewMode('preview')}
-                  >
-                    <Eye size={13} />
-                    Pratinjau F4
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={viewMode === 'table' ? 'secondary' : 'ghost'}
-                    onClick={() => setViewMode('table')}
-                  >
-                    <List size={13} />
-                    Tabel Ringkas
-                  </Button>
+                {/* View toggle & Print Data Mode */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex gap-1 bg-slate-100 p-0.5 rounded-lg">
+                    <button
+                      type="button"
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        viewMode === 'preview'
+                          ? 'bg-white text-slate-900 shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                      onClick={() => setViewMode('preview')}
+                    >
+                      <Eye size={13} />
+                      Pratinjau F4
+                    </button>
+                    <button
+                      type="button"
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        viewMode === 'table'
+                          ? 'bg-white text-slate-900 shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                      onClick={() => setViewMode('table')}
+                    >
+                      <List size={13} />
+                      Tabel Ringkas
+                    </button>
+                  </div>
+
+                  {/* Mode Cetak Toggle: Data Sistem vs Blanko Kosong */}
+                  <div className="flex items-center gap-1 bg-primary-50 border border-primary-100 p-0.5 rounded-lg">
+                    <button
+                      type="button"
+                      onClick={() => setIsPrintBlank(false)}
+                      className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                        !isPrintBlank
+                          ? 'bg-primary-600 text-white shadow-sm'
+                          : 'text-primary-700 hover:bg-primary-100/60'
+                      }`}
+                      title="Mencetak daftar pengunjung dengan data dari sistem"
+                    >
+                      Isi Data Sistem ({visitors.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsPrintBlank(true)}
+                      className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                        isPrintBlank
+                          ? 'bg-primary-600 text-white shadow-sm'
+                          : 'text-primary-700 hover:bg-primary-100/60'
+                      }`}
+                      title="Mencetak blanko fisik kosong resmi untuk paraf langsung pengunjung di perpustakaan"
+                    >
+                      Blanko Kosong Fisik
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={openSettingsModal} title="Ubah Kepala & Koordinator Perpustakaan">
+                    <SlidersHorizontal size={14} />
+                    Atur Penandatangan
+                  </Button>
                   <Button size="sm" variant="outline" onClick={() => setModalOpen(true)}>
                     <Plus size={14} />
                     Catat Manual
@@ -345,12 +481,34 @@ export function AdminReportsPage() {
 
           {/* ── Print Preview (Visitor Sheet) ── */}
           <div className={`print-area ${viewMode === 'preview' ? 'block' : 'hidden print:block'}`}>
-            <div className="no-print mb-2 text-center text-xs text-slate-400">
-              Pratinjau lembar fisik ukuran F4 — tekan "Cetak PDF (F4)" untuk mencetak
+            <div className="no-print mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 px-1">
+              <span>
+                {isPrintBlank ? (
+                  <strong className="text-primary-700">Mode: Cetak Blanko Fisik Kosong (23 baris bertitik-titik tanda tangan)</strong>
+                ) : (
+                  <span>Mode: Cetak Data Kunjungan Sistem ({visitors.length} data pengunjung)</span>
+                )}
+                {' • '}Ukuran Kertas F4 (Folio)
+              </span>
+              <span className="text-slate-400 hidden sm:inline">
+                Penandatangan: {settings.kepala_nama} & {settings.koordinator_nama}
+              </span>
             </div>
             <div className="flex justify-center overflow-x-auto pb-8">
               <div className="bg-white shadow border border-slate-200 rounded-sm">
-                <VisitorSheetPrint visitors={visitors} year={year} month={month} week={week ? Number(week) : null} schoolYear={schoolYear} />
+                <VisitorSheetPrint
+                  visitors={visitors}
+                  year={year}
+                  month={month}
+                  week={week ? Number(week) : null}
+                  schoolYear={settings.school_year}
+                  dateCityText={computeDateCity(settings)}
+                  kepalaPerpusName={settings.kepala_nama}
+                  kepalaPerpusNip={settings.kepala_nip}
+                  koordinatorName={settings.koordinator_nama}
+                  koordinatorNip={settings.koordinator_nip}
+                  isPrintBlank={isPrintBlank}
+                />
               </div>
             </div>
           </div>
@@ -434,7 +592,13 @@ export function AdminReportsPage() {
               </div>
               <div className="print-area flex justify-center overflow-x-auto pb-8">
                 <div className="bg-white shadow border border-slate-200 rounded-sm">
-                  <TextbookLoanFormPrint form={selectedLoan} schoolYear={schoolYear} copies={copies} />
+                  <TextbookLoanFormPrint
+                    form={selectedLoan}
+                    schoolYear={settings.school_year || schoolYear}
+                    copies={copies}
+                    koordinatorName={settings.koordinator_nama}
+                    koordinatorNip={settings.koordinator_nip}
+                  />
                 </div>
               </div>
             </>
@@ -564,6 +728,185 @@ export function AdminReportsPage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════ */}
+      {/* MODAL: PENGATURAN PENANDATANGAN & FORMAT LAPORAN             */}
+      {/* ════════════════════════════════════════════════════════════ */}
+      {settingsModalOpen && (
+        <div className="no-print fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-150">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal size={18} className="text-primary-600" />
+                <h3 className="font-semibold text-slate-900">Pengaturan Penandatangan Laporan</h3>
+              </div>
+              <button
+                onClick={() => setSettingsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-md"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveSettings} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+              <p className="text-xs text-slate-500">
+                Nama dan NIP di bawah ini akan otomatis tercantum pada kolom tanda tangan dokumen laporan & cetak fisik resmi perpustakaan.
+              </p>
+
+              {/* Section 1: Kepala Perpustakaan */}
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                    Kepala Perpustakaan (Kiri)
+                  </span>
+                  <span className="text-[11px] text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    Mengetahui
+                  </span>
+                </div>
+                <Input
+                  label="Nama & Gelar Kepala Perpustakaan"
+                  required
+                  placeholder="Contoh: RUBAETUL ADAWIYAH, S.Pd."
+                  value={settingsForm.kepala_nama}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, kepala_nama: e.target.value })}
+                />
+                <Input
+                  label="NIP Kepala Perpustakaan"
+                  required
+                  placeholder="Contoh: NIP. 19800424 201407 2 003"
+                  value={settingsForm.kepala_nip}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, kepala_nip: e.target.value })}
+                />
+              </div>
+
+              {/* Section 2: Koordinator Pengelola Perpustakaan */}
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                    Koordinator Pengelola Perpustakaan (Kanan)
+                  </span>
+                  <span className="text-[11px] text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    Kampus 1 dan 2
+                  </span>
+                </div>
+                <Input
+                  label="Nama & Gelar Koordinator"
+                  required
+                  placeholder="Contoh: ROSSY RAKHMATU’LAILA, SH."
+                  value={settingsForm.koordinator_nama}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, koordinator_nama: e.target.value })}
+                />
+                <Input
+                  label="NIP Koordinator"
+                  required
+                  placeholder="Contoh: NIP. 19830121 202521 2 054"
+                  value={settingsForm.koordinator_nip}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, koordinator_nip: e.target.value })}
+                />
+              </div>
+
+              {/* Section 3: Titimangsa & Tahun Pelajaran */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-slate-700">Format Titimangsa (Tanggal Surat)</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSettingsForm({ ...settingsForm, titimangsa_mode: 'blank' })}
+                    className={`px-3 py-2 text-xs font-medium rounded-lg border text-center transition-colors ${
+                      settingsForm.titimangsa_mode === 'blank'
+                        ? 'bg-primary-50 border-primary-500 text-primary-700 font-semibold'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    Blanko Titik-Titik
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSettingsForm({ ...settingsForm, titimangsa_mode: 'today' })}
+                    className={`px-3 py-2 text-xs font-medium rounded-lg border text-center transition-colors ${
+                      settingsForm.titimangsa_mode === 'today'
+                        ? 'bg-primary-50 border-primary-500 text-primary-700 font-semibold'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    Tanggal Hari Ini
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSettingsForm({ ...settingsForm, titimangsa_mode: 'custom' })}
+                    className={`px-3 py-2 text-xs font-medium rounded-lg border text-center transition-colors ${
+                      settingsForm.titimangsa_mode === 'custom'
+                        ? 'bg-primary-50 border-primary-500 text-primary-700 font-semibold'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    Teks Kustom
+                  </button>
+                </div>
+
+                {settingsForm.titimangsa_mode === 'custom' ? (
+                  <Input
+                    label="Teks Titimangsa Kustom"
+                    placeholder="Mis: Cianjur, 15 September 2026"
+                    value={settingsForm.titimangsa_custom}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, titimangsa_custom: e.target.value })}
+                  />
+                ) : (
+                  <div className="text-xs text-slate-500 bg-slate-50 px-3 py-2 rounded border border-slate-200">
+                    Teks tercetak:{' '}
+                    <span className="font-medium text-slate-800">
+                      {computeDateCity(settingsForm)}
+                    </span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <Input
+                    label="Tahun Pelajaran"
+                    placeholder="Contoh: 2026 / 2027"
+                    value={settingsForm.school_year}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, school_year: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResetSettings}
+                  title="Kembalikan ke pejabat default"
+                  className="text-slate-500"
+                >
+                  <RotateCcw size={13} />
+                  Reset Default
+                </Button>
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => setSettingsModalOpen(false)}>
+                    Batal
+                  </Button>
+                  <Button type="submit" size="sm" loading={savingSettings}>
+                    <Check size={14} />
+                    Simpan Pengaturan
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Toast Notification ── */}
+      {settingsToast && (
+        <div className="no-print fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-lg shadow-lg text-sm animate-in fade-in slide-in-from-bottom-2">
+          <Check size={16} />
+          Pengaturan penandatangan berhasil disimpan.
         </div>
       )}
     </div>
