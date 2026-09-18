@@ -22,11 +22,9 @@ import {
   reportService,
   type Visitor,
   type VisitorStats,
-  type TextbookLoanForm,
   type ReportSettings,
 } from '@/api/report.service'
 import { VisitorSheetPrint } from '@/components/reports/VisitorSheetPrint'
-import { TextbookLoanFormPrint } from '@/components/reports/TextbookLoanFormPrint'
 import { Card, CardHeader, CardBody, StatCard, EmptyState } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -121,7 +119,6 @@ function computeDateCity(st: ReportSettings): string {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export function AdminReportsPage() {
   const now = new Date()
-  const [activeTab, setActiveTab] = useState<'visitors' | 'textbook'>('visitors')
 
   // ── Settings State (Signatories & Print format) ───────────────────────────
   const [settings, setSettings] = useState<ReportSettings>(() => {
@@ -137,7 +134,7 @@ export function AdminReportsPage() {
   const [settingsToast,     setSettingsToast]     = useState(false)
   const [isPrintBlank,      setIsPrintBlank]      = useState(false)
 
-  // ── Tab 1 State ──────────────────────────────────────────────────────────
+  // ── Visitors State ────────────────────────────────────────────────────────
   const initialYear = now.getFullYear()
   const initialMonth = now.getMonth() + 1
   const initialWeek = String(getWeekOfMonth(now)) // Otomatis pilih minggu aktif hari ini
@@ -166,14 +163,6 @@ export function AdminReportsPage() {
     visited_at: new Date().toISOString().slice(0, 16),
     notes: '',
   })
-
-  // ── Tab 2 State ──────────────────────────────────────────────────────────
-  const [loans,         setLoans]         = useState<TextbookLoanForm[]>([])
-  const [selectedLoan,  setSelectedLoan]  = useState<TextbookLoanForm | null>(null)
-  const [loanQ,         setLoanQ]         = useState('')
-  const [loadingL,      setLoadingL]      = useState(false)
-  const [copies,        setCopies]        = useState(1)
-  const [schoolYear,    setSchoolYear]    = useState(settings.school_year || '2026 / 2027')
 
   // ── Date & Period Handlers ────────────────────────────────────────────────
   const handleMonthInputChange = (val: string) => {
@@ -224,7 +213,6 @@ export function AdminReportsPage() {
     reportService.getSettings().then((remote) => {
       if (remote && remote.kepala_nama) {
         setSettings(remote)
-        if (remote.school_year) setSchoolYear(remote.school_year)
         localStorage.setItem('smakzie_perpustakaan_report_settings', JSON.stringify(remote))
       }
     }).catch(() => {})
@@ -242,14 +230,12 @@ export function AdminReportsPage() {
     try {
       await reportService.saveSettings(settingsForm)
       setSettings(settingsForm)
-      if (settingsForm.school_year) setSchoolYear(settingsForm.school_year)
       localStorage.setItem('smakzie_perpustakaan_report_settings', JSON.stringify(settingsForm))
       setSettingsModalOpen(false)
       setSettingsToast(true)
       setTimeout(() => setSettingsToast(false), 3000)
     } catch {
       setSettings(settingsForm)
-      if (settingsForm.school_year) setSchoolYear(settingsForm.school_year)
       localStorage.setItem('smakzie_perpustakaan_report_settings', JSON.stringify(settingsForm))
       setSettingsModalOpen(false)
       setSettingsToast(true)
@@ -297,20 +283,9 @@ export function AdminReportsPage() {
     } catch { /* silent */ } finally { setLoadingV(false) }
   }
 
-  const fetchLoans = async (q = '') => {
-    setLoadingL(true)
-    try {
-      const res = await reportService.getTextbookLoans({ q, per_page: 20 })
-      const list = res.data ?? []
-      setLoans(list)
-      if (!selectedLoan && list.length > 0) setSelectedLoan(list[0])
-    } catch { /* silent */ } finally { setLoadingL(false) }
-  }
-
   useEffect(() => {
-    if (activeTab === 'visitors') fetchVisitors()
-    else fetchLoans(loanQ)
-  }, [activeTab, filterMode, year, month, week, dateInput, keperluan])
+    fetchVisitors()
+  }, [filterMode, year, month, week, dateInput, keperluan])
 
   // ── Modal Submit ──────────────────────────────────────────────────────────
   const handleSaveVisitor = async (e: React.FormEvent) => {
@@ -430,7 +405,7 @@ export function AdminReportsPage() {
       <div className="no-print flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Laporan</h1>
-          <p className="text-sm text-slate-500">Cetak daftar pengunjung & formulir peminjaman buku teks</p>
+          <p className="text-sm text-slate-500">Cetak daftar pengunjung perpustakaan</p>
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" onClick={openSettingsModal}>
@@ -439,33 +414,7 @@ export function AdminReportsPage() {
           </Button>
         </div>
       </div>
-
-      {/* ── Tab Switcher ── */}
-      <div className="no-print flex gap-2">
-        <Button
-          variant={activeTab === 'visitors' ? 'primary' : 'outline'}
-          size="sm"
-          onClick={() => setActiveTab('visitors')}
-        >
-          <Users size={14} />
-          Daftar Pengunjung
-        </Button>
-        <Button
-          variant={activeTab === 'textbook' ? 'primary' : 'outline'}
-          size="sm"
-          onClick={() => setActiveTab('textbook')}
-        >
-          <BookOpen size={14} />
-          Formulir Peminjaman Buku Teks
-        </Button>
-      </div>
-
-      {/* ════════════════════════════════════════════════════════════ */}
-      {/* TAB 1: DAFTAR PENGUNJUNG                                    */}
-      {/* ════════════════════════════════════════════════════════════ */}
-      {activeTab === 'visitors' && (
-        <>
-          {/* Stat Cards */}
+      {/* Stat Cards */}
           <div className="no-print grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard label="Total Kunjungan"    value={stats.total}   icon={<Users size={20} />}          color="blue"    />
             <StatCard label="Baca di Tempat"     value={stats.baca}    icon={<BookOpen size={20} />}       color="emerald" />
@@ -745,109 +694,6 @@ export function AdminReportsPage() {
               />
             </div>
           </div>
-        </>
-      )}
-
-      {/* ════════════════════════════════════════════════════════════ */}
-      {/* TAB 2: FORMULIR PEMINJAMAN BUKU TEKS                        */}
-      {/* ════════════════════════════════════════════════════════════ */}
-      {activeTab === 'textbook' && (
-        <>
-          {/* Filter & Controls */}
-          <Card className="no-print">
-            <CardBody>
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex-1 min-w-48">
-                  <Input
-                    placeholder="Cari nama siswa, NIS, atau no. transaksi..."
-                    leftIcon={<Search size={15} />}
-                    value={loanQ}
-                    onChange={(e) => { setLoanQ(e.target.value); fetchLoans(e.target.value) }}
-                  />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-slate-500">Tahun Ajaran:</span>
-                  <input
-                    type="text"
-                    value={schoolYear}
-                    onChange={(e) => setSchoolYear(e.target.value)}
-                    className="w-28 px-3 py-2 text-sm text-center border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
-                </div>
-
-                <SelectFilter value={String(copies)} onChange={(v) => setCopies(Number(v))}>
-                  <option value="1">1 formulir / lembar</option>
-                  <option value="2">2 formulir / lembar</option>
-                </SelectFilter>
-
-                <Button
-                  size="sm"
-                  disabled={!selectedLoan}
-                  onClick={() => window.print()}
-                >
-                  <Printer size={14} />
-                  Cetak Formulir (F4)
-                </Button>
-              </div>
-
-              {/* Loan selector chips */}
-              {loans.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-slate-100">
-                  <p className="text-xs text-slate-500 mb-2">Pilih data peminjaman:</p>
-                  <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto">
-                    {loans.map((loan) => (
-                      <button
-                        key={loan.loan_id}
-                        onClick={() => setSelectedLoan(loan)}
-                        className={`text-left px-3 py-1.5 rounded-lg text-xs border transition-colors ${
-                          selectedLoan?.loan_id === loan.loan_id
-                            ? 'bg-primary-50 border-primary-500 text-primary-700'
-                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                        }`}
-                      >
-                        <span className="font-medium">{loan.student.nama}</span>
-                        <span className="text-slate-400 ml-1">({loan.student.kelas})</span>
-                        <span className="text-slate-400 ml-1 font-mono">({loan.items.length} buku)</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardBody>
-          </Card>
-
-          {/* Textbook Form Preview */}
-          {selectedLoan ? (
-            <>
-              <div className="no-print mb-2 text-center text-xs text-slate-400">
-                Pratinjau formulir peminjaman buku teks ukuran F4
-              </div>
-              <div className="print-area flex justify-center overflow-x-auto pb-8">
-                <div className="bg-white shadow border border-slate-200 rounded-sm">
-                  <TextbookLoanFormPrint
-                    form={selectedLoan}
-                    schoolYear={settings.school_year || schoolYear}
-                    copies={copies}
-                    koordinatorName={settings.koordinator_nama}
-                    koordinatorNip={settings.koordinator_nip}
-                  />
-                </div>
-              </div>
-            </>
-          ) : (
-            <Card>
-              <CardBody>
-                <EmptyState
-                  icon={<BookOpen size={48} />}
-                  title="Pilih data peminjaman"
-                  description="Pilih satu riwayat peminjaman siswa di atas untuk melihat pratinjau formulir peminjaman buku teks."
-                />
-              </CardBody>
-            </Card>
-          )}
-        </>
-      )}
 
       {/* ════════════════════════════════════════════════════════════ */}
       {/* MODAL: CATAT PENGUNJUNG MANUAL                               */}
