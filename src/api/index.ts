@@ -35,6 +35,11 @@ export const violationService = {
     const { data } = await apiClient.get('/perpustakaan/violations', { params })
     return data
   },
+
+  async resolve(id: number) {
+    const { data } = await apiClient.patch(`/perpustakaan/violations/${id}/resolve`)
+    return data
+  },
 }
 
 export const auditService = {
