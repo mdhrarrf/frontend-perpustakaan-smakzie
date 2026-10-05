@@ -109,7 +109,6 @@ export function AdminViolationsPage() {
         <div className="flex gap-2 flex-wrap">
           {[
             { value: 'active',   label: 'Aktif' },
-            { value: 'expired',  label: 'Kadaluarsa' },
             { value: 'resolved', label: 'Selesai' },
             { value: '',         label: 'Semua' },
           ].map((item) => (
@@ -147,7 +146,7 @@ export function AdminViolationsPage() {
             <EmptyState
               icon={<AlertTriangle size={48} />}
               title="Tidak ada pelanggaran"
-              description={`Tidak ada data pelanggaran ${status ? `dengan status "${status === 'active' ? 'Aktif' : status === 'expired' ? 'Kadaluarsa' : 'Selesai'}".` : '.'}`}
+              description={`Tidak ada data pelanggaran ${status ? `dengan status "${status === 'active' ? 'Aktif' : 'Selesai'}".` : '.'}`}
             />
           </CardBody>
         ) : (

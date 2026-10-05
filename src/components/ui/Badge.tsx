@@ -53,8 +53,8 @@ export function BookStatusBadge({ status, label }: StatusBadgeProps) {
 export function ViolationStatusBadge({ status, label }: StatusBadgeProps) {
   const map: Record<string, { cls: string; text: string }> = {
     active:   { cls: 'bg-red-100 text-red-700',     text: 'Aktif' },
-    expired:  { cls: 'bg-slate-100 text-slate-500', text: 'Kadaluarsa' },
-    resolved: { cls: 'bg-green-100 text-green-700', text: 'Diselesaikan' },
+    expired:  { cls: 'bg-emerald-100 text-emerald-700', text: 'Selesai' },
+    resolved: { cls: 'bg-emerald-100 text-emerald-700', text: 'Selesai' },
   }
   const d = map[status] ?? { cls: 'bg-slate-100 text-slate-500', text: status }
   return <span className={cn('inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium', d.cls)}>{label ?? d.text}</span>
