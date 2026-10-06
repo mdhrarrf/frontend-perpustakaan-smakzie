@@ -70,6 +70,16 @@ export const bookService = {
     return data.data ?? []
   },
 
+  async places(q?: string): Promise<string[]> {
+    const { data } = await apiClient.get<ApiResponse<string[]>>(`${BASE}/places`, { params: { q } })
+    return data.data ?? []
+  },
+
+  async topics(q?: string): Promise<string[]> {
+    const { data } = await apiClient.get<ApiResponse<string[]>>(`${BASE}/topics`, { params: { q } })
+    return data.data ?? []
+  },
+
   async getItems(id: number): Promise<BookItemsResponse> {
     const { data } = await apiClient.get<ApiResponse<BookItemsResponse>>(`${BASE}/${id}/items`)
     return data.data!

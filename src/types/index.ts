@@ -51,6 +51,13 @@ export interface Book {
   jumlah_dipinjam: number
   jumlah_hilang: number
   lokasi_rak: string | null
+  kota_terbit?: string | null
+  edisi?: string | null
+  topik?: string | null
+  sumber_pengadaan?: number | string | null
+  sumber_label?: string | null
+  call_number?: string | null
+  klasifikasi?: string | null
   status: 'active' | 'inactive' | 'archived'
   status_label: string
   created_at: string

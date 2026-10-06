@@ -12,14 +12,20 @@ import { getErrorMessage } from '@/api/client'
 interface BookFormData {
   judul: string
   penulis: string
+  edisi: string
   penerbit: string
+  kota_terbit: string
   tahun_terbit: string
   isbn: string
-  kategori_id: string
+  topik: string
   sinopsis: string
-  harga: string
-  jumlah_total: string
+  kategori_id: string
+  klasifikasi: string
+  call_number: string
   lokasi_rak: string
+  jumlah_total: string
+  sumber_pengadaan: string
+  harga: string
   status: string
 }
 
@@ -31,7 +37,7 @@ interface YearPickerProps {
 
 function YearPicker({ value, onChange, label = 'Tahun Terbit' }: YearPickerProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const currentYear = new Date().getFullYear() // Dinamis mengikuti tahun berjalan saat ini
+  const currentYear = new Date().getFullYear()
   
   const initialYear = value ? Number(value) : currentYear
   const [decadeStart, setDecadeStart] = useState(() => Math.floor(initialYear / 12) * 12)
@@ -63,12 +69,12 @@ function YearPicker({ value, onChange, label = 'Tahun Terbit' }: YearPickerProps
   const years = Array.from({ length: 12 }, (_, i) => decadeStart + i)
 
   return (
-    <div className="relative" ref={popoverRef}>
+    <div className="flex flex-col gap-1.5 relative" ref={popoverRef}>
       <label className="text-sm font-medium text-slate-700">{label}</label>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="mt-1.5 flex items-center justify-between w-full px-3 py-2 text-sm border border-slate-200 bg-white rounded-lg transition-colors hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-left"
+        className="flex items-center justify-between w-full h-10 px-3 py-2 text-sm border border-slate-200 bg-white rounded-lg transition-colors hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-left"
       >
         <span className={value ? "text-slate-900 font-medium" : "text-slate-400"}>
           {value ? `Tahun ${value}` : "Pilih Tahun Terbit..."}
@@ -77,7 +83,7 @@ function YearPicker({ value, onChange, label = 'Tahun Terbit' }: YearPickerProps
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-lg p-3 space-y-3">
+        <div className="absolute z-50 mt-1 top-full left-0 w-64 bg-white border border-slate-200 rounded-xl shadow-lg p-3 space-y-3">
           <div className="flex items-center justify-between">
             <button
               type="button"
@@ -109,7 +115,7 @@ function YearPicker({ value, onChange, label = 'Tahun Terbit' }: YearPickerProps
           <div className="grid grid-cols-3 gap-1.5">
             {years.map((year) => {
               const isSelected = String(year) === value
-              const isFuture = year > currentYear // Tidak bisa memilih tahun masa depan!
+              const isFuture = year > currentYear
               return (
                 <button
                   key={year}
@@ -167,10 +173,33 @@ function YearPicker({ value, onChange, label = 'Tahun Terbit' }: YearPickerProps
   )
 }
 
-function computeLiveCallNumber(judul?: string, penulis?: string, lokasi?: string): string {
+interface SelectFieldProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label: string
+  required?: boolean
+  children: React.ReactNode
+}
+
+function SelectField({ label, required, children, className = '', ...props }: SelectFieldProps) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-sm font-medium text-slate-700">
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      <select
+        className={`w-full h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${className}`}
+        {...props}
+      >
+        {children}
+      </select>
+    </div>
+  )
+}
+
+function computeLiveCallNumber(judul?: string, penulis?: string, klasifikasi?: string): string {
   let classNum = '000'
-  if (lokasi && lokasi.trim()) {
-    const parts = lokasi.trim().split(/\s+/)
+  if (klasifikasi && klasifikasi.trim()) {
+    const parts = klasifikasi.trim().split(/\s+/)
     classNum = parts[0]
   } else if (judul) {
     const t = judul.toLowerCase()
@@ -242,18 +271,35 @@ export function AdminBookForm() {
     queryFn: bookService.categories,
   })
 
-  const { register, handleSubmit, reset, setValue, watch } = useForm<BookFormData>()
-  const watchJudul   = watch('judul')
-  const watchPenulis = watch('penulis')
-  const watchLokasi  = watch('lokasi_rak')
-  const liveCallNumber = computeLiveCallNumber(watchJudul, watchPenulis, watchLokasi)
+  const { register, handleSubmit, reset, setValue, watch } = useForm<BookFormData>({
+    defaultValues: {
+      status: 'active',
+      sumber_pengadaan: '1',
+      jumlah_total: '1',
+    }
+  })
+
+  const watchJudul       = watch('judul')
+  const watchPenulis     = watch('penulis')
+  const watchKlasifikasi = watch('klasifikasi')
+  const watchCallNumber  = watch('call_number')
+  const liveCallNumber   = computeLiveCallNumber(watchJudul, watchPenulis, watchKlasifikasi)
+
+  // Otomatis sinkronkan call_number dengan kalkulasi jika belum diisi custom
+  const [isCallNumberManual, setIsCallNumberManual] = useState(false)
+
+  useEffect(() => {
+    if (!isEdit && !isCallNumberManual) {
+      setValue('call_number', liveCallNumber)
+    }
+  }, [liveCallNumber, isEdit, isCallNumberManual, setValue])
 
   const [displayHarga, setDisplayHarga] = useState<string>('')
   const [rawHarga, setRawHarga]         = useState<string>('')
   const [displayIsbn, setDisplayIsbn]   = useState<string>('')
   const [selectedYear, setSelectedYear] = useState<string>('')
 
-  // Ambil history pengarang & penerbit dari master SLiMS untuk autocomplete
+  // Master suggestion data dari SLiMS
   const { data: authorsList } = useQuery({
     queryKey: ['book-authors-suggestions'],
     queryFn: () => bookService.authors(),
@@ -266,9 +312,17 @@ export function AdminBookForm() {
     staleTime: 5 * 60 * 1000,
   })
 
-  // List pilihan tahun terbit (tahun depan sampai 1970)
-  const currentYear = new Date().getFullYear() + 1
-  const yearOptions = Array.from({ length: currentYear - 1970 + 1 }, (_, i) => currentYear - i)
+  const { data: placesList } = useQuery({
+    queryKey: ['book-places-suggestions'],
+    queryFn: () => bookService.places(),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const { data: topicsList } = useQuery({
+    queryKey: ['book-topics-suggestions'],
+    queryFn: () => bookService.topics(),
+    staleTime: 5 * 60 * 1000,
+  })
 
   function formatRupiah(value: string | number | undefined | null): string {
     if (!value) return ''
@@ -284,7 +338,6 @@ export function AdminBookForm() {
     setValue('harga', clean)
   }
 
-  // Format otomatis ISBN: hanya angka yang diinput, strip disisipkan otomatis (978-xxx-xxx-xxx-x)
   function formatIsbn(value: string): string {
     const digits = value.replace(/\D/g, '').slice(0, 13)
     if (digits.length <= 3) return digits
@@ -300,7 +353,6 @@ export function AdminBookForm() {
     setValue('isbn', formatted)
   }
 
-  // Guard untuk mencegah ketik karakter non-angka
   function allowOnlyNumbers(e: React.KeyboardEvent<HTMLInputElement>) {
     if (
       !/[0-9]/.test(e.key) &&
@@ -324,18 +376,29 @@ export function AdminBookForm() {
       const yr = book.tahun_terbit ? String(book.tahun_terbit) : ''
       setSelectedYear(yr)
 
+      const existingCallNumber = book.call_number || ''
+      if (existingCallNumber) {
+        setIsCallNumberManual(true)
+      }
+
       reset({
-        judul:        book.judul,
-        penulis:      book.penulis,
-        penerbit:     book.penerbit ?? '',
-        tahun_terbit: yr,
-        isbn:         formattedIsbn,
-        kategori_id:  book.kategori_id?.toString() ?? '',
-        sinopsis:     book.sinopsis ?? '',
-        harga:        hrg,
-        jumlah_total: book.jumlah_total.toString(),
-        lokasi_rak:   book.lokasi_rak ?? '',
-        status:       book.status ?? 'active',
+        judul:            book.judul,
+        penulis:          book.penulis,
+        edisi:            book.edisi ?? '',
+        penerbit:         book.penerbit ?? '',
+        kota_terbit:      book.kota_terbit ?? '',
+        tahun_terbit:     yr,
+        isbn:             formattedIsbn,
+        topik:            book.topik ?? '',
+        sinopsis:         book.sinopsis ?? '',
+        kategori_id:      book.kategori_id?.toString() ?? '',
+        klasifikasi:      book.klasifikasi ?? '',
+        call_number:      existingCallNumber || liveCallNumber,
+        lokasi_rak:       book.lokasi_rak ?? '',
+        jumlah_total:     book.jumlah_total ? book.jumlah_total.toString() : '1',
+        sumber_pengadaan: book.sumber_pengadaan ? String(book.sumber_pengadaan) : '1',
+        harga:            hrg,
+        status:           book.status ?? 'active',
       })
       if (book.cover) setCoverPreview(book.cover)
     }
@@ -345,10 +408,10 @@ export function AdminBookForm() {
     mutationFn: (data: BookFormData) => {
       const fd = new FormData()
       Object.entries(data).forEach(([k, v]) => { if (v !== '') fd.append(k, v) })
-      // Pastikan harga, isbn, dan tahun terbit murni dikirim
       if (rawHarga) fd.set('harga', rawHarga)
       if (displayIsbn) fd.set('isbn', displayIsbn)
       if (selectedYear) fd.set('tahun_terbit', selectedYear)
+      if (!data.call_number && liveCallNumber) fd.set('call_number', liveCallNumber)
       if (coverFile) fd.append('cover', coverFile)
       return isEdit ? bookService.update(Number(id), fd) : bookService.create(fd)
     },
@@ -361,7 +424,7 @@ export function AdminBookForm() {
   })
 
   return (
-    <div className="max-w-2xl space-y-5">
+    <div className="max-w-3xl space-y-5 pb-10">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)}><ArrowLeft size={16} /></Button>
         <h1 className="text-xl font-bold text-slate-900">{isEdit ? 'Edit Buku' : 'Tambah Buku Baru'}</h1>
@@ -369,24 +432,29 @@ export function AdminBookForm() {
 
       {error && <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>}
 
-      <form onSubmit={handleSubmit((d) => saveMutation.mutate(d))} className="space-y-5">
+      <form onSubmit={handleSubmit((d) => saveMutation.mutate(d))} className="space-y-6">
+        {/* Card 1: Informasi Buku */}
         <Card>
           <CardHeader><h2 className="font-semibold text-slate-800">Informasi Buku</h2></CardHeader>
           <CardBody className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                {...register('judul', { required: true })}
-                label="Judul Buku"
-                placeholder="Contoh: Pemrograman Web Lanjut, Laskar Pelangi"
-                required
-                className="md:col-span-2"
-              />
+              <div className="md:col-span-2">
+                <Input
+                  {...register('judul', { required: true })}
+                  label="Judul Buku"
+                  placeholder="Contoh: Pemrograman Web Lanjut, Laskar Pelangi"
+                  className="h-10"
+                  required
+                />
+              </div>
+
               <div>
                 <Input
                   {...register('penulis', { required: true })}
                   label="Penulis"
                   list="authors-suggestions"
-                  placeholder="Contoh: Andrea Hirata, Tere Liye, Drs. H. Ahmad"
+                  placeholder="Contoh: Andrea Hirata, Tere Liye"
+                  className="h-10"
                   required
                 />
                 <datalist id="authors-suggestions">
@@ -395,12 +463,23 @@ export function AdminBookForm() {
                   ))}
                 </datalist>
               </div>
+
+              <div>
+                <Input
+                  {...register('edisi')}
+                  label="Edisi / Cetakan"
+                  placeholder="Contoh: Edisi Revisi, Cetakan ke-2"
+                  className="h-10"
+                />
+              </div>
+
               <div>
                 <Input
                   {...register('penerbit')}
                   label="Penerbit"
                   list="publishers-suggestions"
-                  placeholder="Contoh: Erlangga, Gramedia Pustaka Utama, Metagraf"
+                  placeholder="Contoh: Erlangga, Gramedia Pustaka Utama"
+                  className="h-10"
                 />
                 <datalist id="publishers-suggestions">
                   {publishersList?.map((publisher) => (
@@ -408,6 +487,22 @@ export function AdminBookForm() {
                   ))}
                 </datalist>
               </div>
+
+              <div>
+                <Input
+                  {...register('kota_terbit')}
+                  label="Kota Terbit"
+                  list="places-suggestions"
+                  placeholder="Contoh: Jakarta, Bandung, Cianjur"
+                  className="h-10"
+                />
+                <datalist id="places-suggestions">
+                  {placesList?.map((place) => (
+                    <option key={place} value={place} />
+                  ))}
+                </datalist>
+              </div>
+
               <YearPicker
                 value={selectedYear}
                 onChange={(year) => {
@@ -415,64 +510,101 @@ export function AdminBookForm() {
                   setValue('tahun_terbit', year)
                 }}
               />
+
               <Input
                 label="ISBN"
                 placeholder="Contoh: 978-602-291-000-0"
                 value={displayIsbn}
                 onChange={handleIsbnChange}
                 onKeyDown={allowOnlyNumbers}
+                className="h-10"
               />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">Sinopsis</label>
-              <textarea
-                {...register('sinopsis')}
-                rows={4}
-                className="mt-1.5 w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none placeholder:text-slate-400"
-                placeholder="Contoh: Buku ini membahas konsep dasar kejuruan, logika terstruktur, serta contoh studi kasus nyata untuk siswa..."
-              />
+
+              <div className="md:col-span-2">
+                <Input
+                  {...register('topik')}
+                  label="Subjek / Topik Katalog"
+                  list="topics-suggestions"
+                  placeholder="Contoh: Pemrograman Web, Teknik Kendaraan Ringan, Novel Fiksi"
+                  className="h-10"
+                />
+                <datalist id="topics-suggestions">
+                  {topicsList?.map((topic) => (
+                    <option key={topic} value={topic} />
+                  ))}
+                </datalist>
+              </div>
+
+              <div className="md:col-span-2 flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-slate-700">Sinopsis / Ringkasan</label>
+                <textarea
+                  {...register('sinopsis')}
+                  rows={4}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none placeholder:text-slate-400"
+                  placeholder="Contoh: Buku ini membahas konsep dasar kejuruan, logika terstruktur, serta contoh studi kasus nyata untuk siswa..."
+                />
+              </div>
             </div>
           </CardBody>
         </Card>
 
+        {/* Card 2: Klasifikasi & Stok Inventaris */}
         <Card>
-          <CardHeader><h2 className="font-semibold text-slate-800">Klasifikasi & Stok</h2></CardHeader>
+          <CardHeader><h2 className="font-semibold text-slate-800">Klasifikasi & Inventaris SLiMS</h2></CardHeader>
           <CardBody className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-slate-700">Kategori</label>
-                <select {...register('kategori_id')} className="mt-1.5 w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                  <option value="">— Pilih Kategori (Contoh: Reference, Mapel, Fiction) —</option>
-                  {categories?.map((c) => <option key={c.id} value={c.id}>{c.nama}</option>)}
-                </select>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <SelectField
+                label="Kategori Koleksi"
+                {...register('kategori_id')}
+              >
+                <option value="">— Pilih Kategori Koleksi —</option>
+                {categories?.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nama}
+                  </option>
+                ))}
+              </SelectField>
+
               <Input
-                {...register('lokasi_rak')}
-                label="Klasifikasi DDC / Lokasi Rak"
-                placeholder="Contoh: 813, 153.2, 420, atau RAK-A-01"
+                {...register('klasifikasi')}
+                label="Klasifikasi DDC"
+                placeholder="Contoh: 005.13, 813, 629.2"
+                className="h-10"
               />
 
-              {/* Live Preview Nomor Panggil */}
-              <div className="col-span-2 p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-800">Nomor Panggil SLiMS (Call Number)</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">Format: [Klasifikasi DDC] [3 Huruf Pengarang] [1 Huruf Judul]</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">Otomatis dicetak:</span>
-                  <span className="font-mono text-sm font-bold bg-white px-3 py-1.5 rounded-lg border border-slate-300 shadow-sm text-primary-700 tracking-wide">
-                    {liveCallNumber}
-                  </span>
-                </div>
-              </div>
+              <Input
+                {...register('call_number')}
+                label="Nomor Panggil SLiMS"
+                placeholder={liveCallNumber}
+                onChange={() => setIsCallNumberManual(true)}
+                className="h-10 font-mono font-medium"
+              />
+
+              <Input
+                {...register('lokasi_rak')}
+                label="Lokasi Rak Fisik"
+                placeholder="Contoh: RAK-A-01, Lemari 2"
+                className="h-10"
+              />
 
               <Input
                 {...register('jumlah_total', { required: true })}
                 label="Jumlah Eksemplar"
                 placeholder="Contoh: 5"
                 onKeyDown={allowOnlyNumbers}
+                className="h-10"
                 required
               />
+
+              <SelectField
+                label="Sumber Pengadaan"
+                {...register('sumber_pengadaan')}
+              >
+                <option value="1">Dana BOS / Pembelian</option>
+                <option value="2">Hadiah / Hibah</option>
+                <option value="3">Bantuan Pemerintah / Diknas</option>
+              </SelectField>
+
               <Input
                 label="Harga Buku (Rp)"
                 placeholder="Contoh: 75.000"
@@ -480,19 +612,22 @@ export function AdminBookForm() {
                 onChange={handleHargaChange}
                 onKeyDown={allowOnlyNumbers}
                 leftIcon={<span className="text-xs font-bold text-slate-500">Rp</span>}
+                className="h-10"
               />
-              <div>
-                <label className="text-sm font-medium text-slate-700">Status</label>
-                <select {...register('status')} className="mt-1.5 w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                  <option value="active">Aktif</option>
-                  <option value="inactive">Tidak Aktif</option>
-                  <option value="archived">Diarsipkan</option>
-                </select>
-              </div>
+
+              <SelectField
+                label="Status Buku"
+                {...register('status')}
+              >
+                <option value="active">Aktif</option>
+                <option value="inactive">Tidak Aktif</option>
+                <option value="archived">Diarsipkan</option>
+              </SelectField>
             </div>
           </CardBody>
         </Card>
 
+        {/* Card 3: Cover Buku */}
         <Card>
           <CardHeader><h2 className="font-semibold text-slate-800">Cover Buku</h2></CardHeader>
           <CardBody>
@@ -516,7 +651,7 @@ export function AdminBookForm() {
           </CardBody>
         </Card>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-3 pt-2">
           <Button type="button" variant="outline" onClick={() => navigate(-1)}>Batal</Button>
           <Button type="submit" loading={saveMutation.isPending}>
             <Save size={16} /> {isEdit ? 'Simpan Perubahan' : 'Tambah Buku'}
