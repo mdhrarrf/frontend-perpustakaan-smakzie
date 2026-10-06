@@ -197,12 +197,21 @@ function SelectField({ label, required, children, className = '', ...props }: Se
 }
 
 function computeLiveCallNumber(judul?: string, penulis?: string, klasifikasi?: string): string {
-  let classNum = '000'
-  if (klasifikasi && klasifikasi.trim()) {
-    const parts = klasifikasi.trim().split(/\s+/)
+  const hasJudul = !!judul?.trim()
+  const hasPenulis = !!penulis?.trim()
+  const hasKlasifikasi = !!klasifikasi?.trim()
+
+  // Jika form belum diisi data yang diperlukan, biarkan kosong tanpa menampilkan 000 XXX x
+  if (!hasJudul && !hasPenulis && !hasKlasifikasi) {
+    return ''
+  }
+
+  let classNum = ''
+  if (hasKlasifikasi) {
+    const parts = (klasifikasi ?? '').trim().split(/\s+/)
     classNum = parts[0]
-  } else if (judul) {
-    const t = judul.toLowerCase()
+  } else if (hasJudul) {
+    const t = (judul ?? '').toLowerCase()
     if (/(bahasa jepang|jlpt|nihongo)/i.test(t)) classNum = '495.6'
     else if (/(bahasa inggris|english|splash smart)/i.test(t)) classNum = '420'
     else if (/(basa sunda|bahasa sunda|panggelar)/i.test(t)) classNum = '499.2232'
@@ -223,11 +232,14 @@ function computeLiveCallNumber(judul?: string, penulis?: string, klasifikasi?: s
     else if (/(desain grafis|seni)/i.test(t)) classNum = '741.6'
     else if (/(psikologi|motivasi)/i.test(t)) classNum = '153.2'
     else if (/(novel|fiksi|cerpen|guru aini|matahari|bumi)/i.test(t)) classNum = '813'
+    else classNum = '000'
+  } else {
+    classNum = '000'
   }
 
-  let authorCutter = 'XXX'
-  if (penulis && penulis.trim()) {
-    const firstAuthor = penulis.split(/[,&]|(\s+dan\s+)/i)[0]
+  let authorCutter = ''
+  if (hasPenulis) {
+    const firstAuthor = (penulis ?? '').split(/[,&]|(\s+dan\s+)/i)[0]
     const cleaned = firstAuthor
       .replace(/\b(drs|dra|prof|dr|ir|h|hj|s\.pd|m\.pd|s\.e|m\.m|m\.kom|m\.hum|s\.t|s\.si|m\.si|mf|dkk|et al)\b/gi, '')
       .replace(/\b(al-|el-)/gi, '')
@@ -240,15 +252,19 @@ function computeLiveCallNumber(judul?: string, penulis?: string, klasifikasi?: s
     }
   }
 
-  let titleCutter = 'x'
-  if (judul && judul.trim()) {
-    const cleanTitle = judul.replace(/^[^a-zA-Z]+/, '')
+  let titleCutter = ''
+  if (hasJudul) {
+    const cleanTitle = (judul ?? '').replace(/^[^a-zA-Z]+/, '')
     if (cleanTitle.length > 0) {
       titleCutter = cleanTitle.charAt(0).toLowerCase()
     }
   }
 
-  return `${classNum} ${authorCutter} ${titleCutter}`
+  if (!authorCutter && !titleCutter) {
+    return classNum && classNum !== '000' ? classNum : ''
+  }
+
+  return `${classNum || '000'} ${authorCutter || 'XXX'} ${titleCutter || 'x'}`.trim()
 }
 
 export function AdminBookForm() {
@@ -282,17 +298,13 @@ export function AdminBookForm() {
   const watchJudul       = watch('judul')
   const watchPenulis     = watch('penulis')
   const watchKlasifikasi = watch('klasifikasi')
-  const watchCallNumber  = watch('call_number')
   const liveCallNumber   = computeLiveCallNumber(watchJudul, watchPenulis, watchKlasifikasi)
 
-  // Otomatis sinkronkan call_number dengan kalkulasi jika belum diisi custom
-  const [isCallNumberManual, setIsCallNumberManual] = useState(false)
-
   useEffect(() => {
-    if (!isEdit && !isCallNumberManual) {
+    if (!isEdit && liveCallNumber) {
       setValue('call_number', liveCallNumber)
     }
-  }, [liveCallNumber, isEdit, isCallNumberManual, setValue])
+  }, [liveCallNumber, isEdit, setValue])
 
   const [displayHarga, setDisplayHarga] = useState<string>('')
   const [rawHarga, setRawHarga]         = useState<string>('')
@@ -376,11 +388,6 @@ export function AdminBookForm() {
       const yr = book.tahun_terbit ? String(book.tahun_terbit) : ''
       setSelectedYear(yr)
 
-      const existingCallNumber = book.call_number || ''
-      if (existingCallNumber) {
-        setIsCallNumberManual(true)
-      }
-
       reset({
         judul:            book.judul,
         penulis:          book.penulis,
@@ -393,7 +400,7 @@ export function AdminBookForm() {
         sinopsis:         book.sinopsis ?? '',
         kategori_id:      book.kategori_id?.toString() ?? '',
         klasifikasi:      book.klasifikasi ?? '',
-        call_number:      existingCallNumber || liveCallNumber,
+        call_number:      book.call_number ?? liveCallNumber,
         lokasi_rak:       book.lokasi_rak ?? '',
         jumlah_total:     book.jumlah_total ? book.jumlah_total.toString() : '1',
         sumber_pengadaan: book.sumber_pengadaan ? String(book.sumber_pengadaan) : '1',
@@ -410,8 +417,8 @@ export function AdminBookForm() {
       Object.entries(data).forEach(([k, v]) => { if (v !== '') fd.append(k, v) })
       if (rawHarga) fd.set('harga', rawHarga)
       if (displayIsbn) fd.set('isbn', displayIsbn)
-      if (selectedYear) fd.set('tahun_terbit', selectedYear)
-      if (!data.call_number && liveCallNumber) fd.set('call_number', liveCallNumber)
+      const finalCallNumber = liveCallNumber || (isEdit ? (book?.call_number ?? '') : '')
+      if (finalCallNumber) fd.set('call_number', finalCallNumber)
       if (coverFile) fd.append('cover', coverFile)
       return isEdit ? bookService.update(Number(id), fd) : bookService.create(fd)
     },
@@ -573,11 +580,12 @@ export function AdminBookForm() {
               />
 
               <Input
-                {...register('call_number')}
                 label="Nomor Panggil SLiMS"
-                placeholder={liveCallNumber}
-                onChange={() => setIsCallNumberManual(true)}
-                className="h-10 font-mono font-medium"
+                value={liveCallNumber || (isEdit && book?.call_number ? book.call_number : '')}
+                placeholder="Otomatis dibuat setelah Judul & Penulis diisi"
+                readOnly
+                hint="Dihasilkan otomatis mengikuti standar DDC & SLiMS"
+                className="h-10 font-mono font-semibold bg-slate-50 text-primary-700 cursor-not-allowed border-slate-200 select-none"
               />
 
               <Input
