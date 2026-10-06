@@ -116,19 +116,30 @@ export function AdminDashboard() {
       {/* Today's Loans */}
       <Card>
         <CardHeader>
-          <h2 className="font-semibold text-slate-800">Transaksi Hari Ini</h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="font-semibold text-slate-800">Transaksi Hari Ini</h2>
+              {today.data && today.data.length > 0 && (
+                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                  {today.data.length}
+                </span>
+              )}
+            </div>
+          </div>
         </CardHeader>
         {today.isLoading ? (
           <CardBody><div className="h-20 flex items-center justify-center"><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-500" /></div></CardBody>
+        ) : today.isError ? (
+          <CardBody><p className="text-sm text-red-500 text-center py-6">Gagal memuat transaksi hari ini.</p></CardBody>
         ) : (today.data?.length ?? 0) === 0 ? (
           <CardBody><p className="text-sm text-slate-400 text-center py-6">Belum ada transaksi hari ini.</p></CardBody>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[520px] overflow-y-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-xs text-slate-500 uppercase tracking-wide">
+              <thead className="bg-slate-50 text-xs text-slate-500 uppercase tracking-wide sticky top-0 z-10 shadow-sm">
                 <tr>
                   <th className="px-6 py-3 text-left">No. Transaksi</th>
-                  <th className="px-6 py-3 text-left">Siswa</th>
+                  <th className="px-6 py-3 text-left">Peminjam / Kelas</th>
                   <th className="px-6 py-3 text-left">Buku</th>
                   <th className="px-6 py-3 text-left">Jatuh Tempo</th>
                   <th className="px-6 py-3 text-left">Status</th>
@@ -139,8 +150,8 @@ export function AdminDashboard() {
                   <tr key={loan.id} className="border-t border-slate-50 hover:bg-slate-50/50">
                     <td className="px-6 py-3 font-mono text-xs">{loan.loan_number}</td>
                     <td className="px-6 py-3">
-                      <p className="font-medium">{loan.student?.nama}</p>
-                      <p className="text-xs text-slate-400">{loan.student?.nis}</p>
+                      <p className="font-medium">{loan.student?.nama ?? loan.teacher_name ?? '—'}</p>
+                      <p className="text-xs text-slate-400">{loan.student?.nis ?? loan.class_name ?? '—'}</p>
                     </td>
                     <td className="px-6 py-3">
                       {loan.items?.[0]?.book?.judul ?? (loan.items?.[0] as any)?.book_title_snapshot ?? '—'}
