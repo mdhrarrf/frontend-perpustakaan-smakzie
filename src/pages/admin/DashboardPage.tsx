@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { dashboardService } from '@/api/index'
 import { loanService } from '@/api/loan.service'
 import { StatCard, Card, CardHeader, CardBody, LoadingCard } from '@/components/ui/Card'
@@ -6,7 +7,7 @@ import { LoanStatusBadge } from '@/components/ui/Badge'
 import { formatDate, formatDateTime } from '@/utils'
 import {
   BookOpen, Users, ClipboardList, AlertTriangle,
-  PackageX, RotateCcw, TrendingUp, Layers,
+  PackageX, RotateCcw, TrendingUp, Layers, ArrowRight,
 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
@@ -125,6 +126,13 @@ export function AdminDashboard() {
                 </span>
               )}
             </div>
+            <Link
+              to="/admin/loans"
+              className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center gap-1 group"
+            >
+              <span>Lihat Semua</span>
+              <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
           </div>
         </CardHeader>
         {today.isLoading ? (
@@ -134,37 +142,64 @@ export function AdminDashboard() {
         ) : (today.data?.length ?? 0) === 0 ? (
           <CardBody><p className="text-sm text-slate-400 text-center py-6">Belum ada transaksi hari ini.</p></CardBody>
         ) : (
-          <div className="overflow-x-auto max-h-[520px] overflow-y-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-xs text-slate-500 uppercase tracking-wide sticky top-0 z-10 shadow-sm">
-                <tr>
-                  <th className="px-6 py-3 text-left">No. Transaksi</th>
-                  <th className="px-6 py-3 text-left">Peminjam / Kelas</th>
-                  <th className="px-6 py-3 text-left">Buku</th>
-                  <th className="px-6 py-3 text-left">Jatuh Tempo</th>
-                  <th className="px-6 py-3 text-left">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {today.data?.map((loan) => (
-                  <tr key={loan.id} className="border-t border-slate-50 hover:bg-slate-50/50">
-                    <td className="px-6 py-3 font-mono text-xs">{loan.loan_number}</td>
-                    <td className="px-6 py-3">
-                      <p className="font-medium">{loan.student?.nama ?? loan.teacher_name ?? '—'}</p>
-                      <p className="text-xs text-slate-400">{loan.student?.nis ?? loan.class_name ?? '—'}</p>
-                    </td>
-                    <td className="px-6 py-3">
-                      {loan.items?.[0]?.book?.judul ?? (loan.items?.[0] as any)?.book_title_snapshot ?? '—'}
-                    </td>
-                    <td className="px-6 py-3 text-xs">{formatDateTime(loan.due_at)}</td>
-                    <td className="px-6 py-3">
-                      <LoanStatusBadge status={loan.status} label={loan.status_label} />
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-xs text-slate-500 uppercase tracking-wide">
+                  <tr>
+                    <th className="px-6 py-3 text-left">No. Transaksi</th>
+                    <th className="px-6 py-3 text-left">Peminjam / Kelas</th>
+                    <th className="px-6 py-3 text-left">Buku</th>
+                    <th className="px-6 py-3 text-left">Jatuh Tempo</th>
+                    <th className="px-6 py-3 text-left">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {today.data?.slice(0, 5).map((loan) => (
+                    <tr key={loan.id} className="border-t border-slate-50 hover:bg-slate-50/50">
+                      <td className="px-6 py-3 font-mono text-xs">
+                        <Link
+                          to={`/admin/loans/${loan.id}`}
+                          className="text-blue-600 hover:text-blue-700 hover:underline font-semibold"
+                        >
+                          {loan.loan_number}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-3">
+                        <p className="font-medium text-slate-800">{loan.student?.nama ?? loan.teacher_name ?? '—'}</p>
+                        <p className="text-xs text-slate-400">{loan.student?.nis ?? loan.class_name ?? '—'}</p>
+                      </td>
+                      <td className="px-6 py-3">
+                        <p className="line-clamp-1 max-w-xs" title={loan.items?.[0]?.book?.judul ?? (loan.items?.[0] as any)?.book_title_snapshot}>
+                          {loan.items?.[0]?.book?.judul ?? (loan.items?.[0] as any)?.book_title_snapshot ?? '—'}
+                        </p>
+                      </td>
+                      <td className="px-6 py-3 text-xs text-slate-500">{formatDateTime(loan.due_at)}</td>
+                      <td className="px-6 py-3">
+                        <LoanStatusBadge status={loan.status} label={loan.status_label} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Footer Navigation Link */}
+            {today.data && today.data.length > 0 && (
+              <div className="px-6 py-3 bg-slate-50/80 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                <span>
+                  Menampilkan {Math.min(5, today.data.length)} transaksi terbaru dari total {today.data.length} aktivitas hari ini
+                </span>
+                <Link
+                  to="/admin/loans"
+                  className="inline-flex items-center gap-1.5 font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors group"
+                >
+                  <span>Lihat Selengkapnya di Riwayat Peminjaman</span>
+                  <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
+            )}
+          </>
         )}
       </Card>
     </div>
