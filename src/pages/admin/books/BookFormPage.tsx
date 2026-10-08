@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -6,8 +6,9 @@ import { bookService } from '@/api/book.service'
 import { Card, CardHeader, CardBody } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { ArrowLeft, Save, Calendar, ChevronLeft, ChevronRight, Minus, Plus } from 'lucide-react'
+import { ArrowLeft, Save, Calendar, ChevronLeft, ChevronRight, Minus, Plus, Sparkles } from 'lucide-react'
 import { getErrorMessage } from '@/api/client'
+import { DDC_CATALOG, searchDdc, detectDdcFromTitle, type DdcItem } from '@/utils/ddc'
 
 interface BookFormData {
   judul: string
@@ -304,6 +305,159 @@ function EksemplarInput({
   )
 }
 
+interface DdcInputProps {
+  value: string
+  onChange: (val: string) => void
+  detectedSuggestion?: { code: string; name: string } | null
+}
+
+function DdcInput({ value, onChange, detectedSuggestion }: DdcInputProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const query = isOpen ? searchTerm : (value || '')
+  const suggestions = useMemo(() => searchDdc(query, 7), [query])
+
+  const activeItem = useMemo(() => {
+    if (!value?.trim()) return null
+    return DDC_CATALOG.find((c) => c.code.toLowerCase() === value.trim().toLowerCase())
+  }, [value])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleSelect = (item: DdcItem) => {
+    onChange(item.code)
+    setSearchTerm('')
+    setIsOpen(false)
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    onChange(val)
+    setSearchTerm(val)
+    if (!isOpen) setIsOpen(true)
+  }
+
+  const showSuggestion = detectedSuggestion && (!value || value.trim().toLowerCase() !== detectedSuggestion.code.toLowerCase())
+
+  return (
+    <div ref={containerRef} className="flex flex-col gap-1.5 relative">
+      <div className="flex items-center justify-between">
+        <label htmlFor="klasifikasi_ddc_input" className="text-sm font-medium text-slate-700">
+          Klasifikasi DDC
+        </label>
+        <span className="text-[11px] font-medium text-slate-400">Dewey Decimal</span>
+      </div>
+
+      <div className="relative">
+        <input
+          id="klasifikasi_ddc_input"
+          type="text"
+          value={value ?? ''}
+          onChange={handleInputChange}
+          onFocus={() => {
+            setSearchTerm(value || '')
+            setIsOpen(true)
+          }}
+          placeholder="Cari DDC (misal: 813, novel, otomotif, 629)"
+          className="w-full h-10 rounded-lg border border-slate-200 bg-white pl-3 pr-8 py-2 text-sm text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder:text-slate-400 font-mono"
+        />
+
+        {value && (
+          <button
+            type="button"
+            onClick={() => {
+              onChange('')
+              setSearchTerm('')
+            }}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs px-1 py-0.5 rounded transition-colors"
+            title="Hapus klasifikasi"
+          >
+            ✕
+          </button>
+        )}
+
+        {isOpen && (
+          <div className="absolute z-30 left-0 right-0 mt-1 bg-white rounded-lg border border-slate-200 shadow-xl overflow-hidden max-h-64 overflow-y-auto animate-in fade-in-50 duration-150">
+            <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+              <span>Saran Klasifikasi DDC Perpustakaan</span>
+              <span>{suggestions.length} opsi</span>
+            </div>
+
+            {suggestions.length === 0 ? (
+              <div className="p-3 text-xs text-slate-500 text-center">
+                Tidak ada kode DDC yang cocok dengan &quot;{query}&quot;. Anda tetap bisa mengetik manual.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {suggestions.map((item) => (
+                  <button
+                    key={item.code}
+                    type="button"
+                    onClick={() => handleSelect(item)}
+                    className="w-full px-3 py-2 text-left hover:bg-primary-50 flex items-center justify-between gap-2 transition-colors group cursor-pointer"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 group-hover:bg-primary-100 group-hover:text-primary-800 shrink-0">
+                          {item.code}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-800 group-hover:text-primary-900 truncate">
+                          {item.name}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 group-hover:text-primary-600 mt-0.5 truncate">
+                        {item.classGroup}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {activeItem && !showSuggestion && (
+        <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-1 rounded">
+          <span className="font-bold font-mono shrink-0">{activeItem.code}:</span>
+          <span className="truncate">{activeItem.name}</span>
+        </div>
+      )}
+
+      {showSuggestion && (
+        <div className="flex items-center justify-between p-2 rounded-lg bg-amber-50 border border-amber-200 text-xs">
+          <div className="flex items-center gap-1.5 text-amber-900 truncate min-w-0">
+            <Sparkles size={14} className="text-amber-600 shrink-0" />
+            <span className="font-medium shrink-0">Rekomendasi:</span>
+            <span className="font-mono font-bold text-amber-900 shrink-0">{detectedSuggestion.code}</span>
+            <span className="text-amber-800 truncate">({detectedSuggestion.name})</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              onChange(detectedSuggestion.code)
+              setIsOpen(false)
+            }}
+            className="shrink-0 ml-2 px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-semibold text-[11px] transition-colors shadow-xs cursor-pointer"
+          >
+            Gunakan
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function computeLiveCallNumber(judul?: string, penulis?: string, klasifikasi?: string): string {
   const hasJudul = !!judul?.trim()
   const hasPenulis = !!penulis?.trim()
@@ -408,8 +562,10 @@ export function AdminBookForm() {
   const watchKlasifikasi = watch('klasifikasi')
   const watchJumlahTotal = watch('jumlah_total')
   const liveCallNumber   = computeLiveCallNumber(watchJudul, watchPenulis, watchKlasifikasi)
+  const detectedDdc      = useMemo(() => detectDdcFromTitle(watchJudul), [watchJudul])
 
   useEffect(() => {
+    register('klasifikasi')
     register('jumlah_total', { required: true })
   }, [register])
 
@@ -530,6 +686,8 @@ export function AdminBookForm() {
       Object.entries(data).forEach(([k, v]) => { if (v !== '') fd.append(k, v) })
       if (rawHarga) fd.set('harga', rawHarga)
       if (displayIsbn) fd.set('isbn', displayIsbn)
+      const finalKlasifikasi = data.klasifikasi || watchKlasifikasi || ''
+      if (finalKlasifikasi) fd.set('klasifikasi', finalKlasifikasi)
       const finalJumlah = data.jumlah_total || watchJumlahTotal || '1'
       fd.set('jumlah_total', finalJumlah)
       const finalCallNumber = liveCallNumber || (isEdit ? (book?.call_number ?? '') : '')
@@ -674,7 +832,7 @@ export function AdminBookForm() {
         <Card>
           <CardHeader><h2 className="font-semibold text-slate-800">Klasifikasi & Inventaris SLiMS</h2></CardHeader>
           <CardBody className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               <SelectField
                 label="Kategori Koleksi"
                 required
@@ -688,11 +846,10 @@ export function AdminBookForm() {
                 ))}
               </SelectField>
 
-              <Input
-                {...register('klasifikasi')}
-                label="Klasifikasi DDC"
-                placeholder="Contoh: 005.13, 813, 629.2"
-                className="h-10"
+              <DdcInput
+                value={watchKlasifikasi ?? ''}
+                onChange={(val) => setValue('klasifikasi', val, { shouldValidate: true, shouldDirty: true })}
+                detectedSuggestion={detectedDdc}
               />
 
               <Input
