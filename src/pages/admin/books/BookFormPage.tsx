@@ -581,20 +581,20 @@ export function AdminBookForm() {
               />
 
               <Input
-                label="Nomor Panggil SLiMS"
-                value={liveCallNumber || (isEdit && book?.call_number ? book.call_number : '')}
-                placeholder="Otomatis dibuat setelah Judul & Penulis diisi"
-                readOnly
-                hint="Dihasilkan otomatis mengikuti standar DDC & SLiMS"
-                className="h-10 font-mono font-semibold bg-slate-50 text-primary-700 cursor-not-allowed border-slate-200 select-none"
-              />
-
-              <Input
                 {...register('lokasi_rak')}
                 label="Lokasi Rak Fisik"
                 placeholder="Contoh: RAK-A-01, Lemari 2"
                 className="h-10"
               />
+
+              <SelectField
+                label="Status Buku"
+                {...register('status')}
+              >
+                <option value="active">Aktif</option>
+                <option value="inactive">Tidak Aktif</option>
+                <option value="archived">Diarsipkan</option>
+              </SelectField>
 
               <Input
                 {...register('jumlah_total', { required: true })}
@@ -614,24 +614,17 @@ export function AdminBookForm() {
                 <option value="3">Bantuan Pemerintah / Diknas</option>
               </SelectField>
 
-              <Input
-                label="Harga Buku (Rp)"
-                placeholder="Contoh: 75.000"
-                value={displayHarga}
-                onChange={handleHargaChange}
-                onKeyDown={allowOnlyNumbers}
-                leftIcon={<span className="text-xs font-bold text-slate-500">Rp</span>}
-                className="h-10"
-              />
-
-              <SelectField
-                label="Status Buku"
-                {...register('status')}
-              >
-                <option value="active">Aktif</option>
-                <option value="inactive">Tidak Aktif</option>
-                <option value="archived">Diarsipkan</option>
-              </SelectField>
+              <div className="md:col-span-2">
+                <Input
+                  label="Harga Buku (Rp)"
+                  placeholder="Contoh: 75.000"
+                  value={displayHarga}
+                  onChange={handleHargaChange}
+                  onKeyDown={allowOnlyNumbers}
+                  leftIcon={<span className="text-xs font-bold text-slate-500">Rp</span>}
+                  className="h-10"
+                />
+              </div>
             </div>
           </CardBody>
         </Card>
