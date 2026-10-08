@@ -234,13 +234,10 @@ function EksemplarInput({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between">
-        <label htmlFor="jumlah_total_input" className="text-sm font-medium text-slate-700">
-          {label}
-          {required && <span className="text-red-500 ml-0.5">*</span>}
-        </label>
-        <span className="text-[11px] font-medium text-slate-400">Salinan Fisik</span>
-      </div>
+      <label htmlFor="jumlah_total_input" className="text-sm font-medium text-slate-700">
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
 
       <div className="flex items-center h-10 w-full rounded-lg border border-slate-200 bg-white shadow-xs transition-colors focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 overflow-hidden">
         <button
@@ -249,7 +246,7 @@ function EksemplarInput({
           onClick={() => handleStep(-1)}
           disabled={numValue <= 1}
           className="w-10 h-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-50 active:bg-slate-100 disabled:opacity-25 disabled:cursor-not-allowed border-r border-slate-200 transition-colors select-none"
-          title="Kurangi 1 eksemplar"
+          title="Kurangi 1"
         >
           <Minus size={15} />
         </button>
@@ -263,7 +260,7 @@ function EksemplarInput({
           onBlur={handleBlur}
           onKeyDown={onKeyDown}
           placeholder="1"
-          className="flex-1 h-full text-center font-bold text-slate-800 bg-transparent text-sm focus:outline-none px-2 tracking-wide"
+          className="flex-1 h-full text-center font-semibold text-slate-900 bg-transparent text-sm focus:outline-none px-2"
           required={required}
         />
 
@@ -272,34 +269,14 @@ function EksemplarInput({
           tabIndex={-1}
           onClick={() => handleStep(1)}
           className="w-10 h-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-50 active:bg-slate-100 border-l border-slate-200 transition-colors select-none"
-          title="Tambah 1 eksemplar"
+          title="Tambah 1"
         >
           <Plus size={15} />
         </button>
 
-        <span className="px-3.5 h-full flex items-center bg-slate-50 border-l border-slate-200 text-xs font-semibold text-slate-600 select-none">
+        <span className="px-3 h-full flex items-center bg-slate-50 border-l border-slate-200 text-xs font-medium text-slate-600 select-none">
           Eksemplar
         </span>
-      </div>
-
-      <div className="flex items-center justify-between pt-0.5">
-        <span className="text-[11px] text-slate-500">Pilih cepat:</span>
-        <div className="flex items-center gap-1.5">
-          {[1, 2, 5, 10, 20, 40].map((preset) => (
-            <button
-              key={preset}
-              type="button"
-              onClick={() => onChange(String(preset))}
-              className={`px-2 py-0.5 rounded text-xs transition-colors border ${
-                numValue === preset
-                  ? 'bg-primary-50 text-primary-700 border-primary-300 font-semibold shadow-xs'
-                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              {preset}
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   )
@@ -318,11 +295,6 @@ function DdcInput({ value, onChange, detectedSuggestion }: DdcInputProps) {
 
   const query = isOpen ? searchTerm : (value || '')
   const suggestions = useMemo(() => searchDdc(query, 7), [query])
-
-  const activeItem = useMemo(() => {
-    if (!value?.trim()) return null
-    return DDC_CATALOG.find((c) => c.code.toLowerCase() === value.trim().toLowerCase())
-  }, [value])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -351,12 +323,9 @@ function DdcInput({ value, onChange, detectedSuggestion }: DdcInputProps) {
 
   return (
     <div ref={containerRef} className="flex flex-col gap-1.5 relative">
-      <div className="flex items-center justify-between">
-        <label htmlFor="klasifikasi_ddc_input" className="text-sm font-medium text-slate-700">
-          Klasifikasi DDC
-        </label>
-        <span className="text-[11px] font-medium text-slate-400">Dewey Decimal</span>
-      </div>
+      <label htmlFor="klasifikasi_ddc_input" className="text-sm font-medium text-slate-700">
+        Klasifikasi DDC
+      </label>
 
       <div className="relative">
         <input
@@ -368,78 +337,41 @@ function DdcInput({ value, onChange, detectedSuggestion }: DdcInputProps) {
             setSearchTerm(value || '')
             setIsOpen(true)
           }}
-          placeholder="Cari DDC (misal: 813, novel, otomotif, 629)"
-          className="w-full h-10 rounded-lg border border-slate-200 bg-white pl-3 pr-8 py-2 text-sm text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder:text-slate-400 font-mono"
+          placeholder="Contoh: 005.13, 813, 629.2"
+          className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder:text-slate-400"
         />
 
-        {value && (
-          <button
-            type="button"
-            onClick={() => {
-              onChange('')
-              setSearchTerm('')
-            }}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs px-1 py-0.5 rounded transition-colors"
-            title="Hapus klasifikasi"
-          >
-            ✕
-          </button>
-        )}
-
-        {isOpen && (
-          <div className="absolute z-30 left-0 right-0 mt-1 bg-white rounded-lg border border-slate-200 shadow-xl overflow-hidden max-h-64 overflow-y-auto animate-in fade-in-50 duration-150">
-            <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
-              <span>Saran Klasifikasi DDC Perpustakaan</span>
-              <span>{suggestions.length} opsi</span>
+        {isOpen && suggestions.length > 0 && (
+          <div className="absolute z-30 left-0 right-0 mt-1 bg-white rounded-lg border border-slate-200 shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+            <div className="divide-y divide-slate-100">
+              {suggestions.map((item) => (
+                <button
+                  key={item.code}
+                  type="button"
+                  onClick={() => handleSelect(item)}
+                  className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center justify-between gap-2 transition-colors cursor-pointer"
+                >
+                  <div className="min-w-0 flex-1 flex items-center gap-2">
+                    <span className="font-semibold text-xs text-primary-700 shrink-0">
+                      {item.code}
+                    </span>
+                    <span className="text-xs text-slate-700 truncate">
+                      {item.name}
+                    </span>
+                  </div>
+                </button>
+              ))}
             </div>
-
-            {suggestions.length === 0 ? (
-              <div className="p-3 text-xs text-slate-500 text-center">
-                Tidak ada kode DDC yang cocok dengan &quot;{query}&quot;. Anda tetap bisa mengetik manual.
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {suggestions.map((item) => (
-                  <button
-                    key={item.code}
-                    type="button"
-                    onClick={() => handleSelect(item)}
-                    className="w-full px-3 py-2 text-left hover:bg-primary-50 flex items-center justify-between gap-2 transition-colors group cursor-pointer"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 group-hover:bg-primary-100 group-hover:text-primary-800 shrink-0">
-                          {item.code}
-                        </span>
-                        <span className="text-xs font-semibold text-slate-800 group-hover:text-primary-900 truncate">
-                          {item.name}
-                        </span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 group-hover:text-primary-600 mt-0.5 truncate">
-                        {item.classGroup}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         )}
       </div>
 
-      {activeItem && !showSuggestion && (
-        <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-1 rounded">
-          <span className="font-bold font-mono shrink-0">{activeItem.code}:</span>
-          <span className="truncate">{activeItem.name}</span>
-        </div>
-      )}
-
       {showSuggestion && (
-        <div className="flex items-center justify-between p-2 rounded-lg bg-amber-50 border border-amber-200 text-xs">
+        <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-xs">
           <div className="flex items-center gap-1.5 text-amber-900 truncate min-w-0">
-            <Sparkles size={14} className="text-amber-600 shrink-0" />
+            <Sparkles size={13} className="text-amber-600 shrink-0" />
             <span className="font-medium shrink-0">Rekomendasi:</span>
-            <span className="font-mono font-bold text-amber-900 shrink-0">{detectedSuggestion.code}</span>
+            <span className="font-semibold text-amber-900 shrink-0">{detectedSuggestion.code}</span>
             <span className="text-amber-800 truncate">({detectedSuggestion.name})</span>
           </div>
           <button
@@ -448,7 +380,7 @@ function DdcInput({ value, onChange, detectedSuggestion }: DdcInputProps) {
               onChange(detectedSuggestion.code)
               setIsOpen(false)
             }}
-            className="shrink-0 ml-2 px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-semibold text-[11px] transition-colors shadow-xs cursor-pointer"
+            className="shrink-0 ml-2 px-2 py-0.5 rounded bg-amber-600 hover:bg-amber-700 text-white font-medium text-[11px] transition-colors cursor-pointer"
           >
             Gunakan
           </button>
@@ -878,7 +810,6 @@ export function AdminBookForm() {
               <SelectField
                 label="Sumber Pengadaan"
                 {...register('sumber_pengadaan')}
-                hint="Asal perolehan anggaran / unit buku"
               >
                 <option value="1">Dana BOS / Pembelian</option>
                 <option value="2">Hadiah / Hibah</option>
