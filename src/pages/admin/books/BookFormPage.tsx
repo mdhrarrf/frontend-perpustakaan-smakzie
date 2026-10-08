@@ -6,7 +6,7 @@ import { bookService } from '@/api/book.service'
 import { Card, CardHeader, CardBody } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { ArrowLeft, Save, Calendar, ChevronLeft, ChevronRight, Minus, Plus } from 'lucide-react'
+import { ArrowLeft, Save, Calendar, ChevronLeft, ChevronRight, Minus, Plus, UploadCloud, Upload, Trash2, Image as ImageIcon } from 'lucide-react'
 import { getErrorMessage } from '@/api/client'
 import { DDC_CATALOG, searchDdc, detectDdcFromTitle, type DdcItem } from '@/utils/ddc'
 import { toTitleCase } from '@/utils'
@@ -446,6 +446,33 @@ export function AdminBookForm() {
   const [error, setError]               = useState<string | null>(null)
   const [coverFile, setCoverFile]       = useState<File | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
+  const [isDragging, setIsDragging]     = useState(false)
+  const [coverError, setCoverError]     = useState<string | null>(null)
+  const fileInputRef                    = useRef<HTMLInputElement | null>(null)
+
+  function handleCoverFileSelect(file: File) {
+    setCoverError(null)
+    if (!file.type.startsWith('image/')) {
+      setCoverError('Format file harus berupa gambar (JPG, PNG, atau WebP).')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setCoverError('Ukuran file cover melebihi batas 2MB. Harap gunakan gambar yang lebih kecil.')
+      return
+    }
+
+    setCoverFile(file)
+    setCoverPreview(URL.createObjectURL(file))
+  }
+
+  function handleRemoveCover() {
+    setCoverFile(null)
+    setCoverPreview(null)
+    setCoverError(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
 
   const { data: book } = useQuery({
     queryKey: ['book', id],
@@ -1182,23 +1209,133 @@ export function AdminBookForm() {
         <Card>
           <CardHeader><h2 className="font-semibold text-slate-800">Cover Buku</h2></CardHeader>
           <CardBody>
-            <div className="flex items-start gap-4">
-              {coverPreview && (
-                <img src={coverPreview} alt="Preview" className="w-24 h-32 object-cover rounded-lg shadow" />
-              )}
-              <div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0]
-                    if (f) { setCoverFile(f); setCoverPreview(URL.createObjectURL(f)) }
-                  }}
-                  className="text-sm text-slate-500"
-                />
-                <p className="text-xs text-slate-400 mt-1">Maks 2MB. Format: JPG, PNG, WebP (Tersinkron otomatis ke SLiMS)</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/jpg"
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) handleCoverFileSelect(f)
+              }}
+              className="hidden"
+            />
+
+            {coverPreview ? (
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 p-4 rounded-xl border border-slate-200/80 bg-slate-50/50">
+                {/* Book Thumbnail */}
+                <div className="relative group shrink-0">
+                  <img
+                    src={coverPreview}
+                    alt="Cover Buku"
+                    className="w-28 h-36 object-cover rounded-lg shadow-md border border-slate-200 bg-white"
+                  />
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 rounded-lg flex items-center justify-center transition-all cursor-pointer text-white text-xs font-medium gap-1 select-none"
+                  >
+                    <Upload size={14} /> Ganti
+                  </div>
+                </div>
+
+                {/* Details & Actions */}
+                <div className="flex-1 flex flex-col justify-between self-stretch text-center sm:text-left py-1">
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                      {coverFile ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          File Siap Diunggah
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                          Tersinkron Otomatis (SLiMS / Katalog)
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-sm font-semibold text-slate-800 break-all pt-1">
+                      {coverFile ? coverFile.name : (watchJudul ? `Cover: ${watchJudul}` : 'Cover Buku')}
+                    </p>
+
+                    <p className="text-xs text-slate-500">
+                      {coverFile
+                        ? `Ukuran: ${(coverFile.size / 1024).toFixed(1)} KB • Format: ${coverFile.type.split('/')[1]?.toUpperCase()}`
+                        : 'Gambar cover terdeteksi otomatis dari basis data pangkalan buku.'}
+                    </p>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 pt-3 border-t border-slate-200/60 mt-3 sm:mt-0">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="gap-1.5 text-xs h-8 text-slate-700 border-slate-300 hover:bg-slate-100"
+                    >
+                      <Upload size={13} /> Ganti Cover
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveCover}
+                      className="gap-1.5 text-xs h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 size={13} /> Hapus
+                    </Button>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  setIsDragging(true)
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setIsDragging(false)
+                  const f = e.dataTransfer.files?.[0]
+                  if (f) handleCoverFileSelect(f)
+                }}
+                className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all select-none group ${
+                  isDragging
+                    ? 'border-primary-500 bg-primary-50/40 ring-4 ring-primary-100'
+                    : 'border-slate-200 hover:border-primary-500 hover:bg-primary-50/15 bg-slate-50/50'
+                }`}
+              >
+                <div className="w-14 h-14 mx-auto rounded-full bg-primary-50 text-primary-600 flex items-center justify-center group-hover:scale-105 group-hover:bg-primary-100 transition-all shadow-xs">
+                  <UploadCloud size={28} className="group-hover:-translate-y-0.5 transition-transform" />
+                </div>
+
+                <div className="mt-3.5 space-y-1">
+                  <p className="text-sm font-semibold text-slate-800 group-hover:text-primary-600 transition-colors">
+                    Pilih Gambar Cover Buku
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Klik untuk mencari file atau seret & lepas gambar ke sini
+                  </p>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-[11px] text-slate-400">
+                  <span className="inline-flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-200 font-medium text-slate-600">
+                    JPG, PNG, WebP
+                  </span>
+                  <span>Maksimal 2MB</span>
+                  <span className="text-primary-600 font-medium">• Tersinkron otomatis ke SLiMS</span>
+                </div>
+              </div>
+            )}
+
+            {coverError && (
+              <p className="mt-2.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg">
+                {coverError}
+              </p>
+            )}
           </CardBody>
         </Card>
 
