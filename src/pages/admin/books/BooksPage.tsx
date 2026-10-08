@@ -16,11 +16,18 @@ export function AdminBooksPage() {
   const [q,          setQ]          = useState('')
   const [status,     setStatus]     = useState('')
   const [kategoriId, setKategoriId] = useState('')
+  const [sortBy,     setSortBy]     = useState('latest')
   const [page,       setPage]       = useState(1)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-books', { q, status, kategoriId, page }],
-    queryFn: () => bookService.list({ q, status, kategori_id: kategoriId ? +kategoriId : undefined, page }),
+    queryKey: ['admin-books', { q, status, kategoriId, sortBy, page }],
+    queryFn: () => bookService.list({
+      q,
+      status,
+      kategori_id: kategoriId ? +kategoriId : undefined,
+      sort_by: sortBy,
+      page
+    }),
   })
 
   const { data: categories } = useQuery({
@@ -81,6 +88,18 @@ export function AdminBooksPage() {
                 <option key={c.id} value={c.id}>{c.nama}</option>
               ))}
             </select>
+            <select
+              className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              value={sortBy}
+              onChange={(e) => { setSortBy(e.target.value); setPage(1) }}
+            >
+              <option value="latest">Terbaru Diinput (Default)</option>
+              <option value="oldest">Terlama Diinput</option>
+              <option value="title_asc">Judul (A - Z)</option>
+              <option value="title_desc">Judul (Z - A)</option>
+              <option value="year_desc">Tahun Terbit (Terbaru)</option>
+              <option value="year_asc">Tahun Terbit (Terlama)</option>
+            </select>
           </div>
         </CardBody>
       </Card>
@@ -100,12 +119,12 @@ export function AdminBooksPage() {
                 <thead className="bg-slate-50 text-xs text-slate-500 uppercase tracking-wide border-b border-slate-100">
                   <tr>
                     <th className="px-6 py-3 text-left">Buku</th>
-                    <th className="px-6 py-3 text-left">Kode</th>
-                    <th className="px-6 py-3 text-left">Kategori</th>
-                    <th className="px-6 py-3 text-center">Stok</th>
-                    <th className="px-6 py-3 text-left">Harga</th>
-                    <th className="px-6 py-3 text-left">Status</th>
-                    <th className="px-6 py-3 text-left">Aksi</th>
+                    <th className="px-6 py-3 text-left whitespace-nowrap">Kode</th>
+                    <th className="px-6 py-3 text-left whitespace-nowrap">Kategori</th>
+                    <th className="px-6 py-3 text-center whitespace-nowrap">Stok</th>
+                    <th className="px-6 py-3 text-left whitespace-nowrap">Harga</th>
+                    <th className="px-6 py-3 text-left whitespace-nowrap">Status</th>
+                    <th className="px-6 py-3 text-left whitespace-nowrap">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -126,19 +145,21 @@ export function AdminBooksPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded">{book.kode_buku}</span>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="font-mono text-xs bg-slate-100 text-slate-700 font-medium px-2.5 py-1 rounded whitespace-nowrap inline-block">
+                          {book.kode_buku}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 text-slate-600">{book.kategori?.nama ?? '—'}</td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-600">{book.kategori?.nama ?? '—'}</td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap">
                         <div className="text-xs space-y-0.5">
                           <div className="font-semibold text-slate-900">{book.jumlah_tersedia}<span className="text-slate-400">/{book.jumlah_total}</span></div>
                           {book.jumlah_dipinjam > 0 && <div className="text-blue-600">{book.jumlah_dipinjam} dipinjam</div>}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-slate-600">{formatCurrency(book.harga)}</td>
-                      <td className="px-6 py-4"><BookStatusBadge status={book.status} label={book.status_label} /></td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-600">{formatCurrency(book.harga)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap"><BookStatusBadge status={book.status} label={book.status_label} /></td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1">
                           <Link to={`/admin/books/${book.id}/print-labels`} title="Cetak Label Barcode">
                             <Button size="sm" variant="ghost"><Printer size={14} /></Button>

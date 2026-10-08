@@ -178,7 +178,7 @@ export function KioskBorrowIndividual() {
 
   const borrowMutation = useMutation({
     mutationFn: () => {
-      const isSlimsBook = book?.kode_buku?.startsWith('SLIMS-')
+      const isSlimsBook = book?.kode_buku?.startsWith('SLIMS-') || book?.kode_buku?.startsWith('BK-')
       return loanService.create({
         loan_type:    'individual',
         student_id:   student!.id,

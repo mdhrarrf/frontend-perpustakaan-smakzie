@@ -347,7 +347,7 @@ export function KioskBorrowClass() {
       if (!student) throw new Error('Siswa perwakilan belum dipilih.')
 
       const promises = books.map(({ book, quantity }) => {
-        const isSlims = book.kode_buku?.startsWith('SLIMS-')
+        const isSlims = book.kode_buku?.startsWith('SLIMS-') || book.kode_buku?.startsWith('BK-')
         return loanService.create({
           loan_type:    'class',
           student_id:   student.id,
