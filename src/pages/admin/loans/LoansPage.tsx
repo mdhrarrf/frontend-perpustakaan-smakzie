@@ -25,7 +25,7 @@ export function AdminLoansPage() {
     onSuccess: (res) => {
       setSyncFeedback({
         type: 'success',
-        message: res.data?.message || res.message || 'Sinkronisasi dengan SLiMS berhasil.',
+        message: res.data?.message || res.message || 'Sinkronisasi data berhasil.',
       })
       qc.invalidateQueries({ queryKey: ['admin-loans'] })
       setTimeout(() => setSyncFeedback(null), 8000)
@@ -33,7 +33,7 @@ export function AdminLoansPage() {
     onError: (err: any) => {
       setSyncFeedback({
         type: 'error',
-        message: err?.response?.data?.message || err.message || 'Gagal menyinkronkan dengan SLiMS.',
+        message: err?.response?.data?.message || err.message || 'Gagal menyinkronkan data.',
       })
     },
   })
@@ -62,7 +62,7 @@ export function AdminLoansPage() {
             className="flex items-center gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
           >
             <RefreshCw size={15} className={syncMutation.isPending ? "animate-spin" : ""} />
-            {syncMutation.isPending ? "Menyinkronkan..." : "Sinkronkan SLiMS"}
+            {syncMutation.isPending ? "Menyinkronkan..." : "Sinkronkan Data"}
           </Button>
         </div>
       </div>
@@ -79,7 +79,7 @@ export function AdminLoansPage() {
             <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
           )}
           <div className="flex-1">
-            <p className="font-semibold">{syncFeedback.type === 'success' ? 'Sinkronisasi SLiMS Sukses' : 'Sinkronisasi SLiMS Gagal'}</p>
+            <p className="font-semibold">{syncFeedback.type === 'success' ? 'Sinkronisasi Data Sukses' : 'Sinkronisasi Data Gagal'}</p>
             <p className="text-xs opacity-90 mt-0.5">{syncFeedback.message}</p>
           </div>
           <button
@@ -143,7 +143,7 @@ export function AdminLoansPage() {
                         <div>{loan.loan_number}</div>
                         {loan.sync_source === 'slims' && (
                           <span className="inline-flex items-center px-1.5 py-0.5 mt-1 rounded text-[10px] font-medium bg-emerald-100 text-emerald-800">
-                            SLiMS #{loan.slims_loan_id}
+                            ID #{loan.slims_loan_id}
                           </span>
                         )}
                       </td>

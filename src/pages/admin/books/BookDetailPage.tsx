@@ -76,7 +76,7 @@ export function AdminBookDetail() {
                 { label: 'Topik / Subjek',    value: book.topik || '—' },
                 { label: 'Kategori Koleksi',  value: book.kategori?.nama ?? '—' },
                 { label: 'Klasifikasi DDC',   value: book.klasifikasi || book.lokasi_rak || '—' },
-                { label: 'Nomor Panggil SLiMS', value: book.call_number || '—' },
+                { label: 'Nomor Panggil Buku', value: book.call_number || '—' },
                 { label: 'Lokasi Rak',        value: book.lokasi_rak ?? '—' },
                 { label: 'Sumber Pengadaan',  value: book.sumber_label || (Number(book.sumber_pengadaan) === 2 ? 'Hadiah / Hibah' : Number(book.sumber_pengadaan) === 3 ? 'Bantuan Pemerintah / Diknas' : 'Dana BOS / Pembelian') },
                 { label: 'Harga Buku',        value: formatCurrency(book.harga) },

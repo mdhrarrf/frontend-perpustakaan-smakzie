@@ -89,7 +89,7 @@ function FixBookModal({
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
-              {tab === 'slims' ? 'Cari di Katalog SLiMS' : 'Input Judul Manual'}
+              {tab === 'slims' ? 'Cari di Katalog Buku' : 'Input Judul Manual'}
             </button>
           ))}
         </div>
@@ -121,7 +121,7 @@ function FixBookModal({
                       }`}
                     >
                       <p className="font-medium text-slate-900 line-clamp-1">{book.judul}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{book.penulis} · ID SLiMS: {book.id}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{book.penulis} · ID Buku: {book.id}</p>
                     </button>
                   ))}
                 </div>

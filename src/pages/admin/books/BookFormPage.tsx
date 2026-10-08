@@ -1137,7 +1137,7 @@ export function AdminBookForm() {
 
         {/* Card 2: Klasifikasi & Stok Inventaris */}
         <Card>
-          <CardHeader><h2 className="font-semibold text-slate-800">Klasifikasi & Inventaris SLiMS</h2></CardHeader>
+          <CardHeader><h2 className="font-semibold text-slate-800">Klasifikasi & Inventaris Buku</h2></CardHeader>
           <CardBody className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               <SelectField
@@ -1249,7 +1249,7 @@ export function AdminBookForm() {
                       ) : (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                           <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                          Tersinkron Otomatis (SLiMS / Katalog)
+                          Cover Terverifikasi Katalog
                         </span>
                       )}
                     </div>
@@ -1261,7 +1261,7 @@ export function AdminBookForm() {
                     <p className="text-xs text-slate-500">
                       {coverFile
                         ? `Ukuran: ${(coverFile.size / 1024).toFixed(1)} KB • Format: ${coverFile.type.split('/')[1]?.toUpperCase()}`
-                        : 'Gambar cover terdeteksi otomatis dari basis data pangkalan buku.'}
+                        : 'Gambar cover terverifikasi otomatis dari pangkalan data perpustakaan.'}
                     </p>
                   </div>
 
@@ -1326,7 +1326,6 @@ export function AdminBookForm() {
                     JPG, PNG, WebP
                   </span>
                   <span>Maksimal 2MB</span>
-                  <span className="text-primary-600 font-medium">• Tersinkron otomatis ke SLiMS</span>
                 </div>
               </div>
             )}

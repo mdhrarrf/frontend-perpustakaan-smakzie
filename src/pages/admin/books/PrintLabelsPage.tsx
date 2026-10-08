@@ -193,7 +193,7 @@ export function PrintLabelsPage() {
             <h2 className="text-base font-bold text-slate-800">Pratinjau Lembar Label</h2>
           </div>
           <span className="text-xs text-slate-500">
-            Format 2 kolom per baris (10cm × 5cm) · Standar SLiMS
+            Format 2 kolom per baris (10cm × 5cm) · Standar Label Perpustakaan
           </span>
         </div>
       </div>
