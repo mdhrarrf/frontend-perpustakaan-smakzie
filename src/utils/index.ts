@@ -74,3 +74,60 @@ export function truncate(str: string | null | undefined, maxLength: number): str
   if (!str) return '—'
   return str.length > maxLength ? str.substring(0, maxLength) + '…' : str
 }
+
+// ── Title Case / Indonesian PUEBI Casing ─────────────────────────────────────
+const LOWERCASE_WORDS = new Set([
+  'dan', 'atau', 'ke', 'di', 'dari', 'pada', 'untuk', 'tentang', 'dengan',
+  'yang', 'terhadap', 'dalam', 'oleh', 'sebagai', 'serta', 'binti', 'bin',
+  'dkk', 'dll'
+])
+
+const ACRONYMS = new Set([
+  'smk', 'sma', 'smp', 'sd', 'mak', 'rpl', 'tkj', 'dkv', 'akl', 'mplb',
+  'pplg', 'tbsm', 'tkr', 'titl', 'it', 'php', 'sql', 'html', 'css', 'js',
+  'ai', 'bos', 'ddc', 'isbn', 'puebi', 'eyd', 'ipa', 'ips', 'ppkn', 'pjok',
+  'pai', 'ski', 'myob', 'kbbi'
+])
+
+const ROMAN_NUMERALS = /^(?=[MDCLXVI])M*(C[MD]|D?C{0,3})(X[CL]|L?X{0,3})(I[XV]|V?I{0,3})$/i
+
+function subWordCase(w: string, isFirst: boolean): string {
+  const match = w.match(/^([(\["'“]*)(.*?)([)\]"'”.,:;!?]*)$/)
+  if (!match) return w
+  const prefix = match[1]
+  const clean  = match[2]
+  const suffix = match[3]
+
+  if (!clean) return w
+  const lower = clean.toLowerCase()
+
+  let formatted = ''
+  if (ROMAN_NUMERALS.test(lower) && lower.length > 0) {
+    formatted = lower.toUpperCase()
+  } else if (ACRONYMS.has(lower)) {
+    formatted = lower.toUpperCase()
+  } else if (!isFirst && LOWERCASE_WORDS.has(lower)) {
+    formatted = lower
+  } else {
+    formatted = lower.charAt(0).toUpperCase() + lower.slice(1)
+  }
+
+  return prefix + formatted + suffix
+}
+
+export function toTitleCase(title: string | null | undefined): string {
+  if (!title) return ''
+  const trimmed = title.trim()
+  if (!trimmed) return ''
+
+  const words = trimmed.split(/\s+/)
+  return words.map((w, idx) => {
+    if (w.includes('/')) {
+      return w.split('/').map((sub, subIdx) => subWordCase(sub, idx === 0 && subIdx === 0)).join('/')
+    }
+    if (w.includes('-')) {
+      return w.split('-').map((sub, subIdx) => subWordCase(sub, idx === 0 && subIdx === 0)).join('-')
+    }
+    return subWordCase(w, idx === 0)
+  }).join(' ')
+}

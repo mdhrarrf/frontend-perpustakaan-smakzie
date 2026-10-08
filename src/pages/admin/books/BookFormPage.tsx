@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input'
 import { ArrowLeft, Save, Calendar, ChevronLeft, ChevronRight, Minus, Plus } from 'lucide-react'
 import { getErrorMessage } from '@/api/client'
 import { DDC_CATALOG, searchDdc, detectDdcFromTitle, type DdcItem } from '@/utils/ddc'
+import { toTitleCase } from '@/utils'
 
 interface BookFormData {
   judul: string
@@ -626,27 +627,36 @@ export function AdminBookForm() {
 
         if (res.found && res.data) {
           const d = res.data
-          const newFilled: AutoFilledValues = { judul: trimmedTitle }
+          // Auto-correction judul agar sesuai dengan penulisan baku katalog / PUEBI
+          const officialTitle = d.judul ? toTitleCase(d.judul) : toTitleCase(trimmedTitle)
+          if (officialTitle && getValues('judul') !== officialTitle) {
+            setValue('judul', officialTitle, { shouldValidate: true, shouldDirty: true })
+            lastLookupTitleRef.current = officialTitle
+          }
+          const newFilled: AutoFilledValues = { judul: officialTitle || trimmedTitle }
 
           // Penulis
+          const formattedAuthor = d.penulis ? toTitleCase(d.penulis) : ''
           const curPenulis = getValues('penulis')
           if (!curPenulis || (old && curPenulis === old.penulis)) {
-            setValue('penulis', d.penulis || '', { shouldValidate: true, shouldDirty: true })
-            if (d.penulis) newFilled.penulis = d.penulis
+            setValue('penulis', formattedAuthor || d.penulis || '', { shouldValidate: true, shouldDirty: true })
+            if (d.penulis) newFilled.penulis = formattedAuthor || d.penulis
           }
 
           // Penerbit
+          const formattedPub = d.penerbit ? toTitleCase(d.penerbit) : ''
           const curPenerbit = getValues('penerbit')
           if (!curPenerbit || (old && curPenerbit === old.penerbit)) {
-            setValue('penerbit', d.penerbit || '', { shouldValidate: true, shouldDirty: true })
-            if (d.penerbit) newFilled.penerbit = d.penerbit
+            setValue('penerbit', formattedPub || d.penerbit || '', { shouldValidate: true, shouldDirty: true })
+            if (d.penerbit) newFilled.penerbit = formattedPub || d.penerbit
           }
 
           // Kota Terbit
+          const formattedPlace = d.kota_terbit ? toTitleCase(d.kota_terbit) : ''
           const curKota = getValues('kota_terbit')
           if (!curKota || (old && curKota === old.kota_terbit)) {
-            setValue('kota_terbit', d.kota_terbit || '', { shouldValidate: true, shouldDirty: true })
-            if (d.kota_terbit) newFilled.kota_terbit = d.kota_terbit
+            setValue('kota_terbit', formattedPlace || d.kota_terbit || '', { shouldValidate: true, shouldDirty: true })
+            if (d.kota_terbit) newFilled.kota_terbit = formattedPlace || d.kota_terbit
           }
 
           // Tahun Terbit
@@ -763,34 +773,39 @@ export function AdminBookForm() {
           const newFilled: AutoFilledValues = { isbn: displayIsbn }
 
           // Judul
+          const officialTitle = d.judul ? toTitleCase(d.judul) : ''
           const curJudul = getValues('judul')
           if (!curJudul || (old && curJudul === old.judul)) {
-            setValue('judul', d.judul || '', { shouldValidate: true, shouldDirty: true })
-            if (d.judul) {
-              newFilled.judul = d.judul
-              lastLookupTitleRef.current = d.judul
+            setValue('judul', officialTitle || d.judul || '', { shouldValidate: true, shouldDirty: true })
+            if (officialTitle || d.judul) {
+              const finalJudul = officialTitle || d.judul
+              newFilled.judul = finalJudul
+              lastLookupTitleRef.current = finalJudul
             }
           }
 
           // Penulis
+          const formattedAuthor = d.penulis ? toTitleCase(d.penulis) : ''
           const curPenulis = getValues('penulis')
           if (!curPenulis || (old && curPenulis === old.penulis)) {
-            setValue('penulis', d.penulis || '', { shouldValidate: true, shouldDirty: true })
-            if (d.penulis) newFilled.penulis = d.penulis
+            setValue('penulis', formattedAuthor || d.penulis || '', { shouldValidate: true, shouldDirty: true })
+            if (d.penulis) newFilled.penulis = formattedAuthor || d.penulis
           }
 
           // Penerbit
+          const formattedPub = d.penerbit ? toTitleCase(d.penerbit) : ''
           const curPenerbit = getValues('penerbit')
           if (!curPenerbit || (old && curPenerbit === old.penerbit)) {
-            setValue('penerbit', d.penerbit || '', { shouldValidate: true, shouldDirty: true })
-            if (d.penerbit) newFilled.penerbit = d.penerbit
+            setValue('penerbit', formattedPub || d.penerbit || '', { shouldValidate: true, shouldDirty: true })
+            if (d.penerbit) newFilled.penerbit = formattedPub || d.penerbit
           }
 
           // Kota Terbit
+          const formattedPlace = d.kota_terbit ? toTitleCase(d.kota_terbit) : ''
           const curKota = getValues('kota_terbit')
           if (!curKota || (old && curKota === old.kota_terbit)) {
-            setValue('kota_terbit', d.kota_terbit || '', { shouldValidate: true, shouldDirty: true })
-            if (d.kota_terbit) newFilled.kota_terbit = d.kota_terbit
+            setValue('kota_terbit', formattedPlace || d.kota_terbit || '', { shouldValidate: true, shouldDirty: true })
+            if (d.kota_terbit) newFilled.kota_terbit = formattedPlace || d.kota_terbit
           }
 
           // Tahun Terbit
@@ -923,7 +938,18 @@ export function AdminBookForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <Input
-                  {...register('judul', { required: true })}
+                  {...register('judul', {
+                    required: true,
+                    onBlur: (e) => {
+                      const v = e.target.value?.trim()
+                      if (v) {
+                        const formatted = toTitleCase(v)
+                        if (formatted !== v) {
+                          setValue('judul', formatted, { shouldValidate: true, shouldDirty: true })
+                        }
+                      }
+                    }
+                  })}
                   label="Judul Buku"
                   placeholder="Contoh: Pemrograman Web Lanjut, Laskar Pelangi"
                   className="h-10"
@@ -933,7 +959,18 @@ export function AdminBookForm() {
 
               <div>
                 <Input
-                  {...register('penulis', { required: true })}
+                  {...register('penulis', {
+                    required: true,
+                    onBlur: (e) => {
+                      const v = e.target.value?.trim()
+                      if (v) {
+                        const formatted = toTitleCase(v)
+                        if (formatted !== v) {
+                          setValue('penulis', formatted, { shouldValidate: true, shouldDirty: true })
+                        }
+                      }
+                    }
+                  })}
                   label="Penulis"
                   list="authors-suggestions"
                   placeholder="Contoh: Andrea Hirata, Tere Liye"
@@ -949,7 +986,17 @@ export function AdminBookForm() {
 
               <div>
                 <Input
-                  {...register('edisi')}
+                  {...register('edisi', {
+                    onBlur: (e) => {
+                      const v = e.target.value?.trim()
+                      if (v) {
+                        const formatted = toTitleCase(v)
+                        if (formatted !== v) {
+                          setValue('edisi', formatted, { shouldValidate: true, shouldDirty: true })
+                        }
+                      }
+                    }
+                  })}
                   label="Edisi / Cetakan"
                   placeholder="Contoh: Edisi Revisi, Cetakan ke-2"
                   className="h-10"
@@ -958,7 +1005,17 @@ export function AdminBookForm() {
 
               <div>
                 <Input
-                  {...register('penerbit')}
+                  {...register('penerbit', {
+                    onBlur: (e) => {
+                      const v = e.target.value?.trim()
+                      if (v) {
+                        const formatted = toTitleCase(v)
+                        if (formatted !== v) {
+                          setValue('penerbit', formatted, { shouldValidate: true, shouldDirty: true })
+                        }
+                      }
+                    }
+                  })}
                   label="Penerbit"
                   list="publishers-suggestions"
                   placeholder="Contoh: Erlangga, Gramedia Pustaka Utama"
@@ -973,7 +1030,17 @@ export function AdminBookForm() {
 
               <div>
                 <Input
-                  {...register('kota_terbit')}
+                  {...register('kota_terbit', {
+                    onBlur: (e) => {
+                      const v = e.target.value?.trim()
+                      if (v) {
+                        const formatted = toTitleCase(v)
+                        if (formatted !== v) {
+                          setValue('kota_terbit', formatted, { shouldValidate: true, shouldDirty: true })
+                        }
+                      }
+                    }
+                  })}
                   label="Kota Terbit"
                   list="places-suggestions"
                   placeholder="Contoh: Jakarta, Bandung, Cianjur"
@@ -1005,7 +1072,17 @@ export function AdminBookForm() {
 
               <div className="md:col-span-2">
                 <Input
-                  {...register('topik')}
+                  {...register('topik', {
+                    onBlur: (e) => {
+                      const v = e.target.value?.trim()
+                      if (v) {
+                        const formatted = toTitleCase(v)
+                        if (formatted !== v) {
+                          setValue('topik', formatted, { shouldValidate: true, shouldDirty: true })
+                        }
+                      }
+                    }
+                  })}
                   label="Subjek / Topik Katalog"
                   list="topics-suggestions"
                   placeholder="Contoh: Pemrograman Web, Teknik Kendaraan Ringan, Novel Fiksi"
