@@ -6,7 +6,7 @@ import { bookService } from '@/api/book.service'
 import { Card, CardHeader, CardBody } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { ArrowLeft, Save, Calendar, ChevronLeft, ChevronRight, Minus, Plus, Sparkles } from 'lucide-react'
+import { ArrowLeft, Save, Calendar, ChevronLeft, ChevronRight, Minus, Plus } from 'lucide-react'
 import { getErrorMessage } from '@/api/client'
 import { DDC_CATALOG, searchDdc, detectDdcFromTitle, type DdcItem } from '@/utils/ddc'
 
@@ -285,10 +285,9 @@ function EksemplarInput({
 interface DdcInputProps {
   value: string
   onChange: (val: string) => void
-  detectedSuggestion?: { code: string; name: string } | null
 }
 
-function DdcInput({ value, onChange, detectedSuggestion }: DdcInputProps) {
+function DdcInput({ value, onChange }: DdcInputProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const containerRef = useRef<HTMLDivElement>(null)
@@ -318,8 +317,6 @@ function DdcInput({ value, onChange, detectedSuggestion }: DdcInputProps) {
     setSearchTerm(val)
     if (!isOpen) setIsOpen(true)
   }
-
-  const showSuggestion = detectedSuggestion && (!value || value.trim().toLowerCase() !== detectedSuggestion.code.toLowerCase())
 
   return (
     <div ref={containerRef} className="flex flex-col gap-1.5 relative">
@@ -365,27 +362,6 @@ function DdcInput({ value, onChange, detectedSuggestion }: DdcInputProps) {
           </div>
         )}
       </div>
-
-      {showSuggestion && (
-        <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-xs">
-          <div className="flex items-center gap-1.5 text-amber-900 truncate min-w-0">
-            <Sparkles size={13} className="text-amber-600 shrink-0" />
-            <span className="font-medium shrink-0">Rekomendasi:</span>
-            <span className="font-semibold text-amber-900 shrink-0">{detectedSuggestion.code}</span>
-            <span className="text-amber-800 truncate">({detectedSuggestion.name})</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              onChange(detectedSuggestion.code)
-              setIsOpen(false)
-            }}
-            className="shrink-0 ml-2 px-2 py-0.5 rounded bg-amber-600 hover:bg-amber-700 text-white font-medium text-[11px] transition-colors cursor-pointer"
-          >
-            Gunakan
-          </button>
-        </div>
-      )}
     </div>
   )
 }
@@ -495,11 +471,22 @@ export function AdminBookForm() {
   const watchJumlahTotal = watch('jumlah_total')
   const liveCallNumber   = computeLiveCallNumber(watchJudul, watchPenulis, watchKlasifikasi)
   const detectedDdc      = useMemo(() => detectDdcFromTitle(watchJudul), [watchJudul])
+  const prevDetectedRef  = useRef<string | null>(null)
 
   useEffect(() => {
     register('klasifikasi')
     register('jumlah_total', { required: true })
   }, [register])
+
+  useEffect(() => {
+    if (detectedDdc && detectedDdc.code !== prevDetectedRef.current) {
+      const prev = prevDetectedRef.current
+      prevDetectedRef.current = detectedDdc.code
+      if (!watchKlasifikasi || watchKlasifikasi === prev) {
+        setValue('klasifikasi', detectedDdc.code, { shouldValidate: true, shouldDirty: true })
+      }
+    }
+  }, [detectedDdc, watchKlasifikasi, setValue])
 
   useEffect(() => {
     if (!isEdit && liveCallNumber) {
@@ -781,7 +768,6 @@ export function AdminBookForm() {
               <DdcInput
                 value={watchKlasifikasi ?? ''}
                 onChange={(val) => setValue('klasifikasi', val, { shouldValidate: true, shouldDirty: true })}
-                detectedSuggestion={detectedDdc}
               />
 
               <Input
