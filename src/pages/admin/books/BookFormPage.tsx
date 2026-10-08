@@ -457,7 +457,7 @@ export function AdminBookForm() {
     queryFn: bookService.categories,
   })
 
-  const { register, handleSubmit, reset, setValue, watch } = useForm<BookFormData>({
+  const { register, handleSubmit, reset, setValue, watch, getValues } = useForm<BookFormData>({
     defaultValues: {
       status: 'active',
       sumber_pengadaan: '1',
@@ -482,11 +482,12 @@ export function AdminBookForm() {
     if (detectedDdc && detectedDdc.code !== prevDetectedRef.current) {
       const prev = prevDetectedRef.current
       prevDetectedRef.current = detectedDdc.code
-      if (!watchKlasifikasi || watchKlasifikasi === prev) {
+      const curKlas = getValues('klasifikasi')
+      if (!curKlas || curKlas === prev || (autoFilledValuesRef.current && curKlas === autoFilledValuesRef.current.klasifikasi)) {
         setValue('klasifikasi', detectedDdc.code, { shouldValidate: true, shouldDirty: true })
       }
     }
-  }, [detectedDdc, watchKlasifikasi, setValue])
+  }, [detectedDdc, getValues, setValue])
 
   useEffect(() => {
     if (!isEdit && liveCallNumber) {
@@ -564,48 +565,184 @@ export function AdminBookForm() {
     }
   }
 
-  const lastLookupTitleRef = useRef<string>('')
-  const lastLookupIsbnRef  = useRef<string>('')
+  interface AutoFilledValues {
+    judul?: string
+    penulis?: string
+    penerbit?: string
+    kota_terbit?: string
+    tahun_terbit?: string
+    isbn?: string
+    edisi?: string
+    sinopsis?: string
+    klasifikasi?: string
+    topik?: string
+    cover?: string | null
+  }
+
+  const autoFilledValuesRef = useRef<AutoFilledValues | null>(null)
+  const lastLookupTitleRef  = useRef<string>('')
+  const lastLookupIsbnRef   = useRef<string>('')
 
   // Auto-fill cerdas saat Judul Buku cocok 100% di pangkalan data resmi
   useEffect(() => {
     if (isEdit) return
     const trimmedTitle = (watchJudul ?? '').trim()
-    if (trimmedTitle.length < 4 || trimmedTitle.toLowerCase() === lastLookupTitleRef.current.toLowerCase()) {
+
+    // Lewati jika judul sama persis dengan yang terakhir di-lookup
+    if (trimmedTitle.toLowerCase() === lastLookupTitleRef.current.toLowerCase()) {
       return
     }
 
     const timer = setTimeout(async () => {
       lastLookupTitleRef.current = trimmedTitle
+      const old = autoFilledValuesRef.current
+
+      // Jika judul kurang dari 4 karakter (misal dihapus atau dikosongkan)
+      if (trimmedTitle.length < 4) {
+        if (old) {
+          if (getValues('penulis') === old.penulis) setValue('penulis', '', { shouldValidate: true, shouldDirty: true })
+          if (getValues('penerbit') === old.penerbit) setValue('penerbit', '', { shouldValidate: true, shouldDirty: true })
+          if (getValues('kota_terbit') === old.kota_terbit) setValue('kota_terbit', '', { shouldValidate: true, shouldDirty: true })
+          if (selectedYear === old.tahun_terbit) {
+            setSelectedYear('')
+            setValue('tahun_terbit', '', { shouldValidate: true, shouldDirty: true })
+          }
+          if (displayIsbn === old.isbn) {
+            setDisplayIsbn('')
+            setValue('isbn', '', { shouldValidate: true, shouldDirty: true })
+          }
+          if (getValues('edisi') === old.edisi) setValue('edisi', '', { shouldValidate: true, shouldDirty: true })
+          if (getValues('sinopsis') === old.sinopsis) setValue('sinopsis', '', { shouldValidate: true, shouldDirty: true })
+          if (getValues('klasifikasi') === old.klasifikasi) setValue('klasifikasi', '', { shouldValidate: true, shouldDirty: true })
+          if (getValues('topik') === old.topik) setValue('topik', '', { shouldValidate: true, shouldDirty: true })
+          if (coverPreview === old.cover && !coverFile) setCoverPreview(null)
+          autoFilledValuesRef.current = null
+        }
+        return
+      }
+
       try {
         const res = await bookService.lookup({ title: trimmedTitle })
+
         if (res.found && res.data) {
           const d = res.data
-          if (d.penulis && !watch('penulis')) setValue('penulis', d.penulis, { shouldValidate: true, shouldDirty: true })
-          if (d.penerbit && !watch('penerbit')) setValue('penerbit', d.penerbit, { shouldValidate: true, shouldDirty: true })
-          if (d.kota_terbit && !watch('kota_terbit')) setValue('kota_terbit', d.kota_terbit, { shouldValidate: true, shouldDirty: true })
-          if (d.tahun_terbit && !selectedYear) {
-            setSelectedYear(d.tahun_terbit)
-            setValue('tahun_terbit', d.tahun_terbit, { shouldValidate: true, shouldDirty: true })
+          const newFilled: AutoFilledValues = { judul: trimmedTitle }
+
+          // Penulis
+          const curPenulis = getValues('penulis')
+          if (!curPenulis || (old && curPenulis === old.penulis)) {
+            setValue('penulis', d.penulis || '', { shouldValidate: true, shouldDirty: true })
+            if (d.penulis) newFilled.penulis = d.penulis
           }
-          if (d.isbn && !displayIsbn) {
-            const formatted = formatIsbn(d.isbn)
+
+          // Penerbit
+          const curPenerbit = getValues('penerbit')
+          if (!curPenerbit || (old && curPenerbit === old.penerbit)) {
+            setValue('penerbit', d.penerbit || '', { shouldValidate: true, shouldDirty: true })
+            if (d.penerbit) newFilled.penerbit = d.penerbit
+          }
+
+          // Kota Terbit
+          const curKota = getValues('kota_terbit')
+          if (!curKota || (old && curKota === old.kota_terbit)) {
+            setValue('kota_terbit', d.kota_terbit || '', { shouldValidate: true, shouldDirty: true })
+            if (d.kota_terbit) newFilled.kota_terbit = d.kota_terbit
+          }
+
+          // Tahun Terbit
+          if (!selectedYear || (old && selectedYear === old.tahun_terbit)) {
+            setSelectedYear(d.tahun_terbit || '')
+            setValue('tahun_terbit', d.tahun_terbit || '', { shouldValidate: true, shouldDirty: true })
+            if (d.tahun_terbit) newFilled.tahun_terbit = d.tahun_terbit
+          }
+
+          // ISBN
+          if (!displayIsbn || (old && displayIsbn === old.isbn)) {
+            const formatted = d.isbn ? formatIsbn(d.isbn) : ''
             setDisplayIsbn(formatted)
             setValue('isbn', formatted, { shouldValidate: true, shouldDirty: true })
+            if (formatted) {
+              newFilled.isbn = formatted
+              lastLookupIsbnRef.current = formatted.replace(/\D/g, '')
+            }
           }
-          if (d.edisi && !watch('edisi')) setValue('edisi', d.edisi, { shouldValidate: true, shouldDirty: true })
-          if (d.sinopsis && !watch('sinopsis')) setValue('sinopsis', d.sinopsis, { shouldValidate: true, shouldDirty: true })
-          if (d.klasifikasi && !watch('klasifikasi')) setValue('klasifikasi', d.klasifikasi, { shouldValidate: true, shouldDirty: true })
-          if (d.topik && !watch('topik')) setValue('topik', d.topik, { shouldValidate: true, shouldDirty: true })
-          if (d.cover && !coverPreview && !coverFile) setCoverPreview(d.cover)
+
+          // Edisi
+          const curEdisi = getValues('edisi')
+          if (!curEdisi || (old && curEdisi === old.edisi)) {
+            setValue('edisi', d.edisi || '', { shouldValidate: true, shouldDirty: true })
+            if (d.edisi) newFilled.edisi = d.edisi
+          }
+
+          // Sinopsis
+          const curSinopsis = getValues('sinopsis')
+          if (!curSinopsis || (old && curSinopsis === old.sinopsis)) {
+            setValue('sinopsis', d.sinopsis || '', { shouldValidate: true, shouldDirty: true })
+            if (d.sinopsis) newFilled.sinopsis = d.sinopsis
+          }
+
+          // Klasifikasi DDC
+          const targetDdc = d.klasifikasi || detectDdcFromTitle(trimmedTitle)?.code || ''
+          const curKlas = getValues('klasifikasi')
+          if (!curKlas || (old && curKlas === old.klasifikasi)) {
+            setValue('klasifikasi', targetDdc, { shouldValidate: true, shouldDirty: true })
+            if (targetDdc) {
+              newFilled.klasifikasi = targetDdc
+              prevDetectedRef.current = targetDdc
+            }
+          }
+
+          // Topik
+          const curTopik = getValues('topik')
+          if (!curTopik || (old && curTopik === old.topik)) {
+            setValue('topik', d.topik || '', { shouldValidate: true, shouldDirty: true })
+            if (d.topik) newFilled.topik = d.topik
+          }
+
+          // Cover
+          if (!coverFile && (!coverPreview || (old && coverPreview === old.cover))) {
+            setCoverPreview(d.cover || null)
+            if (d.cover) newFilled.cover = d.cover
+          }
+
+          autoFilledValuesRef.current = newFilled
+        } else {
+          // Buku tidak cocok di database terverifikasi
+          // Bersihkan data lama jika sebelumnya di-autofill oleh buku lain
+          if (old) {
+            if (getValues('penulis') === old.penulis) setValue('penulis', '', { shouldValidate: true, shouldDirty: true })
+            if (getValues('penerbit') === old.penerbit) setValue('penerbit', '', { shouldValidate: true, shouldDirty: true })
+            if (getValues('kota_terbit') === old.kota_terbit) setValue('kota_terbit', '', { shouldValidate: true, shouldDirty: true })
+            if (selectedYear === old.tahun_terbit) {
+              setSelectedYear('')
+              setValue('tahun_terbit', '', { shouldValidate: true, shouldDirty: true })
+            }
+            if (displayIsbn === old.isbn) {
+              setDisplayIsbn('')
+              setValue('isbn', '', { shouldValidate: true, shouldDirty: true })
+            }
+            if (getValues('edisi') === old.edisi) setValue('edisi', '', { shouldValidate: true, shouldDirty: true })
+            if (getValues('sinopsis') === old.sinopsis) setValue('sinopsis', '', { shouldValidate: true, shouldDirty: true })
+
+            const fallbackDdc = detectDdcFromTitle(trimmedTitle)?.code || ''
+            if (getValues('klasifikasi') === old.klasifikasi) {
+              setValue('klasifikasi', fallbackDdc, { shouldValidate: true, shouldDirty: true })
+              prevDetectedRef.current = fallbackDdc || null
+            }
+
+            if (getValues('topik') === old.topik) setValue('topik', '', { shouldValidate: true, shouldDirty: true })
+            if (coverPreview === old.cover && !coverFile) setCoverPreview(null)
+
+            autoFilledValuesRef.current = null
+          }
         }
       } catch {
-        // Abaikan jika tidak cocok
+        // Abaikan jika network error
       }
     }, 600)
 
     return () => clearTimeout(timer)
-  }, [watchJudul, isEdit, setValue, watch, selectedYear, displayIsbn, coverPreview, coverFile])
+  }, [watchJudul, isEdit, setValue, getValues, selectedYear, displayIsbn, coverPreview, coverFile])
 
   // Auto-fill cerdas saat ISBN dimasukkan / di-scan (akurasi 100% ISBN unik)
   useEffect(() => {
@@ -619,21 +756,89 @@ export function AdminBookForm() {
       lastLookupIsbnRef.current = cleanIsbn
       try {
         const res = await bookService.lookup({ isbn: cleanIsbn })
+        const old = autoFilledValuesRef.current
+
         if (res.found && res.data) {
           const d = res.data
-          if (d.judul && !watch('judul')) setValue('judul', d.judul, { shouldValidate: true, shouldDirty: true })
-          if (d.penulis && !watch('penulis')) setValue('penulis', d.penulis, { shouldValidate: true, shouldDirty: true })
-          if (d.penerbit && !watch('penerbit')) setValue('penerbit', d.penerbit, { shouldValidate: true, shouldDirty: true })
-          if (d.kota_terbit && !watch('kota_terbit')) setValue('kota_terbit', d.kota_terbit, { shouldValidate: true, shouldDirty: true })
-          if (d.tahun_terbit && !selectedYear) {
-            setSelectedYear(d.tahun_terbit)
-            setValue('tahun_terbit', d.tahun_terbit, { shouldValidate: true, shouldDirty: true })
+          const newFilled: AutoFilledValues = { isbn: displayIsbn }
+
+          // Judul
+          const curJudul = getValues('judul')
+          if (!curJudul || (old && curJudul === old.judul)) {
+            setValue('judul', d.judul || '', { shouldValidate: true, shouldDirty: true })
+            if (d.judul) {
+              newFilled.judul = d.judul
+              lastLookupTitleRef.current = d.judul
+            }
           }
-          if (d.edisi && !watch('edisi')) setValue('edisi', d.edisi, { shouldValidate: true, shouldDirty: true })
-          if (d.sinopsis && !watch('sinopsis')) setValue('sinopsis', d.sinopsis, { shouldValidate: true, shouldDirty: true })
-          if (d.klasifikasi && !watch('klasifikasi')) setValue('klasifikasi', d.klasifikasi, { shouldValidate: true, shouldDirty: true })
-          if (d.topik && !watch('topik')) setValue('topik', d.topik, { shouldValidate: true, shouldDirty: true })
-          if (d.cover && !coverPreview && !coverFile) setCoverPreview(d.cover)
+
+          // Penulis
+          const curPenulis = getValues('penulis')
+          if (!curPenulis || (old && curPenulis === old.penulis)) {
+            setValue('penulis', d.penulis || '', { shouldValidate: true, shouldDirty: true })
+            if (d.penulis) newFilled.penulis = d.penulis
+          }
+
+          // Penerbit
+          const curPenerbit = getValues('penerbit')
+          if (!curPenerbit || (old && curPenerbit === old.penerbit)) {
+            setValue('penerbit', d.penerbit || '', { shouldValidate: true, shouldDirty: true })
+            if (d.penerbit) newFilled.penerbit = d.penerbit
+          }
+
+          // Kota Terbit
+          const curKota = getValues('kota_terbit')
+          if (!curKota || (old && curKota === old.kota_terbit)) {
+            setValue('kota_terbit', d.kota_terbit || '', { shouldValidate: true, shouldDirty: true })
+            if (d.kota_terbit) newFilled.kota_terbit = d.kota_terbit
+          }
+
+          // Tahun Terbit
+          if (!selectedYear || (old && selectedYear === old.tahun_terbit)) {
+            setSelectedYear(d.tahun_terbit || '')
+            setValue('tahun_terbit', d.tahun_terbit || '', { shouldValidate: true, shouldDirty: true })
+            if (d.tahun_terbit) newFilled.tahun_terbit = d.tahun_terbit
+          }
+
+          // Edisi
+          const curEdisi = getValues('edisi')
+          if (!curEdisi || (old && curEdisi === old.edisi)) {
+            setValue('edisi', d.edisi || '', { shouldValidate: true, shouldDirty: true })
+            if (d.edisi) newFilled.edisi = d.edisi
+          }
+
+          // Sinopsis
+          const curSinopsis = getValues('sinopsis')
+          if (!curSinopsis || (old && curSinopsis === old.sinopsis)) {
+            setValue('sinopsis', d.sinopsis || '', { shouldValidate: true, shouldDirty: true })
+            if (d.sinopsis) newFilled.sinopsis = d.sinopsis
+          }
+
+          // Klasifikasi DDC
+          const targetDdc = d.klasifikasi || (d.judul ? detectDdcFromTitle(d.judul)?.code : '') || ''
+          const curKlas = getValues('klasifikasi')
+          if (!curKlas || (old && curKlas === old.klasifikasi)) {
+            setValue('klasifikasi', targetDdc, { shouldValidate: true, shouldDirty: true })
+            if (targetDdc) {
+              newFilled.klasifikasi = targetDdc
+              prevDetectedRef.current = targetDdc
+            }
+          }
+
+          // Topik
+          const curTopik = getValues('topik')
+          if (!curTopik || (old && curTopik === old.topik)) {
+            setValue('topik', d.topik || '', { shouldValidate: true, shouldDirty: true })
+            if (d.topik) newFilled.topik = d.topik
+          }
+
+          // Cover
+          if (!coverFile && (!coverPreview || (old && coverPreview === old.cover))) {
+            setCoverPreview(d.cover || null)
+            if (d.cover) newFilled.cover = d.cover
+          }
+
+          autoFilledValuesRef.current = newFilled
         }
       } catch {
         // Abaikan jika tidak cocok
@@ -641,7 +846,7 @@ export function AdminBookForm() {
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [displayIsbn, isEdit, setValue, watch, selectedYear, coverPreview, coverFile])
+  }, [displayIsbn, isEdit, setValue, getValues, selectedYear, coverPreview, coverFile])
 
   useEffect(() => {
     if (book) {
