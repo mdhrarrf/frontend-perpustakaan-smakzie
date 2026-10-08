@@ -562,7 +562,8 @@ export function AdminBookForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <SelectField
                 label="Kategori Koleksi"
-                {...register('kategori_id')}
+                required
+                {...register('kategori_id', { required: true })}
               >
                 <option value="">— Pilih Kategori Koleksi —</option>
                 {categories?.map((c) => (
