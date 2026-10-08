@@ -80,6 +80,33 @@ export const bookService = {
     return data.data ?? []
   },
 
+  async lookup(params: { title?: string; isbn?: string }): Promise<{
+    found: boolean
+    confidence?: string
+    source?: string
+    data?: {
+      judul?: string
+      penulis?: string
+      penerbit?: string
+      kota_terbit?: string
+      tahun_terbit?: string
+      isbn?: string
+      edisi?: string
+      sinopsis?: string
+      klasifikasi?: string
+      topik?: string
+      cover?: string | null
+    } | null
+  }> {
+    const { data } = await apiClient.get<ApiResponse<{
+      found: boolean
+      confidence?: string
+      source?: string
+      data?: any
+    }>>(`${BASE}/lookup`, { params })
+    return data.data ?? { found: false }
+  },
+
   async getItems(id: number): Promise<BookItemsResponse> {
     const { data } = await apiClient.get<ApiResponse<BookItemsResponse>>(`${BASE}/${id}/items`)
     return data.data!

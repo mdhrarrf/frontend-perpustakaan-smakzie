@@ -564,6 +564,85 @@ export function AdminBookForm() {
     }
   }
 
+  const lastLookupTitleRef = useRef<string>('')
+  const lastLookupIsbnRef  = useRef<string>('')
+
+  // Auto-fill cerdas saat Judul Buku cocok 100% di pangkalan data resmi
+  useEffect(() => {
+    if (isEdit) return
+    const trimmedTitle = (watchJudul ?? '').trim()
+    if (trimmedTitle.length < 4 || trimmedTitle.toLowerCase() === lastLookupTitleRef.current.toLowerCase()) {
+      return
+    }
+
+    const timer = setTimeout(async () => {
+      lastLookupTitleRef.current = trimmedTitle
+      try {
+        const res = await bookService.lookup({ title: trimmedTitle })
+        if (res.found && res.data) {
+          const d = res.data
+          if (d.penulis && !watch('penulis')) setValue('penulis', d.penulis, { shouldValidate: true, shouldDirty: true })
+          if (d.penerbit && !watch('penerbit')) setValue('penerbit', d.penerbit, { shouldValidate: true, shouldDirty: true })
+          if (d.kota_terbit && !watch('kota_terbit')) setValue('kota_terbit', d.kota_terbit, { shouldValidate: true, shouldDirty: true })
+          if (d.tahun_terbit && !selectedYear) {
+            setSelectedYear(d.tahun_terbit)
+            setValue('tahun_terbit', d.tahun_terbit, { shouldValidate: true, shouldDirty: true })
+          }
+          if (d.isbn && !displayIsbn) {
+            const formatted = formatIsbn(d.isbn)
+            setDisplayIsbn(formatted)
+            setValue('isbn', formatted, { shouldValidate: true, shouldDirty: true })
+          }
+          if (d.edisi && !watch('edisi')) setValue('edisi', d.edisi, { shouldValidate: true, shouldDirty: true })
+          if (d.sinopsis && !watch('sinopsis')) setValue('sinopsis', d.sinopsis, { shouldValidate: true, shouldDirty: true })
+          if (d.klasifikasi && !watch('klasifikasi')) setValue('klasifikasi', d.klasifikasi, { shouldValidate: true, shouldDirty: true })
+          if (d.topik && !watch('topik')) setValue('topik', d.topik, { shouldValidate: true, shouldDirty: true })
+          if (d.cover && !coverPreview && !coverFile) setCoverPreview(d.cover)
+        }
+      } catch {
+        // Abaikan jika tidak cocok
+      }
+    }, 600)
+
+    return () => clearTimeout(timer)
+  }, [watchJudul, isEdit, setValue, watch, selectedYear, displayIsbn, coverPreview, coverFile])
+
+  // Auto-fill cerdas saat ISBN dimasukkan / di-scan (akurasi 100% ISBN unik)
+  useEffect(() => {
+    if (isEdit) return
+    const cleanIsbn = (displayIsbn ?? '').replace(/\D/g, '')
+    if (cleanIsbn.length < 10 || cleanIsbn === lastLookupIsbnRef.current) {
+      return
+    }
+
+    const timer = setTimeout(async () => {
+      lastLookupIsbnRef.current = cleanIsbn
+      try {
+        const res = await bookService.lookup({ isbn: cleanIsbn })
+        if (res.found && res.data) {
+          const d = res.data
+          if (d.judul && !watch('judul')) setValue('judul', d.judul, { shouldValidate: true, shouldDirty: true })
+          if (d.penulis && !watch('penulis')) setValue('penulis', d.penulis, { shouldValidate: true, shouldDirty: true })
+          if (d.penerbit && !watch('penerbit')) setValue('penerbit', d.penerbit, { shouldValidate: true, shouldDirty: true })
+          if (d.kota_terbit && !watch('kota_terbit')) setValue('kota_terbit', d.kota_terbit, { shouldValidate: true, shouldDirty: true })
+          if (d.tahun_terbit && !selectedYear) {
+            setSelectedYear(d.tahun_terbit)
+            setValue('tahun_terbit', d.tahun_terbit, { shouldValidate: true, shouldDirty: true })
+          }
+          if (d.edisi && !watch('edisi')) setValue('edisi', d.edisi, { shouldValidate: true, shouldDirty: true })
+          if (d.sinopsis && !watch('sinopsis')) setValue('sinopsis', d.sinopsis, { shouldValidate: true, shouldDirty: true })
+          if (d.klasifikasi && !watch('klasifikasi')) setValue('klasifikasi', d.klasifikasi, { shouldValidate: true, shouldDirty: true })
+          if (d.topik && !watch('topik')) setValue('topik', d.topik, { shouldValidate: true, shouldDirty: true })
+          if (d.cover && !coverPreview && !coverFile) setCoverPreview(d.cover)
+        }
+      } catch {
+        // Abaikan jika tidak cocok
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [displayIsbn, isEdit, setValue, watch, selectedYear, coverPreview, coverFile])
+
   useEffect(() => {
     if (book) {
       const hrg = book.harga ? String(book.harga) : ''
