@@ -6,7 +6,7 @@ import { bookService } from '@/api/book.service'
 import { Card, CardHeader, CardBody } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { ArrowLeft, Save, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Save, Calendar, ChevronLeft, ChevronRight, Minus, Plus } from 'lucide-react'
 import { getErrorMessage } from '@/api/client'
 
 interface BookFormData {
@@ -176,10 +176,11 @@ function YearPicker({ value, onChange, label = 'Tahun Terbit' }: YearPickerProps
 interface SelectFieldProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label: string
   required?: boolean
+  hint?: string
   children: React.ReactNode
 }
 
-function SelectField({ label, required, children, className = '', ...props }: SelectFieldProps) {
+function SelectField({ label, required, hint, children, className = '', ...props }: SelectFieldProps) {
   return (
     <div className="flex flex-col gap-1.5">
       <label className="text-sm font-medium text-slate-700">
@@ -192,6 +193,113 @@ function SelectField({ label, required, children, className = '', ...props }: Se
       >
         {children}
       </select>
+      {hint && <span className="text-[11px] text-slate-500 pt-0.5">{hint}</span>}
+    </div>
+  )
+}
+
+interface EksemplarInputProps {
+  value: string | number
+  onChange: (val: string) => void
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
+  required?: boolean
+  label?: string
+}
+
+function EksemplarInput({
+  value,
+  onChange,
+  onKeyDown,
+  required = true,
+  label = 'Jumlah Eksemplar',
+}: EksemplarInputProps) {
+  const numValue = Math.max(1, parseInt(String(value) || '1', 10) || 1)
+
+  const handleStep = (delta: number) => {
+    const next = Math.max(1, numValue + delta)
+    onChange(String(next))
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const cleaned = e.target.value.replace(/\D/g, '')
+    onChange(cleaned)
+  }
+
+  const handleBlur = () => {
+    if (!value || parseInt(String(value), 10) < 1) {
+      onChange('1')
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between">
+        <label htmlFor="jumlah_total_input" className="text-sm font-medium text-slate-700">
+          {label}
+          {required && <span className="text-red-500 ml-0.5">*</span>}
+        </label>
+        <span className="text-[11px] font-medium text-slate-400">Salinan Fisik</span>
+      </div>
+
+      <div className="flex items-center h-10 w-full rounded-lg border border-slate-200 bg-white shadow-xs transition-colors focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 overflow-hidden">
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={() => handleStep(-1)}
+          disabled={numValue <= 1}
+          className="w-10 h-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-50 active:bg-slate-100 disabled:opacity-25 disabled:cursor-not-allowed border-r border-slate-200 transition-colors select-none"
+          title="Kurangi 1 eksemplar"
+        >
+          <Minus size={15} />
+        </button>
+
+        <input
+          id="jumlah_total_input"
+          type="text"
+          inputMode="numeric"
+          value={value ?? '1'}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          onKeyDown={onKeyDown}
+          placeholder="1"
+          className="flex-1 h-full text-center font-bold text-slate-800 bg-transparent text-sm focus:outline-none px-2 tracking-wide"
+          required={required}
+        />
+
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={() => handleStep(1)}
+          className="w-10 h-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-50 active:bg-slate-100 border-l border-slate-200 transition-colors select-none"
+          title="Tambah 1 eksemplar"
+        >
+          <Plus size={15} />
+        </button>
+
+        <span className="px-3.5 h-full flex items-center bg-slate-50 border-l border-slate-200 text-xs font-semibold text-slate-600 select-none">
+          Eksemplar
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between pt-0.5">
+        <span className="text-[11px] text-slate-500">Pilih cepat:</span>
+        <div className="flex items-center gap-1.5">
+          {[1, 2, 5, 10, 20, 40].map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              onClick={() => onChange(String(preset))}
+              className={`px-2 py-0.5 rounded text-xs transition-colors border ${
+                numValue === preset
+                  ? 'bg-primary-50 text-primary-700 border-primary-300 font-semibold shadow-xs'
+                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              {preset}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
@@ -298,7 +406,12 @@ export function AdminBookForm() {
   const watchJudul       = watch('judul')
   const watchPenulis     = watch('penulis')
   const watchKlasifikasi = watch('klasifikasi')
+  const watchJumlahTotal = watch('jumlah_total')
   const liveCallNumber   = computeLiveCallNumber(watchJudul, watchPenulis, watchKlasifikasi)
+
+  useEffect(() => {
+    register('jumlah_total', { required: true })
+  }, [register])
 
   useEffect(() => {
     if (!isEdit && liveCallNumber) {
@@ -417,6 +530,8 @@ export function AdminBookForm() {
       Object.entries(data).forEach(([k, v]) => { if (v !== '') fd.append(k, v) })
       if (rawHarga) fd.set('harga', rawHarga)
       if (displayIsbn) fd.set('isbn', displayIsbn)
+      const finalJumlah = data.jumlah_total || watchJumlahTotal || '1'
+      fd.set('jumlah_total', finalJumlah)
       const finalCallNumber = liveCallNumber || (isEdit ? (book?.call_number ?? '') : '')
       if (finalCallNumber) fd.set('call_number', finalCallNumber)
       if (coverFile) fd.append('cover', coverFile)
@@ -596,18 +711,17 @@ export function AdminBookForm() {
                 <option value="archived">Diarsipkan</option>
               </SelectField>
 
-              <Input
-                {...register('jumlah_total', { required: true })}
-                label="Jumlah Eksemplar"
-                placeholder="Contoh: 5"
+              <EksemplarInput
+                value={watchJumlahTotal ?? '1'}
+                onChange={(val) => setValue('jumlah_total', val, { shouldValidate: true, shouldDirty: true })}
                 onKeyDown={allowOnlyNumbers}
-                className="h-10"
                 required
               />
 
               <SelectField
                 label="Sumber Pengadaan"
                 {...register('sumber_pengadaan')}
+                hint="Asal perolehan anggaran / unit buku"
               >
                 <option value="1">Dana BOS / Pembelian</option>
                 <option value="2">Hadiah / Hibah</option>
