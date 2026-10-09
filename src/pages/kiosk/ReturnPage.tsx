@@ -277,6 +277,7 @@ export function KioskReturnPage() {
               placeholder="Scan kartu / NIS / NISN"
               kioskMode
               autoFocus
+              numericOnly
             />
           </div>
         </div>

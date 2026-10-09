@@ -112,7 +112,7 @@ export function StaffBorrowPage() {
         <Card>
           <CardHeader><h2 className="font-semibold text-slate-800 flex items-center gap-2"><Users size={18}/> Cari Siswa</h2></CardHeader>
           <CardBody className="space-y-4">
-            <BarcodeScanner onScan={handleStudentScan} placeholder="Scan kartu / ketik NIS + Enter" />
+            <BarcodeScanner onScan={handleStudentScan} placeholder="Scan kartu / ketik NIS + Enter" numericOnly />
             <p className="text-xs text-slate-400 text-center">atau ketik NIS siswa dan tekan Enter</p>
           </CardBody>
         </Card>

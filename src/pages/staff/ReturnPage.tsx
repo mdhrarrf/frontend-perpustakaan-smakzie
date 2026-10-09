@@ -69,7 +69,7 @@ export function StaffReturnPage() {
       {step === 'find-student' && (
         <Card>
           <CardHeader><h2 className="font-semibold text-slate-800">Cari Siswa</h2></CardHeader>
-          <CardBody><BarcodeScanner onScan={handleStudentScan} placeholder="Scan kartu / ketik NIS + Enter" /></CardBody>
+          <CardBody><BarcodeScanner onScan={handleStudentScan} placeholder="Scan kartu / ketik NIS + Enter" numericOnly /></CardBody>
         </Card>
       )}
 

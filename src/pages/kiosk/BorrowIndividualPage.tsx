@@ -291,7 +291,7 @@ export function KioskBorrowIndividual() {
               </div>
 
               <div className="w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
-                <BarcodeScanner onScan={handleStudentScan} placeholder="Masukan NIS/NISN Anda" kioskMode autoFocus />
+                <BarcodeScanner onScan={handleStudentScan} placeholder="Masukan NIS/NISN Anda" kioskMode autoFocus numericOnly />
               </div>
             </div>
           )}

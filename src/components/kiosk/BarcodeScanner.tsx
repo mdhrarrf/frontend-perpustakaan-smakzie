@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { KioskInput } from '@/components/ui/Input'
 import { Scan } from 'lucide-react'
 import { cn } from '@/utils'
@@ -10,12 +10,13 @@ interface BarcodeScannerProps {
   autoFocus?: boolean
   kioskMode?: boolean
   className?: string
+  numericOnly?: boolean
 }
 
 /**
  * BarcodeScanner
- * Input dibatasi hanya angka (0-9) untuk menghindari kesalahan ketik NIS/NISN.
- * Scanner barcode fisik (HID keyboard) tetap bisa input dengan normal.
+ * Jika numericOnly = true: Input dibatasi hanya angka (0-9) untuk NIS/NISN siswa.
+ * Jika numericOnly = false (default): Mengizinkan huruf & angka untuk barcode buku (misal: NGPBD001, BM2IU001, ISBN, dll).
  */
 export function BarcodeScanner({
   onScan,
@@ -24,6 +25,7 @@ export function BarcodeScanner({
   autoFocus = true,
   kioskMode = false,
   className,
+  numericOnly = false,
 }: BarcodeScannerProps) {
   const [value, setValue] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -35,12 +37,16 @@ export function BarcodeScanner({
     }
   }, [autoFocus])
 
-  // Hanya izinkan digit 0-9 — strip karakter lain langsung di onChange
+  // Hanya strip non-angka jika numericOnly aktif
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(e.target.value.replace(/\D/g, ''))
-  }, [])
+    if (numericOnly) {
+      setValue(e.target.value.replace(/\D/g, ''))
+    } else {
+      setValue(e.target.value)
+    }
+  }, [numericOnly])
 
-  // Blok keypress non-angka di level keyboard
+  // Blok keypress non-angka di level keyboard HANYA jika numericOnly aktif
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       // Selalu izinkan Enter untuk submit
@@ -50,20 +56,23 @@ export function BarcodeScanner({
         setValue('')
         return
       }
-      // Izinkan: digit, control keys, clipboard shortcuts
-      const isDigit = /^[0-9]$/.test(e.key)
-      const isControl = [
-        'Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight',
-        'ArrowUp', 'ArrowDown', 'Home', 'End', 'Enter',
-      ].includes(e.key)
-      const isClipboard = (e.ctrlKey || e.metaKey) &&
-        ['a', 'c', 'v', 'x', 'z'].includes(e.key.toLowerCase())
 
-      if (!isDigit && !isControl && !isClipboard) {
-        e.preventDefault()
+      if (numericOnly) {
+        // Izinkan: digit, control keys, clipboard shortcuts
+        const isDigit = /^[0-9]$/.test(e.key)
+        const isControl = [
+          'Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight',
+          'ArrowUp', 'ArrowDown', 'Home', 'End', 'Enter',
+        ].includes(e.key)
+        const isClipboard = (e.ctrlKey || e.metaKey) &&
+          ['a', 'c', 'v', 'x', 'z'].includes(e.key.toLowerCase())
+
+        if (!isDigit && !isControl && !isClipboard) {
+          e.preventDefault()
+        }
       }
     },
-    [value, onScan]
+    [value, onScan, numericOnly]
   )
 
   const handleAreaClick = () => inputRef.current?.focus()
@@ -78,8 +87,8 @@ export function BarcodeScanner({
             <KioskInput
               ref={inputRef}
               type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
+              inputMode={numericOnly ? 'numeric' : 'text'}
+              pattern={numericOnly ? '[0-9]*' : undefined}
               value={value}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
@@ -88,7 +97,11 @@ export function BarcodeScanner({
               className="bg-white border-2 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-primary-600 focus:ring-4 focus:ring-primary-100 shadow-sm rounded-2xl"
             />
           </div>
-          <p className="text-slate-400 text-xs font-medium">Arahkan scanner ke kode atau ketik angka lalu tekan Enter</p>
+          <p className="text-slate-400 text-xs font-medium">
+            {numericOnly
+              ? 'Arahkan scanner ke kode atau ketik angka lalu tekan Enter'
+              : 'Arahkan scanner ke kode QR / barcode atau ketik lalu tekan Enter'}
+          </p>
         </div>
       ) : (
         <div className="flex items-center gap-2">
@@ -96,8 +109,8 @@ export function BarcodeScanner({
           <input
             ref={inputRef}
             type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
+            inputMode={numericOnly ? 'numeric' : 'text'}
+            pattern={numericOnly ? '[0-9]*' : undefined}
             value={value}
             onChange={handleChange}
             onKeyDown={handleKeyDown}

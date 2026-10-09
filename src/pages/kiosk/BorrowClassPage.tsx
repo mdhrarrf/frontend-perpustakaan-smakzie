@@ -484,6 +484,7 @@ export function KioskBorrowClass() {
                   placeholder="Masukan NIS/NISN Perwakilan"
                   kioskMode
                   autoFocus
+                  numericOnly
                 />
               </div>
             </div>
