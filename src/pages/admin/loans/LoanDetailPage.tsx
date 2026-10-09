@@ -29,6 +29,7 @@ function FixBookModal({
   const [mode, setMode] = useState<'slims' | 'manual'>('slims')
   const [search, setSearch] = useState('')
   const [selectedBiblioId, setSelectedBiblioId] = useState<number | null>(null)
+  const [selectedItemCode, setSelectedItemCode] = useState<string | null>(null)
   const [selectedTitle, setSelectedTitle] = useState('')
   const [manualTitle, setManualTitle] = useState('')
   const [manualAuthor, setManualAuthor] = useState('')
@@ -45,7 +46,10 @@ function FixBookModal({
   const fixMutation = useMutation({
     mutationFn: () => {
       if (mode === 'slims' && selectedBiblioId) {
-        return loanService.fixBook(loanId, { slims_biblio_id: selectedBiblioId })
+        return loanService.fixBook(loanId, {
+          slims_biblio_id: selectedBiblioId,
+          slims_item_code: selectedItemCode || undefined,
+        })
       }
       if (mode === 'manual' && manualTitle.trim()) {
         return loanService.fixBook(loanId, {
@@ -101,10 +105,10 @@ function FixBookModal({
                 <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400"
-                  placeholder="Ketik judul buku..."
+                  placeholder="Ketik judul, barcode, atau ISBN buku..."
                   value={search}
                   autoFocus
-                  onChange={(e) => { setSearch(e.target.value); setSelectedBiblioId(null); setSelectedTitle('') }}
+                  onChange={(e) => { setSearch(e.target.value); setSelectedBiblioId(null); setSelectedItemCode(null); setSelectedTitle('') }}
                 />
               </div>
 
@@ -115,7 +119,13 @@ function FixBookModal({
                   {books.map((book: any) => (
                     <button
                       key={book.id}
-                      onClick={() => { setSelectedBiblioId(book.id); setSelectedTitle(book.judul) }}
+                      onClick={() => {
+                        setSelectedBiblioId(book.id)
+                        setSelectedTitle(book.judul)
+                        if (book.items && book.items.length > 0) {
+                          setSelectedItemCode(book.items[0].item_code)
+                        }
+                      }}
                       className={`w-full text-left px-4 py-3 text-sm transition hover:bg-primary-50 ${
                         selectedBiblioId === book.id ? 'bg-primary-50 border-l-2 border-primary-500' : ''
                       }`}
@@ -243,16 +253,14 @@ export function AdminLoanDetail() {
           </div>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">
-          {hasPlaceholder && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFixModal(true)}
-              className="border-amber-300 text-amber-700 hover:bg-amber-50"
-            >
-              <Pencil size={13} /> Koreksi Buku
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFixModal(true)}
+            className="border-slate-300 text-slate-700 hover:bg-slate-50"
+          >
+            <Pencil size={13} /> Koreksi Buku
+          </Button>
           {canReturn && (
             <>
               <Button variant="danger" size="sm" onClick={() => { if (confirm('Tandai buku ini hilang?')) lostMutation.mutate() }} loading={lostMutation.isPending}>

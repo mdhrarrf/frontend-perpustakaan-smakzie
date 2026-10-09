@@ -48,6 +48,7 @@ export interface SlimsSyncResult {
 
 export interface FixBookPayload {
   slims_biblio_id?: number
+  slims_item_code?: string
   book_title_snapshot?: string
   book_author_snapshot?: string
 }
