@@ -11,7 +11,7 @@ import { useKioskStore } from '@/store/kiosk.store'
 import { getErrorMessage } from '@/api/client'
 import { ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Loader2, BookOpen, Clock, AlertCircle, X, User } from 'lucide-react'
 import type { Student, Book, Loan } from '@/types'
-import { formatDate } from '@/utils'
+import { formatDate, formatNis, formatStudentLabel } from '@/utils'
 
 type Step = 'scan-student' | 'confirm-student' | 'active-loan-warning' | 'scan-book' | 'pick-duration' | 'photo' | 'confirm'
 
@@ -329,7 +329,7 @@ export function KioskBorrowIndividual() {
                 <div className="divide-y divide-slate-100 border-t border-slate-100">
                   {[
                     { label: 'Nama Lengkap', value: student.nama },
-                    { label: 'NIS',          value: student.nis },
+                    { label: 'NIS',          value: formatNis(student.nis) },
                     { label: 'NISN',         value: student.nisn || '—' },
                     { label: 'Kelas',        value: student.kelas || '—' },
                   ].map(({ label, value }) => (
@@ -537,7 +537,7 @@ export function KioskBorrowIndividual() {
                   </div>
                 ) : null}
                 {[
-                  { label: 'Siswa',       value: `${student.nama} (${student.nis})` },
+                  { label: 'Siswa',       value: formatStudentLabel(student) },
                   { label: 'Kelas',       value: student.kelas ?? '—' },
                   { label: 'Judul Buku',  value: book.judul },
                   { label: 'Penulis',     value: book.penulis || '—' },

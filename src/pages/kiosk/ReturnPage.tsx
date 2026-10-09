@@ -8,7 +8,7 @@ import { BarcodeScanner } from '@/components/kiosk/BarcodeScanner'
 import { WebcamCapture } from '@/components/kiosk/WebcamCapture'
 import { useKioskStore } from '@/store/kiosk.store'
 import { getErrorMessage } from '@/api/client'
-import { formatDateTime, formatDate } from '@/utils'
+import { formatDateTime, formatDate, formatNis, formatStudentLabel } from '@/utils'
 import { compareFaces } from '@/utils/faceCompare'
 import {
   ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Loader2, RotateCcw,
@@ -315,7 +315,7 @@ export function KioskReturnPage() {
             <div className="divide-y divide-slate-100 border-t border-slate-100">
               {[
                 { label: 'Nama Lengkap', value: student.nama },
-                { label: 'NIS',          value: student.nis },
+                { label: 'NIS',          value: formatNis(student.nis) },
                 { label: 'NISN',         value: student.nisn || '—' },
                 { label: 'Kelas',        value: student.kelas || '—' },
               ].map(({ label, value }) => (
@@ -354,7 +354,7 @@ export function KioskReturnPage() {
           <div className="text-center">
             <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-6 py-2.5 mb-3 shadow-sm">
               <CheckCircle2 size={20} className="text-emerald-600" />
-              <span className="text-slate-800 text-base font-bold">{student.nama} ({student.nis})</span>
+              <span className="text-slate-800 text-base font-bold">{formatStudentLabel(student)}</span>
             </div>
             <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Pilih Buku yang Dikembalikan</h2>
             <p className="text-slate-600 text-base mt-1 font-medium">Ketuk buku yang sedang Anda bawa untuk dikembalikan</p>
@@ -516,7 +516,7 @@ export function KioskReturnPage() {
                   <div className="space-y-2">
                     {[
                       { label: 'Nama',        value: student.nama },
-                      { label: 'NIS',         value: student.nis },
+                      { label: 'NIS',         value: formatNis(student.nis) },
                       { label: 'Buku',        value: getLoanBookTitle(selectedLoan) },
                       { label: 'Jatuh Tempo', value: selectedLoan.loan_type === 'class' ? formatDateTime(selectedLoan.due_at) : formatDate(selectedLoan.due_at) },
                     ].map(({ label, value }) => (

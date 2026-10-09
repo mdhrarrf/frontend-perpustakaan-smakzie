@@ -5,7 +5,7 @@ import { lostBookService } from '@/api/index'
 import { Card, CardBody, EmptyState } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Pagination } from '@/components/ui/Pagination'
-import { formatDate, formatCurrency } from '@/utils'
+import { formatDate, formatCurrency, formatNis } from '@/utils'
 import type { LostBook } from '@/types'
 import {
   BookX, CheckCircle2, AlertCircle, X, Banknote, BookOpen,
@@ -130,7 +130,7 @@ function ResolveModal({ lostBook, onClose, onSuccess }: ResolveModalProps) {
                 <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Siswa</p>
                 <p className="text-sm font-bold text-slate-900 mt-0.5">{lostBook.student?.nama ?? '—'}</p>
                 <p className="text-xs text-slate-400">
-                  {lostBook.student?.nis ?? '—'}
+                  {formatNis(lostBook.student?.nis)}
                   {lostBook.student?.kelas ? ` · ${lostBook.student.kelas}` : ''}
                 </p>
               </div>
@@ -343,7 +343,7 @@ export function AdminLostBooksPage() {
                       {/* Siswa */}
                       <td className="px-6 py-3">
                         <p className="font-medium text-slate-900">{lb.student?.nama ?? '—'}</p>
-                        <p className="text-xs text-slate-400">{lb.student?.nis ?? '—'}</p>
+                        <p className="text-xs text-slate-400">{formatNis(lb.student?.nis)}</p>
                         {lb.student?.kelas && (
                           <p className="text-xs text-slate-400">{lb.student.kelas}</p>
                         )}

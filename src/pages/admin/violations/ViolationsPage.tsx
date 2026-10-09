@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { ViolationStatusBadge } from '@/components/ui/Badge'
 import { Pagination } from '@/components/ui/Pagination'
-import { formatDate } from '@/utils'
+import { formatDate, formatNis } from '@/utils'
 import { AlertTriangle, Search, X } from 'lucide-react'
 
 // ─── Modal Selesaikan Sanksi ──────────────────────────────────────────────────
@@ -169,7 +169,7 @@ export function AdminViolationsPage() {
                     <tr key={v.id} className="border-t border-slate-50 hover:bg-slate-50/50">
                       <td className="px-6 py-3">
                         <p className="font-medium text-slate-900">{v.student?.nama}</p>
-                        <p className="text-xs text-slate-400">{v.student?.nis}</p>
+                        <p className="text-xs text-slate-400">{formatNis(v.student?.nis)}</p>
                       </td>
                       <td className="px-6 py-3">
                         <p className="line-clamp-1 text-slate-800">{v.book?.judul ?? v.book_title_snapshot ?? '—'}</p>

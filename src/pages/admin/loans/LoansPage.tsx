@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { LoanStatusBadge } from '@/components/ui/Badge'
 import { Pagination } from '@/components/ui/Pagination'
-import { formatDateTime } from '@/utils'
+import { formatDateTime, formatNis } from '@/utils'
 import { ClipboardList, Search, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react'
 
 export function AdminLoansPage() {
@@ -149,7 +149,7 @@ export function AdminLoansPage() {
                       </td>
                       <td className="px-6 py-3">
                         <p className="font-medium">{loan.student?.nama}</p>
-                        <p className="text-xs text-slate-400">{loan.student?.nis}</p>
+                        <p className="text-xs text-slate-400">{formatNis(loan.student?.nis)}</p>
                       </td>
                       <td className="px-6 py-3">
                         {(() => {

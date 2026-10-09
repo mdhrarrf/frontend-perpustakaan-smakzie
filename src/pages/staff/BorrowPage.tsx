@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/Input'
 import { WebcamCapture } from '@/components/kiosk/WebcamCapture'
 import { BarcodeScanner } from '@/components/kiosk/BarcodeScanner'
 import { LoanStatusBadge } from '@/components/ui/Badge'
-import { formatDateTime } from '@/utils'
+import { formatDateTime, formatStudentLabel } from '@/utils'
 import { getErrorMessage } from '@/api/client'
 import { BookOpen, Users, RotateCcw, CheckCircle2, AlertTriangle, Check, ArrowLeft, ArrowRight } from 'lucide-react'
 import type { Student, Book } from '@/types'
@@ -186,7 +186,7 @@ export function StaffBorrowPage() {
           <CardHeader><h2 className="font-semibold text-slate-800">Konfirmasi Peminjaman</h2></CardHeader>
           <CardBody className="space-y-4">
             <dl className="space-y-2 text-sm">
-              <div className="flex justify-between"><dt className="text-slate-500">Siswa</dt><dd className="font-medium">{student.nama} ({student.nis})</dd></div>
+              <div className="flex justify-between"><dt className="text-slate-500">Siswa</dt><dd className="font-medium">{formatStudentLabel(student)}</dd></div>
               <div className="flex justify-between"><dt className="text-slate-500">Buku</dt><dd className="font-medium">{book.judul}</dd></div>
               <div className="flex justify-between"><dt className="text-slate-500">Jatuh Tempo</dt><dd className="font-medium">{new Date(dueAt).toLocaleString('id-ID')}</dd></div>
               {loanType === 'class' && <>

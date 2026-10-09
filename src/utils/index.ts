@@ -131,3 +131,29 @@ export function toTitleCase(title: string | null | undefined): string {
     return subWordCase(w, idx === 0)
   }).join(' ')
 }
+
+// ── Student NIS Formatting ──────────────────────────────────────────────────
+/**
+ * Format NIS siswa.
+ * Jika NIS kosong, diawali TMP (belum ada dari pusat), atau '-', tampilkan '-' / '—'.
+ */
+export function formatNis(nis?: string | null): string {
+  if (!nis || nis.startsWith('TMP') || nis.trim() === '-') {
+    return '—'
+  }
+  return nis.trim()
+}
+
+/**
+ * Format tampilan nama dan NIS siswa.
+ * Contoh: "Adil Jaelani" (jika belum ada NIS) atau "Adil Jaelani (242510109)" (jika ada NIS).
+ */
+export function formatStudentLabel(student?: { nama?: string; nis?: string | null } | null): string {
+  if (!student?.nama) return '—'
+  const formattedNis = formatNis(student.nis)
+  if (formattedNis === '—') {
+    return student.nama
+  }
+  return `${student.nama} (${formattedNis})`
+}
+

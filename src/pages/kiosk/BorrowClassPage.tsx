@@ -15,7 +15,7 @@ import {
   Search, BookOpen, ChevronDown, Check, Clock, AlertCircle, User, Lock
 } from 'lucide-react'
 import type { Student, Book, Teacher, Loan } from '@/types'
-import { formatDate } from '@/utils'
+import { formatDate, formatNis, formatStudentLabel } from '@/utils'
 
 type Step = 'scan-student' | 'confirm-student' | 'active-loan-warning' | 'class-details' | 'scan-books' | 'return-time' | 'photo' | 'confirm'
 
@@ -522,7 +522,7 @@ export function KioskBorrowClass() {
                 <div className="divide-y divide-slate-100 border-t border-slate-100">
                   {[
                     { label: 'Nama Lengkap', value: student.nama },
-                    { label: 'NIS',          value: student.nis },
+                    { label: 'NIS',          value: formatNis(student.nis) },
                     { label: 'NISN',         value: student.nisn || '—' },
                     { label: 'Kelas',        value: student.kelas || '—' },
                   ].map(({ label, value }) => (
@@ -660,7 +660,7 @@ export function KioskBorrowClass() {
                   <div className="min-w-0">
                     <p className="text-xs text-slate-500 font-medium">Perwakilan</p>
                     <p className="text-base font-bold text-slate-900 truncate">
-                      {student?.nama} <span className="text-slate-500 font-normal">({student?.nis})</span>
+                      {formatStudentLabel(student)}
                     </p>
                     <p className="text-sm font-bold text-blue-600 mt-0.5">
                       Kelas: {classInfo.class_name || student?.kelas || '—'}
@@ -1181,7 +1181,7 @@ export function KioskBorrowClass() {
                   </div>
                 )}
                 {[
-                  { label: 'Siswa',          value: `${student?.nama} (${student?.nis})` },
+                  { label: 'Siswa',          value: formatStudentLabel(student) },
                   { label: 'Kelas',          value: classInfo.class_name },
                   { label: 'Guru',           value: classInfo.teacher_name },
                   { label: 'Mata Pelajaran', value: classInfo.subject_name || '—' },

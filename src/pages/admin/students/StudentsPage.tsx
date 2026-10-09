@@ -9,6 +9,7 @@ import { Pagination } from '@/components/ui/Pagination'
 import { Users, Plus, Search, X } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { getErrorMessage } from '@/api/client'
+import { formatNis } from '@/utils'
 import type { Student } from '@/types'
 
 interface StudentFormData {
@@ -28,8 +29,16 @@ function StudentFormModal({ student, onClose, classList }: { student?: Student; 
 
   const { register, handleSubmit } = useForm<StudentFormData>({
     defaultValues: student
-      ? { nis: student.nis, nisn: student.nisn ?? '', nama: student.nama, kelas: student.kelas ?? '', angkatan: student.angkatan?.toString() ?? '', jenis_kelamin: student.jenis_kelamin ?? '', status: student.status }
-      : { status: 'active' },
+      ? {
+          nis: (student.nis && !student.nis.startsWith('TMP') && student.nis !== '-') ? student.nis : '',
+          nisn: student.nisn ?? '',
+          nama: student.nama,
+          kelas: student.kelas ?? '',
+          angkatan: student.angkatan?.toString() ?? '',
+          jenis_kelamin: student.jenis_kelamin ?? '',
+          status: student.status,
+        }
+      : { status: 'active', nis: '' },
   })
 
   const saveMutation = useMutation({
@@ -61,8 +70,8 @@ function StudentFormModal({ student, onClose, classList }: { student?: Student; 
         <form onSubmit={handleSubmit((d) => saveMutation.mutate(d))} className="p-6 space-y-4">
           {error && <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>}
           <div className="grid grid-cols-2 gap-4">
-            <Input {...register('nis', { required: true })} label="NIS" required />
-            <Input {...register('nisn')} label="NISN" />
+            <Input {...register('nis')} label="NIS (Opsional)" placeholder="Kosongkan jika belum ada dari pusat" />
+            <Input {...register('nisn')} label="NISN" placeholder="Opsional" />
             <Input {...register('nama', { required: true })} label="Nama Lengkap" required className="col-span-2" />
             <div>
               <label className="text-sm font-medium text-slate-700">Kelas</label>
@@ -252,7 +261,7 @@ export function AdminStudentsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-3">
-                        <p className="font-mono text-xs">{s.nis}</p>
+                        <p className="font-mono text-xs">{formatNis(s.nis)}</p>
                         {s.nisn && <p className="font-mono text-xs text-slate-400">{s.nisn}</p>}
                       </td>
                       <td className="px-6 py-3 text-slate-700">{s.kelas ?? '—'}</td>
