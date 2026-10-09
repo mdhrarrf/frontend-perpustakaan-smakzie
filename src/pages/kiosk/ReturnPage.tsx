@@ -21,6 +21,13 @@ import type { Student, Loan } from '@/types'
 type Step = 'scan-student' | 'confirm-student' | 'scan-book' | 'select-loan' | 'photo' | 'confirm'
 type FaceMatchStatus = 'idle' | 'checking' | 'match' | 'mismatch' | 'no_face' | 'unknown'
 
+const steps = [
+  { id: 'scan-student', label: 'Scan Siswa' },
+  { id: 'scan-book',    label: 'Scan Buku' },
+  { id: 'photo',        label: 'Foto' },
+  { id: 'confirm',      label: 'Konfirmasi' },
+]
+
 export function KioskReturnPage() {
   const navigate  = useNavigate()
   const stationId = useKioskStore((s) => s.stationId)
@@ -40,6 +47,23 @@ export function KioskReturnPage() {
   const [faceMatchStatus, setFaceMatchStatus] = useState<FaceMatchStatus>('idle')
   const [faceMatchScore,  setFaceMatchScore]  = useState<number>(0)
   const faceCheckDoneRef = useRef(false)
+
+  const currentStepIndex = (() => {
+    switch (step) {
+      case 'scan-student':
+      case 'confirm-student':
+        return 0
+      case 'scan-book':
+      case 'select-loan':
+        return 1
+      case 'photo':
+        return 2
+      case 'confirm':
+        return 3
+      default:
+        return 0
+    }
+  })()
 
   const kBtn = 'flex items-center justify-center gap-2 sm:gap-3 rounded-2xl font-bold text-base sm:text-lg lg:text-xl px-5 sm:px-8 py-3 sm:py-4 lg:py-5 min-h-[50px] sm:min-h-[58px] lg:min-h-[68px] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none'
 
@@ -308,32 +332,70 @@ export function KioskReturnPage() {
 
   return (
     <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-teal-50/40 to-emerald-50/40 flex flex-col p-3 sm:p-5 lg:p-8 text-slate-900">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-3 sm:mb-5 lg:mb-8">
-        <button
-          onClick={handleBack}
-          className="p-3 bg-white hover:bg-slate-100 rounded-2xl border border-slate-200 text-slate-700 shadow-sm transition-all cursor-pointer"
-          title="Kembali"
-        >
-          <ArrowLeft size={24} />
-        </button>
-        <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            Pengembalian Buku Mandiri
-          </h1>
-          <p className="text-slate-500 text-xs sm:text-sm font-medium">Layanan mandiri pengembalian buku perpustakaan</p>
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between gap-4 mb-3 sm:mb-5 lg:mb-6">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <button
+            onClick={handleBack}
+            className="p-3 bg-white hover:bg-slate-100 rounded-2xl border border-slate-200 text-slate-700 shadow-sm transition-all cursor-pointer"
+            title="Kembali"
+          >
+            <ArrowLeft size={22} />
+          </button>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              Pengembalian Buku Mandiri
+            </h1>
+            <p className="text-slate-500 text-xs sm:text-sm font-medium">
+              Layanan mandiri pengembalian buku perpustakaan
+            </p>
+          </div>
+        </div>
+
+        {/* Stepper Progress Indicator */}
+        <div className="hidden sm:flex items-center gap-3 bg-white/90 backdrop-blur-sm border border-slate-200/80 px-4 py-2 rounded-2xl shadow-xs">
+          <div className="flex items-center gap-1.5">
+            {steps.map((st, idx) => (
+              <div
+                key={st.id}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  idx === currentStepIndex
+                    ? 'w-6 bg-emerald-600'
+                    : idx < currentStepIndex
+                    ? 'w-2 bg-emerald-400'
+                    : 'w-2 bg-slate-200'
+                }`}
+              />
+            ))}
+          </div>
+          <span className="text-xs font-bold text-slate-600">
+            Langkah {currentStepIndex + 1} dari {steps.length} • {steps[currentStepIndex]?.label}
+          </span>
+        </div>
+
+        {/* Mobile Stepper */}
+        <div className="sm:hidden flex items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-slate-200/80 px-3 py-1.5 rounded-full shadow-xs text-xs font-bold text-slate-600">
+          <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+          <span>Langkah {currentStepIndex + 1}/{steps.length}</span>
         </div>
       </div>
 
-      {/* Error Banner */}
+      {/* ── Error Banner ── */}
       {error && (
-        <div className="flex items-start gap-3 bg-rose-50 border border-rose-200 rounded-2xl p-5 mb-6 text-rose-900 shadow-sm">
+        <div className="flex items-start gap-3 bg-rose-50 border border-rose-200 rounded-2xl p-4 sm:p-5 mb-4 text-rose-900 shadow-sm max-w-xl mx-auto w-full">
           <AlertTriangle size={24} className="text-rose-600 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-base font-semibold">{error}</p>
-            <button onClick={reset} className="text-rose-700 hover:text-rose-900 text-sm font-bold mt-2 underline cursor-pointer">
-              Coba lagi
-            </button>
+            <div className="flex items-center gap-4 mt-2">
+              <button onClick={() => setError(null)} className="text-rose-700 hover:text-rose-900 text-sm font-bold underline cursor-pointer">
+                Coba lagi
+              </button>
+              {step === 'scan-book' && (
+                <button onClick={() => { setError(null); setStep('select-loan'); }} className="text-emerald-700 hover:text-emerald-900 text-sm font-bold underline cursor-pointer">
+                  Pilih Manual dari Daftar
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -436,61 +498,17 @@ export function KioskReturnPage() {
         </div>
       )}
 
-      {/* ─── Step 2: Scan Barcode Buku Fisik (Auto-Reconcile) ─── */}
+      {/* ─── Step 2: Scan Buku ─── */}
       {step === 'scan-book' && student && !isLoading && (
-        <div key="scan-book" className="animate-kiosk-step flex flex-col items-center gap-5 max-w-xl mx-auto w-full py-4 my-auto">
+        <div key="scan-book" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full my-auto">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-5 py-2 mb-3 shadow-sm">
-              <CheckCircle2 size={18} className="text-emerald-600" />
-              <span className="text-slate-800 text-sm sm:text-base font-bold">{formatStudentLabel(student)}</span>
-            </div>
-            <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Scan Barcode Buku
-            </h2>
-            <p className="text-slate-600 text-sm sm:text-base mt-1 font-medium">
-              Arahkan stiker barcode pada buku fisik ke scanner untuk memvalidasi
-            </p>
+            <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Scan Barcode Buku</h2>
+            <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Arahkan barcode atau QR pada buku ke scanner</p>
           </div>
 
           <div className="w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
-            <BarcodeScanner
-              onScan={handleBookScan}
-              placeholder="Scan barcode stiker buku..."
-              kioskMode
-              autoFocus
-            />
+            <BarcodeScanner onScan={handleBookScan} placeholder="Scan barcode / QR buku..." kioskMode autoFocus />
           </div>
-
-          {/* Active loan preview card */}
-          <div className="w-full bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 sm:p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
-                <BookOpen size={16} />
-                Buku yang Terdata Dipinjam ({activeLoans.length})
-              </span>
-            </div>
-            <div className="space-y-2">
-              {activeLoans.map((loan) => (
-                <div key={loan.id} className="flex justify-between items-center text-sm">
-                  <span className="font-bold text-slate-800 truncate max-w-[80%]">
-                    {getLoanBookTitle(loan)}
-                  </span>
-                  <span className="text-xs text-slate-500 font-medium">
-                    {isLoanOverdue(loan) ? <span className="text-rose-600 font-bold">Terlambat</span> : 'Aktif'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Fallback Option */}
-          <button
-            type="button"
-            onClick={() => setStep('select-loan')}
-            className="text-slate-600 hover:text-emerald-700 text-xs sm:text-sm font-semibold flex items-center gap-1.5 underline underline-offset-4 cursor-pointer transition-colors pt-1"
-          >
-            <span>Stiker barcode rusak / tidak terbaca? Pilih Manual dari Daftar</span>
-          </button>
         </div>
       )}
 
