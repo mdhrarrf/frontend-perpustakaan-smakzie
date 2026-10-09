@@ -578,18 +578,10 @@ export function KioskReturnPage() {
 
       {/* ─── Step 3: Photo ─── */}
       {step === 'photo' && selectedLoan && (
-        <div key="photo" className="animate-kiosk-step flex flex-col items-center gap-6 max-w-xl mx-auto w-full py-4 my-auto">
+        <div key="photo" className="animate-kiosk-step flex flex-col items-center justify-center gap-6 max-w-xl mx-auto w-full">
           <div className="text-center">
-            <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Dokumentasi Pengembalian</h2>
-            <div className="inline-block bg-white border border-slate-200 rounded-xl px-5 py-2 mt-2 shadow-sm">
-              <p className="text-slate-900 font-bold">{reconciledTitle || getLoanBookTitle(selectedLoan)}</p>
-              {reconciledTitle && (
-                <p className="text-emerald-600 text-xs font-bold mt-1 flex items-center justify-center gap-1">
-                  <Sparkles size={13} /> Terverifikasi Barcode: {scannedBarcode}
-                </p>
-              )}
-            </div>
-            <p className="text-slate-600 text-base mt-2 font-medium">Posisikan wajah di dalam lingkaran untuk foto otomatis</p>
+            <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Verifikasi & Foto Siswa</h2>
+            <p className="text-slate-600 text-base sm:text-lg mt-1 font-medium">Posisikan wajah di dalam lingkaran oval untuk verifikasi otomatis</p>
           </div>
 
           <WebcamCapture
