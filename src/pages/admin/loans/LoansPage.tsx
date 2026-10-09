@@ -95,7 +95,7 @@ export function AdminLoansPage() {
         <CardBody>
           <div className="flex flex-wrap gap-3">
             <div className="flex-1 min-w-48">
-              <Input placeholder="Cari nomor transaksi, siswa..." leftIcon={<Search size={15} />} value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }} />
+              <Input placeholder="Cari no. transaksi, siswa, NIS, judul buku, barcode..." leftIcon={<Search size={15} />} value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }} />
             </div>
             <select className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}>
               <option value="">Semua Status</option>
