@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { loanService } from '@/api/loan.service'
 import { Card, CardBody, EmptyState } from '@/components/ui/Card'
@@ -8,35 +8,15 @@ import { Input } from '@/components/ui/Input'
 import { LoanStatusBadge } from '@/components/ui/Badge'
 import { Pagination } from '@/components/ui/Pagination'
 import { formatDateTime, formatNis } from '@/utils'
-import { ClipboardList, Search, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react'
+import { ClipboardList, Search } from 'lucide-react'
 
 export function AdminLoansPage() {
-  const qc = useQueryClient()
   const [q, setQ]         = useState('')
   const [status, setStatus] = useState('')
   const [type, setType]   = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo]   = useState('')
   const [page, setPage]   = useState(1)
-  const [syncFeedback, setSyncFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
-
-  const syncMutation = useMutation({
-    mutationFn: () => loanService.syncSlims(),
-    onSuccess: (res) => {
-      setSyncFeedback({
-        type: 'success',
-        message: res.data?.message || res.message || 'Sinkronisasi data berhasil.',
-      })
-      qc.invalidateQueries({ queryKey: ['admin-loans'] })
-      setTimeout(() => setSyncFeedback(null), 8000)
-    },
-    onError: (err: any) => {
-      setSyncFeedback({
-        type: 'error',
-        message: err?.response?.data?.message || err.message || 'Gagal menyinkronkan data.',
-      })
-    },
-  })
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-loans', { q, status, type, dateFrom, dateTo, page }],
@@ -53,43 +33,7 @@ export function AdminLoansPage() {
           <h1 className="text-2xl font-bold text-slate-900">Riwayat Peminjaman</h1>
           <p className="text-sm text-slate-500">Semua transaksi peminjaman buku</p>
         </div>
-        <div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => syncMutation.mutate()}
-            disabled={syncMutation.isPending}
-            className="flex items-center gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-          >
-            <RefreshCw size={15} className={syncMutation.isPending ? "animate-spin" : ""} />
-            {syncMutation.isPending ? "Menyinkronkan..." : "Sinkronkan Data"}
-          </Button>
-        </div>
       </div>
-
-      {syncFeedback && (
-        <div className={`p-4 rounded-xl flex items-start gap-3 text-sm animate-in fade-in duration-200 ${
-          syncFeedback.type === 'success'
-            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
-            : 'bg-rose-50 border border-rose-200 text-rose-800'
-        }`}>
-          {syncFeedback.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-          )}
-          <div className="flex-1">
-            <p className="font-semibold">{syncFeedback.type === 'success' ? 'Sinkronisasi Data Sukses' : 'Sinkronisasi Data Gagal'}</p>
-            <p className="text-xs opacity-90 mt-0.5">{syncFeedback.message}</p>
-          </div>
-          <button
-            onClick={() => setSyncFeedback(null)}
-            className="text-xs opacity-60 hover:opacity-100 font-bold ml-2"
-          >
-            ✕
-          </button>
-        </div>
-      )}
 
       <Card>
         <CardBody>
