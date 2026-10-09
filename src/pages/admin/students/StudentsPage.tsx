@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { studentService, type StudentClass } from '@/api/student.service'
 import { Card, CardHeader, CardBody, EmptyState } from '@/components/ui/Card'
@@ -27,7 +28,11 @@ function StudentFormModal({ student, onClose, classList }: { student?: Student; 
   const [error, setError] = useState<string | null>(null)
   const isEdit = !!student
 
-  const { register, handleSubmit } = useForm<StudentFormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<StudentFormData>({
     defaultValues: student
       ? {
           nis: (student.nis && !student.nis.startsWith('TMP') && student.nis !== '-') ? student.nis : '',
@@ -36,10 +41,26 @@ function StudentFormModal({ student, onClose, classList }: { student?: Student; 
           kelas: student.kelas ?? '',
           angkatan: student.angkatan?.toString() ?? '',
           jenis_kelamin: student.jenis_kelamin ?? '',
-          status: student.status,
+          status: student.status || 'active',
         }
-      : { status: 'active', nis: '' },
+      : {
+          status: 'active',
+          nis: '',
+          nisn: '',
+          nama: '',
+          kelas: '',
+          angkatan: new Date().getFullYear().toString(),
+          jenis_kelamin: '',
+        },
   })
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   const saveMutation = useMutation({
     mutationFn: (data: StudentFormData) => {
@@ -58,26 +79,60 @@ function StudentFormModal({ student, onClose, classList }: { student?: Student; 
     onError: (err: unknown) => setError(getErrorMessage(err)),
   })
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-100 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <h2 className="font-semibold text-slate-900">{isEdit ? 'Edit Siswa' : 'Tambah Siswa'}</h2>
-          <button type="button" onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer" title="Tutup">
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+            title="Tutup"
+          >
             <X size={18} />
           </button>
         </div>
         <form onSubmit={handleSubmit((d) => saveMutation.mutate(d))} className="p-6 space-y-4">
           {error && <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>}
           <div className="grid grid-cols-2 gap-4">
-            <Input {...register('nis')} label="NIS (Opsional)" placeholder="Kosongkan jika belum ada dari pusat" />
-            <Input {...register('nisn')} label="NISN" placeholder="Opsional" />
-            <Input {...register('nama', { required: true })} label="Nama Lengkap" required className="col-span-2" />
+            <Input
+              {...register('nis', { required: 'NIS wajib diisi' })}
+              label="NIS"
+              required
+              placeholder="Contoh: 242510109"
+              error={errors.nis?.message}
+            />
+            <Input
+              {...register('nisn', { required: 'NISN wajib diisi' })}
+              label="NISN"
+              required
+              placeholder="Contoh: 0094218989"
+              error={errors.nisn?.message}
+            />
+            <Input
+              {...register('nama', { required: 'Nama lengkap wajib diisi' })}
+              label="Nama Lengkap"
+              required
+              placeholder="Masukkan nama lengkap siswa"
+              error={errors.nama?.message}
+              className="col-span-2"
+            />
             <div>
-              <label className="text-sm font-medium text-slate-700">Kelas</label>
+              <label className="text-sm font-medium text-slate-700">
+                Kelas <span className="text-red-500 ml-0.5">*</span>
+              </label>
               <select
-                {...register('kelas')}
-                className="mt-1.5 w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                {...register('kelas', { required: 'Kelas wajib dipilih' })}
+                className={`mt-1.5 w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white ${
+                  errors.kelas ? 'border-red-300 focus:ring-red-400' : 'border-slate-200'
+                }`}
               >
                 <option value="">— Pilih Kelas —</option>
                 {['X', 'XI', 'XII'].map((t) => {
@@ -92,23 +147,48 @@ function StudentFormModal({ student, onClose, classList }: { student?: Student; 
                   )
                 })}
               </select>
+              {errors.kelas && <p className="text-xs text-red-500 mt-1">{errors.kelas.message}</p>}
             </div>
-            <Input {...register('angkatan')} label="Angkatan" type="number" placeholder="2024" />
+            <Input
+              {...register('angkatan', { required: 'Angkatan wajib diisi' })}
+              label="Angkatan"
+              type="number"
+              required
+              placeholder="Contoh: 2024"
+              error={errors.angkatan?.message}
+            />
             <div>
-              <label className="text-sm font-medium text-slate-700">Jenis Kelamin</label>
-              <select {...register('jenis_kelamin')} className="mt-1.5 w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                <option value="">— Pilih —</option>
+              <label className="text-sm font-medium text-slate-700">
+                Jenis Kelamin <span className="text-red-500 ml-0.5">*</span>
+              </label>
+              <select
+                {...register('jenis_kelamin', { required: 'Jenis kelamin wajib dipilih' })}
+                className={`mt-1.5 w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white ${
+                  errors.jenis_kelamin ? 'border-red-300 focus:ring-red-400' : 'border-slate-200'
+                }`}
+              >
+                <option value="">— Pilih Jenis Kelamin —</option>
                 <option value="L">Laki-laki</option>
                 <option value="P">Perempuan</option>
               </select>
+              {errors.jenis_kelamin && <p className="text-xs text-red-500 mt-1">{errors.jenis_kelamin.message}</p>}
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Status</label>
-              <select {...register('status')} className="mt-1.5 w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <label className="text-sm font-medium text-slate-700">
+                Status <span className="text-red-500 ml-0.5">*</span>
+              </label>
+              <select
+                {...register('status', { required: 'Status wajib dipilih' })}
+                className={`mt-1.5 w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white ${
+                  errors.status ? 'border-red-300 focus:ring-red-400' : 'border-slate-200'
+                }`}
+              >
+                <option value="">— Pilih Status —</option>
                 <option value="active">Aktif</option>
                 <option value="inactive">Tidak Aktif</option>
                 <option value="alumni">Alumni</option>
               </select>
+              {errors.status && <p className="text-xs text-red-500 mt-1">{errors.status.message}</p>}
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
@@ -117,7 +197,8 @@ function StudentFormModal({ student, onClose, classList }: { student?: Student; 
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
