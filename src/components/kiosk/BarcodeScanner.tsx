@@ -49,12 +49,16 @@ export function BarcodeScanner({
   // Blok keypress non-angka di level keyboard HANYA jika numericOnly aktif
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      // Selalu izinkan Enter untuk submit
-      if (e.key === 'Enter' && value.trim()) {
-        e.preventDefault()
-        onScan(value.trim())
-        setValue('')
-        return
+      // Selalu izinkan Enter untuk submit (baca langsung dari DOM element agar kebal dari micro-race condition scanner HID)
+      if (e.key === 'Enter') {
+        const raw = (e.currentTarget?.value || inputRef.current?.value || value).trim()
+        if (raw) {
+          e.preventDefault()
+          onScan(raw)
+          setValue('')
+          if (inputRef.current) inputRef.current.value = ''
+          return
+        }
       }
 
       if (numericOnly) {
@@ -75,6 +79,12 @@ export function BarcodeScanner({
     [value, onScan, numericOnly]
   )
 
+  const handleBlur = useCallback(() => {
+    if (kioskMode && autoFocus) {
+      setTimeout(() => inputRef.current?.focus(), 150)
+    }
+  }, [kioskMode, autoFocus])
+
   const handleAreaClick = () => inputRef.current?.focus()
 
   return (
@@ -92,6 +102,7 @@ export function BarcodeScanner({
               value={value}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
+              onBlur={handleBlur}
               placeholder={placeholder}
               autoComplete="off"
               className="bg-white border-2 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-primary-600 focus:ring-4 focus:ring-primary-100 shadow-sm rounded-2xl"

@@ -24,6 +24,7 @@ export interface CreateLoanPayload {
 export interface ReturnLoanPayload {
   return_photo?: string
   notes?: string
+  scanned_barcode?: string
 }
 
 export interface ReturnResult {

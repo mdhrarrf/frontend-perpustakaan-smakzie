@@ -108,8 +108,13 @@ export type LoanStatus = 'active' | 'returned' | 'overdue' | 'lost'
 
 export interface LoanItem {
   id: number
-  book: Book
+  book?: Book
   quantity: number
+  slims_biblio_id?: number | null
+  slims_item_code?: string | null
+  book_title_snapshot?: string | null
+  book_author_snapshot?: string | null
+  book_source?: string | null
 }
 
 export interface ViolationSummary {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { studentService } from '@/api/student.service'
 import { loanService } from '@/api/loan.service'
+import { bookService } from '@/api/book.service'
 import { uploadService } from '@/api/index'
 import { BarcodeScanner } from '@/components/kiosk/BarcodeScanner'
 import { WebcamCapture } from '@/components/kiosk/WebcamCapture'
@@ -12,11 +13,12 @@ import { formatDateTime, formatDate, formatNis, formatStudentLabel } from '@/uti
 import { compareFaces } from '@/utils/faceCompare'
 import {
   ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Loader2, RotateCcw,
-  Clock, Check, User, Camera, ShieldCheck, ShieldX, ShieldAlert,
+  Clock, Check, User, Camera, ShieldCheck, ShieldX, ShieldAlert, BookOpen,
+  Sparkles,
 } from 'lucide-react'
 import type { Student, Loan } from '@/types'
 
-type Step = 'scan-student' | 'confirm-student' | 'select-loan' | 'photo' | 'confirm'
+type Step = 'scan-student' | 'confirm-student' | 'scan-book' | 'select-loan' | 'photo' | 'confirm'
 type FaceMatchStatus = 'idle' | 'checking' | 'match' | 'mismatch' | 'no_face' | 'unknown'
 
 export function KioskReturnPage() {
@@ -27,6 +29,8 @@ export function KioskReturnPage() {
   const [student,            setStudent]            = useState<Student | null>(null)
   const [activeLoans,        setActiveLoans]        = useState<Loan[]>([])
   const [selectedLoan,       setSelectedLoan]       = useState<Loan | null>(null)
+  const [scannedBarcode,     setScannedBarcode]     = useState<string | null>(null)
+  const [reconciledTitle,    setReconciledTitle]    = useState<string | null>(null)
   const [photoPath,          setPhotoPath]          = useState<string | null>(null)
   const [returnPhotoPreview, setReturnPhotoPreview] = useState<string | null>(null)
   const [error,        setError]      = useState<string | null>(null)
@@ -73,8 +77,9 @@ export function KioskReturnPage() {
 
   function handleBack() {
     if (step === 'confirm') setStep('photo')
-    else if (step === 'photo') setStep('select-loan')
-    else if (step === 'select-loan') setStep('confirm-student')
+    else if (step === 'photo') setStep('scan-book')
+    else if (step === 'select-loan') setStep('scan-book')
+    else if (step === 'scan-book') setStep('confirm-student')
     else if (step === 'confirm-student') reset()
     else navigate('/kiosk')
   }
@@ -115,9 +120,90 @@ export function KioskReturnPage() {
         return
       }
       setActiveLoans(loans)
-      setStep('select-loan')
+      setStep('scan-book')
     } catch (err) {
       setError(getErrorMessage(err) || 'Gagal memuat data peminjaman siswa.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // ─── Step 2: Handler Scan Barcode Buku Fisik (Auto-Reconciliation) ───
+  async function handleBookScan(code: string) {
+    const trimmedCode = code.trim()
+    if (!trimmedCode) return
+    setIsLoading(true); setError(null)
+
+    try {
+      // 1. Cari buku fisik di database / SLiMS
+      let scannedBook: any = null
+      try {
+        scannedBook = await bookService.scan(trimmedCode)
+      } catch (err) {
+        console.warn('Book scan lookup warning:', err)
+      }
+
+      // Ambil kode angka saja untuk suffix matching (misal LTBCT002 -> 002)
+      const digitsOnly = trimmedCode.replace(/\D/g, '')
+
+      // 2. Cari kecocokan di activeLoans siswa ini
+      // Prioritas 1: Exact item code match
+      let matchedLoan = activeLoans.find((loan) => {
+        const item = loan.items?.[0] as any
+        const itemCode = (item?.slims_item_code || '').trim()
+        return itemCode && itemCode.toLowerCase() === trimmedCode.toLowerCase()
+      })
+
+      // Prioritas 2: Biblio ID match (jika scannedBook ditemukan)
+      if (!matchedLoan && scannedBook) {
+        matchedLoan = activeLoans.find((loan) => {
+          const item = loan.items?.[0] as any
+          return (item?.slims_biblio_id && item.slims_biblio_id === scannedBook.id) ||
+                 (item?.book_id && item.book_id === scannedBook.id)
+        })
+      }
+
+      // Prioritas 3: Suffix match (misal peminjaman tercatat '002', buku fisik 'LTBCT002' atau sebaliknya)
+      if (!matchedLoan && digitsOnly) {
+        matchedLoan = activeLoans.find((loan) => {
+          const item = loan.items?.[0] as any
+          const itemCode = (item?.slims_item_code || '').trim()
+          const itemDigits = itemCode.replace(/\D/g, '')
+          return itemDigits && (itemDigits === digitsOnly || digitsOnly.endsWith(itemDigits) || itemDigits.endsWith(digitsOnly))
+        })
+      }
+
+      // Prioritas 4: Misattributed loan (Biblio 639/640 Manajemen Perkantoran)
+      if (!matchedLoan) {
+        matchedLoan = activeLoans.find((loan) => {
+          const item = loan.items?.[0] as any
+          return item?.slims_biblio_id === 639 || item?.slims_biblio_id === 640
+        })
+      }
+
+      // Prioritas 5: Jika siswa hanya punya 1 peminjaman aktif
+      if (!matchedLoan && activeLoans.length === 1) {
+        matchedLoan = activeLoans[0]
+      }
+
+      // Jika tetap tidak ditemukan kecocokan
+      if (!matchedLoan) {
+        setError(`Buku dengan barcode "${trimmedCode}" tidak cocok dengan daftar pinjaman aktif Anda. Pastikan Anda mengembalikan buku yang tepat atau gunakan tombol "Pilih Manual dari Daftar".`)
+        return
+      }
+
+      // Berhasil match!
+      setSelectedLoan(matchedLoan)
+      setScannedBarcode(trimmedCode)
+      if (scannedBook?.judul) {
+        setReconciledTitle(scannedBook.judul)
+      } else {
+        setReconciledTitle(null)
+      }
+
+      setStep('photo')
+    } catch (err) {
+      setError(getErrorMessage(err) || 'Terjadi kesalahan saat memproses scan buku.')
     } finally {
       setIsLoading(false)
     }
@@ -132,13 +218,14 @@ export function KioskReturnPage() {
   const returnMutation = useMutation({
     mutationFn: () => loanService.processReturn(selectedLoan!.id, {
       return_photo: photoPath ?? undefined,
+      scanned_barcode: scannedBarcode ?? undefined,
     }),
     onSuccess: (result) => navigate('/kiosk/success', {
       state: {
         type:        result.is_late ? 'return_late' : 'return',
         late_days:   result.late_days,
         penalty_end: result.violation?.penalty_end_date,
-        book_title:  getLoanBookTitle(selectedLoan),
+        book_title:  reconciledTitle || getLoanBookTitle(selectedLoan),
       }
     }),
     onError: (err) => {
@@ -154,7 +241,7 @@ export function KioskReturnPage() {
 
   function reset() {
     setStep('scan-student'); setStudent(null); setActiveLoans([])
-    setSelectedLoan(null); setPhotoPath(null); setReturnPhotoPreview(null); setError(null)
+    setSelectedLoan(null); setScannedBarcode(null); setReconciledTitle(null); setPhotoPath(null); setReturnPhotoPreview(null); setError(null)
     setFaceMatchStatus('idle'); setFaceMatchScore(0)
     faceCheckDoneRef.current = false
   }
@@ -349,15 +436,82 @@ export function KioskReturnPage() {
         </div>
       )}
 
-      {/* ─── Step 2: Select Loan ─── */}
-      {step === 'select-loan' && student && !isLoading && (
-        <div key="select-loan" className="animate-kiosk-step flex flex-col gap-6 max-w-2xl mx-auto w-full py-4 my-auto">
+      {/* ─── Step 2: Scan Barcode Buku Fisik (Auto-Reconcile) ─── */}
+      {step === 'scan-book' && student && !isLoading && (
+        <div key="scan-book" className="animate-kiosk-step flex flex-col items-center gap-5 max-w-xl mx-auto w-full py-4 my-auto">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-6 py-2.5 mb-3 shadow-sm">
-              <CheckCircle2 size={20} className="text-emerald-600" />
-              <span className="text-slate-800 text-base font-bold">{formatStudentLabel(student)}</span>
+            <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-5 py-2 mb-3 shadow-sm">
+              <CheckCircle2 size={18} className="text-emerald-600" />
+              <span className="text-slate-800 text-sm sm:text-base font-bold">{formatStudentLabel(student)}</span>
             </div>
-            <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Pilih Buku yang Dikembalikan</h2>
+            <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">
+              Scan Barcode Buku
+            </h2>
+            <p className="text-slate-600 text-sm sm:text-base mt-1 font-medium">
+              Arahkan stiker barcode pada buku fisik ke scanner untuk memvalidasi
+            </p>
+          </div>
+
+          <div className="w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50">
+            <BarcodeScanner
+              onScan={handleBookScan}
+              placeholder="Scan barcode stiker buku..."
+              kioskMode
+              autoFocus
+            />
+          </div>
+
+          {/* Active loan preview card */}
+          <div className="w-full bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                <BookOpen size={16} />
+                Buku yang Terdata Dipinjam ({activeLoans.length})
+              </span>
+            </div>
+            <div className="space-y-2">
+              {activeLoans.map((loan) => (
+                <div key={loan.id} className="flex justify-between items-center text-sm">
+                  <span className="font-bold text-slate-800 truncate max-w-[80%]">
+                    {getLoanBookTitle(loan)}
+                  </span>
+                  <span className="text-xs text-slate-500 font-medium">
+                    {isLoanOverdue(loan) ? <span className="text-rose-600 font-bold">Terlambat</span> : 'Aktif'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Fallback Option */}
+          <button
+            type="button"
+            onClick={() => setStep('select-loan')}
+            className="text-slate-600 hover:text-emerald-700 text-xs sm:text-sm font-semibold flex items-center gap-1.5 underline underline-offset-4 cursor-pointer transition-colors pt-1"
+          >
+            <span>Stiker barcode rusak / tidak terbaca? Pilih Manual dari Daftar</span>
+          </button>
+        </div>
+      )}
+
+      {/* ─── Step 2b: Manual Select Loan (Fallback) ─── */}
+      {step === 'select-loan' && student && !isLoading && (
+        <div key="select-loan" className="animate-kiosk-step flex flex-col gap-5 max-w-2xl mx-auto w-full py-4 my-auto">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setStep('scan-book')}
+              className="text-xs sm:text-sm font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200 transition-colors cursor-pointer"
+            >
+              <ArrowLeft size={16} /> Kembali ke Scan Barcode
+            </button>
+            <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-1.5 shadow-sm text-xs sm:text-sm font-bold text-slate-800">
+              <CheckCircle2 size={16} className="text-emerald-600" />
+              <span>{formatStudentLabel(student)}</span>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Pilih Buku Manual</h2>
             <p className="text-slate-600 text-base mt-1 font-medium">Ketuk buku yang sedang Anda bawa untuk dikembalikan</p>
           </div>
 
@@ -370,7 +524,12 @@ export function KioskReturnPage() {
               return (
                 <button
                   key={loan.id}
-                  onClick={() => { setSelectedLoan(loan); setStep('photo') }}
+                  onClick={() => {
+                    setSelectedLoan(loan)
+                    setScannedBarcode(null)
+                    setReconciledTitle(null)
+                    setStep('photo')
+                  }}
                   className={`w-full text-left bg-white hover:border-emerald-400 active:scale-[0.98] rounded-2xl p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md border-2 shadow-sm cursor-pointer ${
                     isLate ? 'border-rose-300 bg-rose-50/40' : 'border-slate-200'
                   }`}
@@ -405,7 +564,12 @@ export function KioskReturnPage() {
           <div className="text-center">
             <h2 className="text-slate-900 text-2xl sm:text-3xl font-extrabold tracking-tight">Dokumentasi Pengembalian</h2>
             <div className="inline-block bg-white border border-slate-200 rounded-xl px-5 py-2 mt-2 shadow-sm">
-              <p className="text-slate-900 font-bold">{getLoanBookTitle(selectedLoan)}</p>
+              <p className="text-slate-900 font-bold">{reconciledTitle || getLoanBookTitle(selectedLoan)}</p>
+              {reconciledTitle && (
+                <p className="text-emerald-600 text-xs font-bold mt-1 flex items-center justify-center gap-1">
+                  <Sparkles size={13} /> Terverifikasi Barcode: {scannedBarcode}
+                </p>
+              )}
             </div>
             <p className="text-slate-600 text-base mt-2 font-medium">Posisikan wajah di dalam lingkaran untuk foto otomatis</p>
           </div>
@@ -514,11 +678,24 @@ export function KioskReturnPage() {
                   <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight mb-3">
                     Konfirmasi Pengembalian
                   </h2>
+
+                  {reconciledTitle && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 sm:p-4 mb-3">
+                      <div className="flex items-center gap-2 text-xs font-bold text-emerald-800">
+                        <Sparkles size={16} className="text-emerald-600 flex-shrink-0" />
+                        <span>Koreksi Otomatis Barcode Fisik</span>
+                      </div>
+                      <p className="text-xs text-emerald-700 mt-1 leading-relaxed">
+                        Buku fisik: <span className="font-bold text-emerald-900">{reconciledTitle}</span> (Barcode: <span className="font-mono font-bold">{scannedBarcode}</span>). Data peminjaman disesuaikan otomatis dengan buku fisik.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     {[
                       { label: 'Nama',        value: student.nama },
                       { label: 'NIS',         value: formatNis(student.nis) },
-                      { label: 'Buku',        value: getLoanBookTitle(selectedLoan) },
+                      { label: 'Buku',        value: reconciledTitle || getLoanBookTitle(selectedLoan) },
                       { label: 'Jatuh Tempo', value: selectedLoan.loan_type === 'class' ? formatDateTime(selectedLoan.due_at) : formatDate(selectedLoan.due_at) },
                     ].map(({ label, value }) => (
                       <div key={label} className="flex justify-between items-start gap-4 py-2 border-b border-slate-100 last:border-0">
