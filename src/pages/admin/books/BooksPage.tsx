@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { BookStatusBadge } from '@/components/ui/Badge'
 import { Pagination } from '@/components/ui/Pagination'
 import { formatCurrency, formatDate } from '@/utils'
-import { BookOpen, Plus, Search, Filter, Trash2, Edit, Printer } from 'lucide-react'
+import { BookOpen, Plus, Search, Filter, Trash2, Edit, Printer, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { getErrorMessage } from '@/api/client'
 
 export function AdminBooksPage() {
@@ -18,6 +18,7 @@ export function AdminBooksPage() {
   const [kategoriId, setKategoriId] = useState('')
   const [sortBy,     setSortBy]     = useState('latest')
   const [page,       setPage]       = useState(1)
+  const [repairMsg,  setRepairMsg]  = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-books', { q, status, kategoriId, sortBy, page }],
@@ -40,21 +41,53 @@ export function AdminBooksPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-books'] }),
   })
 
+  const repairDdcMutation = useMutation({
+    mutationFn: () => bookService.repairDdc(),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['admin-books'] })
+      const count = res.data?.repaired_count ?? 0
+      setRepairMsg(`Standarisasi selesai. Sebanyak ${count} judul buku berhasil distandarisasi klasifikasi DDC-nya.`)
+      setTimeout(() => setRepairMsg(null), 6000)
+    },
+  })
+
   const books = (data?.data as any)?.data ?? []
   const meta  = (data?.data as any)?.meta ?? data?.data
 
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Manajemen Buku</h1>
           <p className="text-sm text-slate-500">Kelola koleksi buku perpustakaan</p>
         </div>
-        <Link to="/admin/books/create">
-          <Button><Plus size={16} /> Tambah Buku</Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            className="gap-2 text-slate-700 hover:text-primary-600 border-slate-200"
+            disabled={repairDdcMutation.isPending}
+            onClick={() => {
+              if (confirm('Jalankan standarisasi DDC untuk memverifikasi dan memperbarui klasifikasi semua buku yang belum terisi atau berlabel 000?')) {
+                repairDdcMutation.mutate()
+              }
+            }}
+          >
+            <RefreshCw size={15} className={repairDdcMutation.isPending ? 'animate-spin' : ''} />
+            {repairDdcMutation.isPending ? 'Memproses DDC...' : 'Standarisasi DDC'}
+          </Button>
+          <Link to="/admin/books/create">
+            <Button><Plus size={16} /> Tambah Buku</Button>
+          </Link>
+        </div>
       </div>
+
+      {repairMsg && (
+        <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-xl flex items-center gap-2">
+          <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+          <span>{repairMsg}</span>
+        </div>
+      )}
 
       {/* Filter bar */}
       <Card>

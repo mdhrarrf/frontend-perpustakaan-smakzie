@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { ArrowLeft, Save, Calendar, ChevronLeft, ChevronRight, Minus, Plus, UploadCloud, Upload, Trash2, Image as ImageIcon } from 'lucide-react'
 import { getErrorMessage } from '@/api/client'
-import { DDC_CATALOG, searchDdc, detectDdcFromTitle, type DdcItem } from '@/utils/ddc'
+import { DDC_CATALOG, searchDdc, detectDdcFromTitle, getDdcItem, cleanAuthorCutter, cleanTitleCutter, type DdcItem } from '@/utils/ddc'
 import { toTitleCase } from '@/utils'
 
 interface BookFormData {
@@ -294,7 +294,8 @@ function DdcInput({ value, onChange }: DdcInputProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   const query = isOpen ? searchTerm : (value || '')
-  const suggestions = useMemo(() => searchDdc(query, 7), [query])
+  const suggestions = useMemo(() => searchDdc(query, 8), [query])
+  const activeDdc = useMemo(() => getDdcItem(value), [value])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -321,9 +322,16 @@ function DdcInput({ value, onChange }: DdcInputProps) {
 
   return (
     <div ref={containerRef} className="flex flex-col gap-1.5 relative">
-      <label htmlFor="klasifikasi_ddc_input" className="text-sm font-medium text-slate-700">
-        Klasifikasi DDC
-      </label>
+      <div className="flex items-center justify-between">
+        <label htmlFor="klasifikasi_ddc_input" className="text-sm font-medium text-slate-700">
+          Klasifikasi DDC <span className="text-red-500">*</span>
+        </label>
+        {activeDdc && (
+          <span className="text-xs text-slate-500 font-medium truncate max-w-[220px]" title={`${activeDdc.name} (${activeDdc.classGroup})`}>
+            {activeDdc.name}
+          </span>
+        )}
+      </div>
 
       <div className="relative">
         <input
@@ -336,7 +344,7 @@ function DdcInput({ value, onChange }: DdcInputProps) {
             setIsOpen(true)
           }}
           placeholder="Contoh: 005.13, 813, 629.2"
-          className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder:text-slate-400"
+          className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder:text-slate-400 font-mono"
         />
 
         {isOpen && suggestions.length > 0 && (
@@ -350,92 +358,62 @@ function DdcInput({ value, onChange }: DdcInputProps) {
                   className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center justify-between gap-2 transition-colors cursor-pointer"
                 >
                   <div className="min-w-0 flex-1 flex items-center gap-2">
-                    <span className="font-semibold text-xs text-primary-700 shrink-0">
+                    <span className="font-semibold text-xs text-primary-700 shrink-0 font-mono">
                       {item.code}
                     </span>
                     <span className="text-xs text-slate-700 truncate">
                       {item.name}
                     </span>
                   </div>
+                  <span className="text-[10px] text-slate-400 shrink-0">
+                    {item.classGroup.split(' - ')[0]}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
         )}
       </div>
+
+      {activeDdc && (
+        <span className="text-[11px] text-slate-500 pt-0.5">
+          {activeDdc.classGroup} &bull; {activeDdc.name}
+        </span>
+      )}
     </div>
   )
 }
 
-function computeLiveCallNumber(judul?: string, penulis?: string, klasifikasi?: string): string {
+function computeLiveCallNumber(judul?: string, penulis?: string, klasifikasi?: string, categoryName?: string): string {
   const hasJudul = !!judul?.trim()
   const hasPenulis = !!penulis?.trim()
-  const hasKlasifikasi = !!klasifikasi?.trim()
+  const hasKlasifikasi = !!klasifikasi?.trim() && klasifikasi.trim() !== '000'
 
-  // Jika form belum diisi data yang diperlukan, biarkan kosong tanpa menampilkan 000 XXX x
+  // Jika form belum diisi data apa pun, biarkan kosong
   if (!hasJudul && !hasPenulis && !hasKlasifikasi) {
     return ''
   }
 
   let classNum = ''
   if (hasKlasifikasi) {
-    const parts = (klasifikasi ?? '').trim().split(/\s+/)
-    classNum = parts[0]
-  } else if (hasJudul) {
-    const t = (judul ?? '').toLowerCase()
-    if (/(bahasa jepang|jlpt|nihongo)/i.test(t)) classNum = '495.6'
-    else if (/(bahasa inggris|english|splash smart)/i.test(t)) classNum = '420'
-    else if (/(basa sunda|bahasa sunda|panggelar)/i.test(t)) classNum = '499.2232'
-    else if (/(bahasa indonesia|cerdas cergas|bersastra indonesia)/i.test(t)) classNum = '410'
-    else if (/(matematika|kalkulus|aljabar|tka matematika)/i.test(t)) classNum = '510'
-    else if (/(fisika)/i.test(t)) classNum = '530'
-    else if (/(kimia)/i.test(t)) classNum = '660'
-    else if (/(biologi|ipa|ilmu pengetahuan alam)/i.test(t)) classNum = '500'
-    else if (/(pancasila|kewarganegaraan|ppkn)/i.test(t)) classNum = '320'
-    else if (/(agama islam|pendidikan agama|budi pekerti|allah|tuhan)/i.test(t)) classNum = '297'
-    else if (/(sejarah)/i.test(t)) classNum = '959.8'
-    else if (/(penduduk|demografi|sensus|supas)/i.test(t)) classNum = '312'
-    else if (/(akuntansi|myob)/i.test(t)) classNum = '657'
-    else if (/(pemasaran|marketing|bisnis)/i.test(t)) classNum = '658.8'
-    else if (/(manajemen perkantoran|humas|kearsipan)/i.test(t)) classNum = '650'
-    else if (/(ekonomi)/i.test(t)) classNum = '330'
-    else if (/(jaringan|komputer|informatika|pemrograman)/i.test(t)) classNum = '004.6'
-    else if (/(desain grafis|seni)/i.test(t)) classNum = '741.6'
-    else if (/(psikologi|motivasi)/i.test(t)) classNum = '153.2'
-    else if (/(novel|fiksi|cerpen|guru aini|matahari|bumi)/i.test(t)) classNum = '813'
-    else classNum = '000'
-  } else {
-    classNum = '000'
+    classNum = klasifikasi!.trim().split(/\s+/)[0]
+  } else if (hasJudul || categoryName) {
+    const detected = detectDdcFromTitle(judul, categoryName)
+    classNum = detected.code
   }
 
-  let authorCutter = ''
-  if (hasPenulis) {
-    const firstAuthor = (penulis ?? '').split(/[,&]|(\s+dan\s+)/i)[0]
-    const cleaned = firstAuthor
-      .replace(/\b(drs|dra|prof|dr|ir|h|hj|s\.pd|m\.pd|s\.e|m\.m|m\.kom|m\.hum|s\.t|s\.si|m\.si|mf|dkk|et al)\b/gi, '')
-      .replace(/\b(al-|el-)/gi, '')
-      .replace(/[^a-zA-Z\s]/g, '')
-      .trim()
-    const words = cleaned.split(/\s+/).filter(Boolean)
-    if (words.length > 0) {
-      const target = words.length > 1 && words[words.length - 1].length >= 2 ? words[words.length - 1] : words[0]
-      authorCutter = target.slice(0, 3).toUpperCase().padEnd(3, 'X')
-    }
+  if (!classNum || classNum === '000') {
+    classNum = '371.3'
   }
 
-  let titleCutter = ''
-  if (hasJudul) {
-    const cleanTitle = (judul ?? '').replace(/^[^a-zA-Z]+/, '')
-    if (cleanTitle.length > 0) {
-      titleCutter = cleanTitle.charAt(0).toLowerCase()
-    }
-  }
+  const authorCutter = cleanAuthorCutter(penulis)
+  const titleCutter = cleanTitleCutter(judul)
 
   if (!authorCutter && !titleCutter) {
-    return classNum && classNum !== '000' ? classNum : ''
+    return classNum
   }
 
-  return `${classNum || '000'} ${authorCutter || 'XXX'} ${titleCutter || 'x'}`.trim()
+  return `${classNum} ${authorCutter} ${titleCutter}`.trim()
 }
 
 export function AdminBookForm() {
@@ -497,12 +475,25 @@ export function AdminBookForm() {
   const watchPenulis     = watch('penulis')
   const watchKlasifikasi = watch('klasifikasi')
   const watchJumlahTotal = watch('jumlah_total')
-  const liveCallNumber   = computeLiveCallNumber(watchJudul, watchPenulis, watchKlasifikasi)
-  const detectedDdc      = useMemo(() => detectDdcFromTitle(watchJudul), [watchJudul])
+  const watchKategoriId  = watch('kategori_id')
+
+  const selectedCategory = useMemo(() => {
+    return categories?.find((c) => String(c.id) === String(watchKategoriId))
+  }, [categories, watchKategoriId])
+
+  const detectedDdc = useMemo(() => {
+    if (!watchJudul?.trim() && !selectedCategory?.nama) return null
+    return detectDdcFromTitle(watchJudul, selectedCategory?.nama)
+  }, [watchJudul, selectedCategory])
+
+  const liveCallNumber = useMemo(() => {
+    return computeLiveCallNumber(watchJudul, watchPenulis, watchKlasifikasi, selectedCategory?.nama)
+  }, [watchJudul, watchPenulis, watchKlasifikasi, selectedCategory])
+
   const prevDetectedRef  = useRef<string | null>(null)
 
   useEffect(() => {
-    register('klasifikasi')
+    register('klasifikasi', { required: true })
     register('jumlah_total', { required: true })
   }, [register])
 
@@ -511,7 +502,7 @@ export function AdminBookForm() {
       const prev = prevDetectedRef.current
       prevDetectedRef.current = detectedDdc.code
       const curKlas = getValues('klasifikasi')
-      if (!curKlas || curKlas === prev || (autoFilledValuesRef.current && curKlas === autoFilledValuesRef.current.klasifikasi)) {
+      if (!curKlas || curKlas === '000' || curKlas === prev || (autoFilledValuesRef.current && curKlas === autoFilledValuesRef.current.klasifikasi)) {
         setValue('klasifikasi', detectedDdc.code, { shouldValidate: true, shouldDirty: true })
       }
     }
@@ -857,7 +848,7 @@ export function AdminBookForm() {
           }
 
           // Klasifikasi DDC
-          const targetDdc = d.klasifikasi || (d.judul ? detectDdcFromTitle(d.judul)?.code : '') || ''
+          const targetDdc = d.klasifikasi || (d.judul ? detectDdcFromTitle(d.judul, selectedCategory?.nama)?.code : '') || ''
           const curKlas = getValues('klasifikasi')
           if (!curKlas || (old && curKlas === old.klasifikasi)) {
             setValue('klasifikasi', targetDdc, { shouldValidate: true, shouldDirty: true })
@@ -931,11 +922,13 @@ export function AdminBookForm() {
       Object.entries(data).forEach(([k, v]) => { if (v !== '') fd.append(k, v) })
       if (rawHarga) fd.set('harga', rawHarga)
       if (displayIsbn) fd.set('isbn', displayIsbn)
-      const finalKlasifikasi = data.klasifikasi || watchKlasifikasi || ''
-      if (finalKlasifikasi) fd.set('klasifikasi', finalKlasifikasi)
+      const rawKlasifikasi = data.klasifikasi || watchKlasifikasi || detectedDdc?.code || '371.3'
+      const finalKlasifikasi = rawKlasifikasi === '000' ? (detectedDdc?.code || '371.3') : rawKlasifikasi
+      fd.set('klasifikasi', finalKlasifikasi)
       const finalJumlah = data.jumlah_total || watchJumlahTotal || '1'
       fd.set('jumlah_total', finalJumlah)
-      const finalCallNumber = liveCallNumber || (isEdit ? (book?.call_number ?? '') : '')
+      const computedCall = computeLiveCallNumber(data.judul || watchJudul, data.penulis || watchPenulis, finalKlasifikasi, selectedCategory?.nama)
+      const finalCallNumber = (liveCallNumber && !liveCallNumber.startsWith('000 ')) ? liveCallNumber : computedCall
       if (finalCallNumber) fd.set('call_number', finalCallNumber)
       if (coverFile) fd.append('cover', coverFile)
       return isEdit ? bookService.update(Number(id), fd) : bookService.create(fd)
@@ -943,6 +936,7 @@ export function AdminBookForm() {
     onSuccess: (book) => {
       qc.invalidateQueries({ queryKey: ['admin-books'] })
       qc.invalidateQueries({ queryKey: ['book', String(book.id)] })
+      qc.invalidateQueries({ queryKey: ['book-items', String(book.id)] })
       navigate(`/admin/books/${book.id}`)
     },
     onError: (err: unknown) => setError(getErrorMessage(err)),

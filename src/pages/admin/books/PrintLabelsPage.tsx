@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button"
 import { Card, CardHeader, CardBody } from "@/components/ui/Card"
 import { ArrowLeft, Printer, CheckSquare, Square, Eye } from "lucide-react"
 import Barcode from "react-barcode"
+import { detectDdcFromTitle, cleanAuthorCutter, cleanTitleCutter } from "@/utils/ddc"
 
 function getBarcodeWidth(code: string): number {
   const len = code.length
@@ -26,38 +27,32 @@ function parseCallNumber(
   const raw = (itemCallNumber && itemCallNumber !== "AUTO" ? itemCallNumber : "") ||
               (biblioCallNumber && biblioCallNumber !== "AUTO" ? biblioCallNumber : "")
 
+  let finalParts: string[] = []
   if (raw) {
     const trimmed = raw.trim()
     const parts = trimmed.split(/\s+/)
     if (parts.length >= 2) {
-      return parts
-    }
-    if (parts.length === 1 && parts[0] && !/^\d+(\.\d+)?$/.test(parts[0])) {
-      return [parts[0]]
-    }
-  }
-
-  // Fallback pembagian standar Cutter SLiMS: Klasifikasi / 3 Huruf Pengarang / 1 Huruf Judul
-  const classNum = (raw ? raw : "") || classification || "000"
-
-  let authorCutter = ""
-  if (author) {
-    const cleanAuthor = author.replace(/[^a-zA-Z]/g, "")
-    if (cleanAuthor.length > 0) {
-      authorCutter = cleanAuthor.slice(0, 3).toUpperCase()
+      if (parts[0] === '000' || parts[0] === 'AUTO') {
+        const detected = detectDdcFromTitle(title)
+        parts[0] = detected.code
+      }
+      finalParts = parts
+    } else if (parts.length === 1 && parts[0] && !/^\d+(\.\d+)?$/.test(parts[0])) {
+      finalParts = [parts[0]]
     }
   }
 
-  let titleCutter = ""
-  if (title) {
-    const cleanTitle = title.replace(/^[^a-zA-Z]+/, "")
-    if (cleanTitle.length > 0) {
-      titleCutter = cleanTitle.charAt(0).toLowerCase()
+  if (finalParts.length === 0) {
+    let classNum = (raw ? raw : "") || classification || ""
+    if (!classNum || classNum === '000' || classNum === 'AUTO') {
+      classNum = detectDdcFromTitle(title).code
     }
+    const authorCutter = cleanAuthorCutter(author)
+    const titleCutter = cleanTitleCutter(title)
+    finalParts = [classNum, authorCutter, titleCutter].filter(Boolean)
   }
 
-  const lines = [classNum, authorCutter, titleCutter].filter(Boolean)
-  return lines.length > 0 ? lines : ["—"]
+  return finalParts.length > 0 ? finalParts : ["—"]
 }
 
 export function PrintLabelsPage() {

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { BookStatusBadge } from '@/components/ui/Badge'
 import { formatCurrency, formatDate } from '@/utils'
 import { ArrowLeft, Edit, BookOpen, Printer } from 'lucide-react'
+import { detectDdcFromTitle, getDdcItem, cleanAuthorCutter, cleanTitleCutter } from '@/utils/ddc'
 
 export function AdminBookDetail() {
   const { id } = useParams<{ id: string }>()
@@ -26,6 +27,15 @@ export function AdminBookDetail() {
 
   if (isLoading) return <div className="flex items-center justify-center h-60"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" /></div>
   if (!book) return <div className="text-center py-20 text-slate-400">Buku tidak ditemukan.</div>
+
+  const detectedDdc = detectDdcFromTitle(book.judul, book.kategori?.nama)
+  const displayClass = (book.klasifikasi && book.klasifikasi !== '000') ? book.klasifikasi : (detectedDdc?.code || '371.3')
+  const ddcInfo = getDdcItem(displayClass)
+
+  let displayCallNumber = book.call_number || ''
+  if (!displayCallNumber || displayCallNumber === 'AUTO' || displayCallNumber.startsWith('000 ') || displayCallNumber === '000') {
+    displayCallNumber = `${displayClass} ${cleanAuthorCutter(book.penulis)} ${cleanTitleCutter(book.judul)}`
+  }
 
   return (
     <div className="space-y-5 max-w-4xl">
@@ -75,8 +85,8 @@ export function AdminBookDetail() {
                 { label: 'ISBN',              value: book.isbn ?? '—' },
                 { label: 'Topik / Subjek',    value: book.topik || '—' },
                 { label: 'Kategori Koleksi',  value: book.kategori?.nama ?? '—' },
-                { label: 'Klasifikasi DDC',   value: book.klasifikasi || book.lokasi_rak || '—' },
-                { label: 'Nomor Panggil Buku', value: book.call_number || '—' },
+                { label: 'Klasifikasi DDC',   value: `${displayClass}${ddcInfo ? ` — ${ddcInfo.name}` : ''}` },
+                { label: 'Nomor Panggil Buku', value: displayCallNumber },
                 { label: 'Lokasi Rak',        value: book.lokasi_rak ?? '—' },
                 { label: 'Sumber Pengadaan',  value: book.sumber_label || (Number(book.sumber_pengadaan) === 2 ? 'Hadiah / Hibah' : Number(book.sumber_pengadaan) === 3 ? 'Bantuan Pemerintah / Diknas' : 'Dana BOS / Pembelian') },
                 { label: 'Harga Buku',        value: formatCurrency(book.harga) },

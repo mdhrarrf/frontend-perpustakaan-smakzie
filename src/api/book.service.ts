@@ -111,6 +111,11 @@ export const bookService = {
     const { data } = await apiClient.get<ApiResponse<BookItemsResponse>>(`${BASE}/${id}/items`)
     return data.data!
   },
+
+  async repairDdc(): Promise<ApiResponse<{ repaired_count: number; samples: any[] }>> {
+    const { data } = await apiClient.post<ApiResponse<{ repaired_count: number; samples: any[] }>>(`${BASE}/repair-ddc`)
+    return data
+  },
 }
 
 export interface BookItem {
