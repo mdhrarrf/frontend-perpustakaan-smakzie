@@ -182,8 +182,9 @@ export function KioskBorrowIndividual() {
       const clientUuid = generateClientUuid()
       const isSlimsBook = book?.kode_buku?.startsWith('SLIMS-') || book?.kode_buku?.startsWith('BK-')
       const payload = {
-        client_uuid:    clientUuid,
-        loan_type:      'individual' as const,
+        client_uuid:             clientUuid,
+        client_transaction_uuid: clientUuid,
+        loan_type:               'individual' as const,
         student_id:     student!.id,
         ...(isSlimsBook
           ? { slims_biblio_id: book!.id }

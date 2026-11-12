@@ -5,6 +5,7 @@ const BASE = '/perpustakaan/loans'
 
 export interface CreateLoanPayload {
   client_uuid?: string
+  client_transaction_uuid?: string
   loan_type: 'individual' | 'class'
   student_id: number
   book_id?: number           // Untuk buku lokal

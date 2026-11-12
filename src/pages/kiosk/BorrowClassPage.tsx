@@ -360,8 +360,9 @@ export function KioskBorrowClass() {
         const clientUuid = generateClientUuid()
         const isSlims = book.kode_buku?.startsWith('SLIMS-') || book.kode_buku?.startsWith('BK-')
         const payload = {
-          client_uuid:    clientUuid,
-          loan_type:      'class' as const,
+          client_uuid:             clientUuid,
+          client_transaction_uuid: clientUuid,
+          loan_type:               'class' as const,
           student_id:     student.id,
           ...(isSlims
             ? { slims_biblio_id: book.id }

@@ -12,13 +12,23 @@ export const apiClient = axios.create({
   timeout: 30000,
 })
 
-// ── Request Interceptor: Inject Bearer token ─────────────────────────────────
+// ── Request Interceptor: Inject Bearer token & Idempotency Key ────────────────
 apiClient.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+
+    // Lapisan 3: Inject Idempotency Key dari body data jika tersedia
+    if (config.data && typeof config.data === 'object') {
+      const uuid = (config.data as any).client_transaction_uuid || (config.data as any).client_uuid
+      if (uuid) {
+        config.headers['X-Idempotency-Key'] = uuid
+        config.headers['X-Client-Transaction-UUID'] = uuid
+      }
+    }
+
     return config
   },
   (error) => Promise.reject(error),

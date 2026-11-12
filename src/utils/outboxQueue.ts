@@ -221,10 +221,11 @@ class OutboxQueueManager {
     payload: CreateLoanPayload
     meta: OutboxMeta
   }): Promise<OutboxItem> {
-    const clientUuid = params.payload.client_uuid || generateClientUuid()
+    const clientUuid = params.payload.client_transaction_uuid || params.payload.client_uuid || generateClientUuid()
     const payloadWithUuid: CreateLoanPayload = {
       ...params.payload,
       client_uuid: clientUuid,
+      client_transaction_uuid: clientUuid,
     }
 
     const item: OutboxItem = {
