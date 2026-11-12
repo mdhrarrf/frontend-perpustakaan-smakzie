@@ -1,5 +1,6 @@
 import apiClient from './client'
 import type { ApiResponse, Book, BookCategory, PaginatedResponse } from '@/types'
+import { persistentMasterCache } from '@/utils/persistentCache'
 
 export interface BookFilters {
   q?: string
@@ -56,8 +57,14 @@ export const bookService = {
   },
 
   async categories(): Promise<BookCategory[]> {
-    const { data } = await apiClient.get<ApiResponse<BookCategory[]>>(`${BASE}/categories`)
-    return data.data!
+    return persistentMasterCache.fetchWithOfflineFallback<BookCategory[]>(
+      'master_categories',
+      async () => {
+        const { data } = await apiClient.get<ApiResponse<BookCategory[]>>(`${BASE}/categories`)
+        return data.data ?? []
+      },
+      { ttlMs: 24 * 60 * 60 * 1000 }
+    )
   },
 
   async authors(q?: string): Promise<string[]> {

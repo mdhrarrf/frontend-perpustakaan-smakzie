@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import type { Student, Book, Teacher, Loan } from '@/types'
 import { formatDate, formatNis, formatStudentLabel } from '@/utils'
+import { persistentMasterCache } from '@/utils/persistentCache'
 
 type Step = 'scan-student' | 'confirm-student' | 'active-loan-warning' | 'class-details' | 'scan-books' | 'return-time' | 'photo' | 'confirm'
 
@@ -64,6 +65,7 @@ export function KioskBorrowClass() {
   } = useQuery({
     queryKey: ['kiosk-teachers'],
     queryFn: () => teacherService.list(),
+    initialData: () => persistentMasterCache.getSync<Teacher[]>('master_teachers') ?? undefined,
     staleTime: 5 * 60 * 1000,
   })
 

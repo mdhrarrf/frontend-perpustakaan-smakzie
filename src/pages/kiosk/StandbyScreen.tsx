@@ -2,6 +2,9 @@ import { useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { loanService } from '@/api/loan.service'
+import { teacherService } from '@/api/teacher.service'
+import { studentService } from '@/api/student.service'
+import { bookService } from '@/api/book.service'
 import type { StandbyItem } from '@/types'
 import { BookOpen, RotateCcw, Clock, ArrowRight } from 'lucide-react'
 import { cn } from '@/utils'
@@ -18,6 +21,16 @@ export function KioskStandby() {
 
   // Jam & tanggal yang terus berjalan setiap detik
   const { timeStr, dateStr } = useLiveClock()
+
+  // Prewarm cache master data di background (Guru, Kelas, Kategori Buku)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      teacherService.list().catch(() => {})
+      studentService.classes().catch(() => {})
+      bookService.categories().catch(() => {})
+    }, 800)
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <div className="flex-1 min-h-[calc(100vh-2.75rem)] bg-gradient-to-br from-slate-50 via-sky-50/40 to-blue-50/50 flex flex-col overflow-hidden relative selection:bg-blue-100">

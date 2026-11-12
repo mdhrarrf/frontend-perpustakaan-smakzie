@@ -1,5 +1,6 @@
 import apiClient from './client'
 import type { ApiResponse, PaginatedResponse, Student, Violation, Loan } from '@/types'
+import { persistentMasterCache } from '@/utils/persistentCache'
 
 const BASE = '/perpustakaan/students'
 
@@ -13,8 +14,14 @@ export interface StudentClass {
 
 export const studentService = {
   async classes(): Promise<StudentClass[]> {
-    const { data } = await apiClient.get<ApiResponse<StudentClass[]>>(`${BASE}/classes`)
-    return data.data!
+    return persistentMasterCache.fetchWithOfflineFallback<StudentClass[]>(
+      'master_classes',
+      async () => {
+        const { data } = await apiClient.get<ApiResponse<StudentClass[]>>(`${BASE}/classes`)
+        return data.data ?? []
+      },
+      { ttlMs: 24 * 60 * 60 * 1000 }
+    )
   },
 
   async list(params: Record<string, unknown> = {}): Promise<ApiResponse<PaginatedResponse<Student>>> {
