@@ -124,13 +124,13 @@ export function KioskSuccessPage() {
         )}
 
         {state.is_offline_queued && (
-          <div className="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 text-left w-full space-y-1 mt-2 shadow-sm">
-            <p className="text-amber-900 font-bold text-sm flex items-center gap-2">
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 text-left w-full mt-2 space-y-0.5">
+            <p className="text-amber-900 font-bold text-xs flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-amber-500" />
-              Tersimpan di Sistem Lokal
+              Tersimpan di Antrean Lokal
             </p>
-            <p className="text-xs text-amber-800 leading-relaxed">
-              Transaksi peminjaman telah berhasil dicatat pada komputer ini dan akan disinkronkan ke server secara otomatis. Buku sudah dapat dibawa.
+            <p className="text-xs text-amber-700">
+              Transaksi tercatat dan akan disinkronkan ke server secara otomatis.
             </p>
           </div>
         )}

@@ -191,7 +191,7 @@ export function KioskBorrowClass() {
       const s = Array.isArray(data) ? data[0] : data
 
       if (!s) {
-        setError('Siswa tidak ditemukan. Pastikan NIS/NISN yang Anda masukkan sudah benar atau kartu pelajar terbaca dengan jelas.')
+        setError('Siswa tidak ditemukan. Periksa NIS/NISN.')
         return
       }
 
@@ -203,7 +203,7 @@ export function KioskBorrowClass() {
       setStudent(s)
       setStep('confirm-student')
     } catch (err) {
-      setError(getErrorMessage(err) || 'Siswa tidak ditemukan. Pastikan NIS/NISN yang Anda masukkan sudah benar atau kartu pelajar terbaca dengan jelas.')
+      setError(getErrorMessage(err) || 'Siswa tidak ditemukan. Periksa NIS/NISN.')
     } finally {
       setIsLoading(false)
     }
@@ -310,7 +310,7 @@ export function KioskBorrowClass() {
 
       setBooks([{ book: b, quantity: 1 }])
     } catch {
-      setError('Buku tidak ditemukan. Pastikan barcode terbaca dengan jelas.')
+      setError('Buku tidak ditemukan.')
     } finally {
       setIsLoading(false)
     }

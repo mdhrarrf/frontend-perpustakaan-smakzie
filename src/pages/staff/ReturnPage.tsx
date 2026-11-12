@@ -11,7 +11,7 @@ import { BarcodeScanner } from '@/components/kiosk/BarcodeScanner'
 import { LoanStatusBadge } from '@/components/ui/Badge'
 import { formatDateTime } from '@/utils'
 import { getErrorMessage } from '@/api/client'
-import { CheckCircle2, AlertTriangle, ArrowLeft, Sparkles } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, ArrowLeft } from 'lucide-react'
 import type { Student, Loan } from '@/types'
 
 type Step = 'find-student' | 'select-loan' | 'photo' | 'done'
@@ -186,9 +186,9 @@ export function StaffReturnPage() {
           <CardBody className="space-y-4">
             <div className="p-3 bg-slate-50 rounded-lg text-sm space-y-1">
               <p className="font-bold text-slate-900">{reconciledTitle || selectedLoan.items?.[0]?.book?.judul || selectedLoan.items?.[0]?.book_title_snapshot}</p>
-              {reconciledTitle && (
-                <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
-                  <Sparkles size={13} /> Terverifikasi Barcode: {scannedBarcode} (Koreksi Otomatis)
+              {scannedBarcode && (
+                <p className="text-xs text-slate-500">
+                  Barcode: <span className="font-mono font-medium text-slate-700">{scannedBarcode}</span>
                 </p>
               )}
               <p className="text-slate-500 text-xs">{formatDateTime(selectedLoan.due_at)}</p>

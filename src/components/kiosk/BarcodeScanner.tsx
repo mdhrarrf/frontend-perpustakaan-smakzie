@@ -262,8 +262,8 @@ export function BarcodeScanner({
           </div>
           <p className="text-slate-400 text-xs font-medium">
             {numericOnly
-              ? 'Arahkan scanner ke kode atau ketik angka lalu tekan Enter'
-              : 'Arahkan scanner ke kode QR / barcode atau ketik lalu tekan Enter'}
+              ? 'Scan kartu atau ketik NIS / NISN'
+              : 'Scan barcode atau ketik kode'}
           </p>
         </div>
       ) : (

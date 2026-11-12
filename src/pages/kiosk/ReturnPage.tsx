@@ -14,7 +14,6 @@ import { compareFaces } from '@/utils/faceCompare'
 import {
   ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Loader2, RotateCcw,
   Clock, Check, User, Camera, ShieldCheck, ShieldX, ShieldAlert, BookOpen,
-  Sparkles,
 } from 'lucide-react'
 import type { Student, Loan } from '@/types'
 
@@ -114,7 +113,7 @@ export function KioskReturnPage() {
       const data = await studentService.search(code, 'barcode')
       const s = Array.isArray(data) ? data[0] : data
       if (!s) {
-        setError('Siswa tidak ditemukan. Pastikan NIS/NISN yang Anda masukkan sudah benar atau kartu pelajar terbaca dengan jelas.')
+        setError('Siswa tidak ditemukan. Periksa kembali NIS/NISN.')
         return
       }
       if (s.status !== 'active') {
@@ -124,7 +123,7 @@ export function KioskReturnPage() {
       setStudent(s)
       setStep('confirm-student')
     } catch (err) {
-      setError(getErrorMessage(err) || 'Siswa tidak ditemukan. Pastikan NIS/NISN yang Anda masukkan sudah benar atau kartu pelajar terbaca dengan jelas.')
+      setError(getErrorMessage(err) || 'Siswa tidak ditemukan. Periksa kembali NIS/NISN.')
     } finally {
       setIsLoading(false)
     }
@@ -140,13 +139,13 @@ export function KioskReturnPage() {
       const loans = rawLoans.filter((l: Loan) => l.status === 'active' || l.status === 'overdue')
 
       if (loans.length === 0) {
-        setError('Tidak ada peminjaman aktif. Anda tidak memiliki tanggungan buku yang sedang dipinjam.')
+        setError('Tidak ada peminjaman aktif untuk siswa ini.')
         return
       }
       setActiveLoans(loans)
       setStep('scan-book')
     } catch (err) {
-      setError(getErrorMessage(err) || 'Gagal memuat data peminjaman siswa.')
+      setError(getErrorMessage(err) || 'Gagal memuat data peminjaman.')
     } finally {
       setIsLoading(false)
     }
@@ -212,7 +211,7 @@ export function KioskReturnPage() {
 
       // Jika tetap tidak ditemukan kecocokan
       if (!matchedLoan) {
-        setError(`Buku dengan barcode "${trimmedCode}" tidak cocok dengan daftar pinjaman aktif Anda. Pastikan Anda mengembalikan buku yang tepat atau gunakan tombol "Pilih Manual dari Daftar".`)
+        setError(`Buku dengan barcode "${trimmedCode}" tidak sesuai pinjaman aktif. Silakan pilih manual dari daftar.`)
         return
       }
 
@@ -227,7 +226,7 @@ export function KioskReturnPage() {
 
       setStep('photo')
     } catch (err) {
-      setError(getErrorMessage(err) || 'Terjadi kesalahan saat memproses scan buku.')
+      setError(getErrorMessage(err) || 'Gagal memproses barcode buku.')
     } finally {
       setIsLoading(false)
     }
@@ -256,7 +255,7 @@ export function KioskReturnPage() {
       const msg = getErrorMessage(err)
       if (msg.toLowerCase().includes('dikembalikan') || msg.toLowerCase().includes('returned')) {
         reset()
-        setError('Buku ini sudah tercatat dikembalikan. Silakan scan kartu pelajar kembali untuk melihat peminjaman aktif.')
+        setError('Buku ini sudah tercatat dikembalikan.')
       } else {
         setError(msg)
       }
@@ -290,10 +289,7 @@ export function KioskReturnPage() {
         return (
           <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 mt-3">
             <ShieldCheck size={16} className="text-emerald-600 flex-shrink-0" />
-            <div>
-              <span className="text-emerald-800 text-sm font-bold">Identitas Terverifikasi</span>
-              <span className="text-emerald-600 text-xs ml-2">({Math.round(faceMatchScore * 100)}% sesuai)</span>
-            </div>
+            <span className="text-emerald-800 text-sm font-bold">Identitas Terverifikasi</span>
           </div>
         )
       case 'mismatch':
@@ -689,23 +685,12 @@ export function KioskReturnPage() {
                     Konfirmasi Pengembalian
                   </h2>
 
-                  {reconciledTitle && (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 sm:p-4 mb-3">
-                      <div className="flex items-center gap-2 text-xs font-bold text-emerald-800">
-                        <Sparkles size={16} className="text-emerald-600 flex-shrink-0" />
-                        <span>Koreksi Otomatis Barcode Fisik</span>
-                      </div>
-                      <p className="text-xs text-emerald-700 mt-1 leading-relaxed">
-                        Buku fisik: <span className="font-bold text-emerald-900">{reconciledTitle}</span> (Barcode: <span className="font-mono font-bold">{scannedBarcode}</span>). Data peminjaman disesuaikan otomatis dengan buku fisik.
-                      </p>
-                    </div>
-                  )}
-
                   <div className="space-y-2">
                     {[
                       { label: 'Nama',        value: student.nama },
                       { label: 'NIS',         value: formatNis(student.nis) },
                       { label: 'Buku',        value: reconciledTitle || getLoanBookTitle(selectedLoan) },
+                      ...(scannedBarcode ? [{ label: 'Barcode', value: scannedBarcode }] : []),
                       { label: 'Jatuh Tempo', value: selectedLoan.loan_type === 'class' ? formatDateTime(selectedLoan.due_at) : formatDate(selectedLoan.due_at) },
                     ].map(({ label, value }) => (
                       <div key={label} className="flex justify-between items-start gap-4 py-2 border-b border-slate-100 last:border-0">
@@ -715,10 +700,10 @@ export function KioskReturnPage() {
                     ))}
                     {photoPath && (
                       <div className="flex justify-between py-2">
-                        <span className="text-slate-500 text-sm sm:text-base font-medium">Status Foto</span>
-                        <span className="text-emerald-600 text-sm sm:text-base font-bold flex items-center gap-1.5">
+                        <span className="text-slate-500 text-sm sm:text-base font-medium">Foto</span>
+                        <span className="text-emerald-600 text-sm sm:text-base font-semibold flex items-center gap-1.5">
                           <Check size={16} strokeWidth={2.5} />
-                          Terlampir & Terverifikasi
+                          Terlampir
                         </span>
                       </div>
                     )}

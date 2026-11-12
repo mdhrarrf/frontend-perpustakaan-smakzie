@@ -95,7 +95,7 @@ export function KioskBorrowIndividual() {
       const s = Array.isArray(data) ? data[0] : data
 
       if (!s) {
-        setError('Siswa tidak ditemukan. Pastikan NIS/NISN yang Anda masukkan sudah benar atau kartu pelajar terbaca dengan jelas.')
+        setError('Siswa tidak ditemukan. Periksa NIS/NISN.')
         return
       }
 
@@ -107,7 +107,7 @@ export function KioskBorrowIndividual() {
       setStudent(s)
       setStep('confirm-student')
     } catch (err) {
-      setError(getErrorMessage(err) || 'Siswa tidak ditemukan. Pastikan NIS/NISN yang Anda masukkan sudah benar atau kartu pelajar terbaca dengan jelas.')
+      setError(getErrorMessage(err) || 'Siswa tidak ditemukan. Periksa NIS/NISN.')
     } finally {
       setIsLoading(false)
     }
@@ -129,7 +129,7 @@ export function KioskBorrowIndividual() {
         setStep('scan-book')
       }
     } catch (err) {
-      setError(getErrorMessage(err) || 'Gagal memeriksa riwayat peminjaman siswa.')
+      setError(getErrorMessage(err) || 'Gagal memeriksa riwayat peminjaman.')
     } finally {
       setIsLoading(false)
     }
@@ -150,20 +150,20 @@ export function KioskBorrowIndividual() {
       const meta = result.meta ?? null
 
       if ((b.jumlah_tersedia ?? 0) < 1 && !meta?.registered) {
-        setError('Maaf, stok buku ini sedang habis.')
+        setError('Stok buku sedang habis.')
         return
       }
 
       const v = await violationService.check(student!.id, b.id)
       if (!v.allowed) {
-        setError(`Tidak dapat meminjam buku ini. Terkena sanksi keterlambatan hingga ${formatDate(v.violation?.penalty_end_date)}.`)
+        setError(`Tidak dapat meminjam buku ini. Terkena sanksi hingga ${formatDate(v.violation?.penalty_end_date)}.`)
         return
       }
 
       setBook(b)
       setStep('pick-duration')
     } catch {
-      setError('Buku tidak ditemukan. Pastikan barcode terbaca dengan jelas.')
+      setError('Buku tidak ditemukan.')
     } finally {
       setIsLoading(false)
     }
