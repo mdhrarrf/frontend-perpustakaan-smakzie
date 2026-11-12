@@ -56,7 +56,12 @@ export function KioskBorrowClass() {
   const [loadingMessage, setLoadingMessage] = useState('Memproses...')
 
   // Fetch daftar guru aktif beserta mata pelajarannya
-  const { data: teachers = [], isLoading: isLoadingTeachers } = useQuery({
+  const {
+    data: teachers = [],
+    isLoading: isLoadingTeachers,
+    isError: isErrorTeachers,
+    refetch: refetchTeachers,
+  } = useQuery({
     queryKey: ['kiosk-teachers'],
     queryFn: () => teacherService.list(),
     staleTime: 5 * 60 * 1000,
@@ -738,9 +743,25 @@ export function KioskBorrowClass() {
                             <div className="py-4 text-center text-slate-500 flex items-center justify-center gap-2 text-sm">
                               <Loader2 className="animate-spin" size={16} /> Memuat guru...
                             </div>
+                          ) : isErrorTeachers ? (
+                            <div className="py-4 px-4 text-center text-red-500 text-xs">
+                              <p className="font-semibold">Gagal memuat daftar guru.</p>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  refetchTeachers()
+                                }}
+                                className="mt-1.5 text-blue-600 hover:underline font-bold cursor-pointer"
+                              >
+                                Coba lagi
+                              </button>
+                            </div>
                           ) : filteredTeachers.length === 0 ? (
                             <div className="py-4 text-center text-slate-500 text-xs">
-                              Guru "{teacherSearch}" tidak ditemukan.
+                              {teacherSearch.trim()
+                                ? `Guru "${teacherSearch}" tidak ditemukan.`
+                                : 'Belum ada data guru pengajar yang terdaftar.'}
                             </div>
                           ) : (
                             filteredTeachers.map((t) => (
