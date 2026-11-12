@@ -62,31 +62,29 @@ export function KioskStandby() {
             <p className="text-slate-500 text-xs sm:text-sm font-medium">Self-Service Kiosk Pelajar</p>
           </div>
         </div>
-        <div className="text-right bg-white/80 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-2xl border border-slate-200/80 shadow-sm">
-          <p className="text-xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">{timeStr}</p>
-          <p className="text-slate-500 text-[10px] sm:text-xs font-semibold mt-0.5 uppercase tracking-wider">{dateStr}</p>
+
+        <div className="flex items-center gap-3">
+          {outboxPendingCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setIsOutboxModalOpen(true)}
+              className="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/90 px-3.5 py-2 rounded-2xl flex items-center gap-2 text-xs font-bold transition-all shadow-sm cursor-pointer"
+            >
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              <span>{outboxPendingCount} Transaksi Offline</span>
+              <span className="text-amber-700 underline text-[11px] font-semibold ml-0.5">Kelola</span>
+            </button>
+          )}
+
+          <div className="text-right bg-white/80 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-2xl border border-slate-200/80 shadow-sm">
+            <p className="text-xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">{timeStr}</p>
+            <p className="text-slate-500 text-[10px] sm:text-xs font-semibold mt-0.5 uppercase tracking-wider">{dateStr}</p>
+          </div>
         </div>
       </div>
 
       {/* Main CTA Buttons (Centered in whole screen) */}
       <div className="flex-1 flex flex-col items-center justify-center gap-5 sm:gap-8 px-6 sm:px-10 z-0 pt-16 pb-20">
-        {/* Outbox Sync Notification Pill */}
-        {outboxPendingCount > 0 && (
-          <div className="mb-1 sm:mb-2">
-            <button
-              type="button"
-              onClick={() => setIsOutboxModalOpen(true)}
-              className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 border-2 border-amber-300 px-4 py-2 rounded-2xl inline-flex items-center gap-2.5 text-xs sm:text-sm font-bold shadow-sm transition-all animate-pulse cursor-pointer"
-            >
-              <CloudOff size={16} className="text-amber-600" />
-              <span>{outboxPendingCount} Transaksi Menunggu Sinkronisasi</span>
-              <span className="bg-amber-600 text-white text-[10px] px-2 py-0.5 rounded-full font-extrabold uppercase">
-                Lihat Detail
-              </span>
-            </button>
-          </div>
-        )}
-
         <div className="text-center">
           <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-widest px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full mb-2 sm:mb-3 border border-blue-200/60">
             Layanan Mandiri

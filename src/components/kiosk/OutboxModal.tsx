@@ -49,23 +49,23 @@ export function OutboxModal({ isOpen, onClose }: OutboxModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
           <div className="flex items-center gap-3">
-            <div className={`p-2.5 rounded-2xl ${pendingCount > 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-              {pendingCount > 0 ? <CloudOff size={22} /> : <Cloud size={22} />}
+            <div className={`p-2.5 rounded-2xl ${pendingCount > 0 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
+              {pendingCount > 0 ? <CloudOff size={20} /> : <Cloud size={20} />}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Antrean Peminjaman Lokal (Outbox)</h2>
+              <h2 className="text-lg font-bold text-slate-900">Antrean Transaksi Offline</h2>
               <p className="text-xs text-slate-500">
                 {pendingCount > 0
-                  ? `${pendingCount} transaksi tersimpan lokal menunggu sinkronisasi`
-                  : 'Semua transaksi telah tersinkronkan ke server'}
+                  ? `${pendingCount} transaksi tersimpan lokal menunggu sinkronisasi ke server`
+                  : 'Seluruh transaksi telah berhasil tersinkronkan ke server'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+            className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-200/60 transition-colors cursor-pointer"
           >
             <X size={20} />
           </button>
@@ -81,17 +81,19 @@ export function OutboxModal({ isOpen, onClose }: OutboxModalProps) {
 
           {items.length === 0 ? (
             <div className="py-12 text-center text-slate-400">
-              <CheckCircle2 size={44} className="mx-auto text-emerald-500 mb-2" />
-              <p className="font-bold text-slate-700 text-sm">Tidak Ada Antrean</p>
-              <p className="text-xs text-slate-500 mt-0.5">Semua transaksi peminjaman sudah tercatat di server.</p>
+              <CheckCircle2 size={40} className="mx-auto text-emerald-600 mb-2" />
+              <p className="font-bold text-slate-800 text-sm">Tidak Ada Antrean Tertunda</p>
+              <p className="text-xs text-slate-500 mt-0.5">Semua transaksi peminjaman telah tercatat di server perpustakaan.</p>
             </div>
           ) : (
             items.map((item) => (
               <div key={item.id} className="pt-4 first:pt-0 flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                      item.type === 'class' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                      item.type === 'class'
+                        ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                        : 'bg-blue-50 text-blue-700 border border-blue-200'
                     }`}>
                       {item.type === 'class' ? 'Peminjaman Kelas' : 'Individu'}
                     </span>
@@ -125,19 +127,19 @@ export function OutboxModal({ isOpen, onClose }: OutboxModalProps) {
                 <div className="text-right flex-shrink-0">
                   {item.status === 'synced' ? (
                     <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-xl">
-                      <CheckCircle2 size={13} /> Tersinkron
+                      <CheckCircle2 size={13} /> Tersinkronkan
                     </span>
                   ) : item.status === 'syncing' ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-xl animate-pulse">
-                      <RefreshCw size={13} className="animate-spin" /> Sinkron...
+                    <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-xl">
+                      <RefreshCw size={13} className="animate-spin" /> Menyinkronkan...
                     </span>
                   ) : item.status === 'failed' ? (
                     <span className="inline-flex items-center gap-1 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-xl">
-                      <AlertTriangle size={13} /> Dicoba lagi
+                      <AlertTriangle size={13} /> Menunggu Jaringan
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-xl">
-                      <Clock size={13} /> Menunggu
+                      <Clock size={13} /> Dalam Antrean
                     </span>
                   )}
                 </div>

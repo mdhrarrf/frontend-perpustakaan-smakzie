@@ -126,11 +126,11 @@ export function KioskSuccessPage() {
         {state.is_offline_queued && (
           <div className="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 text-left w-full space-y-1 mt-2 shadow-sm">
             <p className="text-amber-900 font-bold text-sm flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-              Tercatat di Antrean Sistem Lokal
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              Tersimpan di Sistem Lokal
             </p>
-            <p className="text-xs text-amber-700 leading-relaxed">
-              Koneksi server sedang fluktuatif. Transaksi ini sudah tersimpan aman di komputer lokal perpustakaan dan akan disinkronkan otomatis. Buku sudah boleh dibawa.
+            <p className="text-xs text-amber-800 leading-relaxed">
+              Transaksi peminjaman telah berhasil dicatat pada komputer ini dan akan disinkronkan ke server secara otomatis. Buku sudah dapat dibawa.
             </p>
           </div>
         )}
