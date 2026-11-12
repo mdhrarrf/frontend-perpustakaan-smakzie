@@ -4,6 +4,7 @@ import type { ApiResponse, Loan, PaginatedResponse, StandbyItem } from '@/types'
 const BASE = '/perpustakaan/loans'
 
 export interface CreateLoanPayload {
+  client_uuid?: string
   loan_type: 'individual' | 'class'
   student_id: number
   book_id?: number           // Untuk buku lokal

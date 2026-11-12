@@ -17,6 +17,7 @@ import {
 import type { Student, Book, Teacher, Loan } from '@/types'
 import { formatDate, formatNis, formatStudentLabel } from '@/utils'
 import { persistentMasterCache } from '@/utils/persistentCache'
+import { outboxQueue, generateClientUuid } from '@/utils/outboxQueue'
 
 type Step = 'scan-student' | 'confirm-student' | 'active-loan-warning' | 'class-details' | 'scan-books' | 'return-time' | 'photo' | 'confirm'
 
@@ -348,42 +349,72 @@ export function KioskBorrowClass() {
     }))
   }
 
-  // ─── Submit Peminjaman Kelas ───
+  // ─── Submit Peminjaman Kelas (Resilient Writes dengan Outbox Pattern) ───
   const borrowMutation = useMutation({
     mutationFn: async () => {
       if (!student) throw new Error('Siswa perwakilan belum dipilih.')
 
-      const promises = books.map(({ book, quantity }) => {
+      let anyOfflineQueued = false
+
+      for (const { book, quantity } of books) {
+        const clientUuid = generateClientUuid()
         const isSlims = book.kode_buku?.startsWith('SLIMS-') || book.kode_buku?.startsWith('BK-')
-        return loanService.create({
-          loan_type:    'class',
-          student_id:   student.id,
+        const payload = {
+          client_uuid:    clientUuid,
+          loan_type:      'class' as const,
+          student_id:     student.id,
           ...(isSlims
             ? { slims_biblio_id: book.id }
             : { book_id: book.id }
           ),
           // Barcode yang di-scan untuk audit trail
           slims_item_code: isSlims ? (book.kode_barcode ?? book.kode_qr ?? undefined) : undefined,
-          due_at:       dueAt.toISOString().slice(0, 16),
-          borrow_photo: photoPath ?? undefined,
-          station_id:   stationId,
-          class_name:   classInfo.class_name,
-          teacher_name: classInfo.teacher_name,
-          subject_name: classInfo.subject_name || undefined,
-          purpose:      classInfo.purpose || 'Pembelajaran di kelas',
+          due_at:         dueAt.toISOString().slice(0, 16),
+          borrow_photo:   photoPath ?? undefined,
+          station_id:     stationId,
+          class_name:     classInfo.class_name,
+          teacher_name:   classInfo.teacher_name,
+          subject_name:   classInfo.subject_name || undefined,
+          purpose:        classInfo.purpose || 'Pembelajaran di kelas',
           quantity,
-        })
-      })
+        }
 
-      return Promise.all(promises)
+        try {
+          await loanService.create(payload)
+        } catch (err: any) {
+          // Jika terjadi kendala jaringan (tidak ada respons) atau server error (status >= 500)
+          if (!err?.response || err?.response?.status >= 500) {
+            anyOfflineQueued = true
+            await outboxQueue.enqueue({
+              type: 'class',
+              payload,
+              meta: {
+                student_name: student.nama,
+                student_nis: student.nis || student.nisn || undefined,
+                student_kelas: classInfo.class_name || student.kelas,
+                book_title: book.judul,
+                quantity,
+                due_at: dueAt.toISOString(),
+                photo_base64: photoPreview,
+              },
+            })
+          } else {
+            // Error validasi data (422) seperti buku tidak ditemukan / pelanggaran siswa
+            throw err
+          }
+        }
+      }
+
+      return { anyOfflineQueued }
     },
-    onSuccess: () => {
+    onSuccess: (res) => {
       const totalCount = books.reduce((a, b) => a + b.quantity, 0)
       navigate('/kiosk/success', {
         state: {
           type: 'borrow_class',
           book_count: totalCount,
           due_at: dueAt,
+          is_offline_queued: res?.anyOfflineQueued ?? false,
         },
       })
     },

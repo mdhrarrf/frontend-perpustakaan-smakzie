@@ -10,6 +10,7 @@ interface SuccessState {
   book_count?: number
   late_days?: number
   penalty_end?: string
+  is_offline_queued?: boolean
 }
 
 const AUTO_REDIRECT_SECS = 10
@@ -120,6 +121,18 @@ export function KioskSuccessPage() {
             <Clock size={14} className="flex-shrink-0" />
             {content.info}
           </p>
+        )}
+
+        {state.is_offline_queued && (
+          <div className="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 text-left w-full space-y-1 mt-2 shadow-sm">
+            <p className="text-amber-900 font-bold text-sm flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+              Tercatat di Antrean Sistem Lokal
+            </p>
+            <p className="text-xs text-amber-700 leading-relaxed">
+              Koneksi server sedang fluktuatif. Transaksi ini sudah tersimpan aman di komputer lokal perpustakaan dan akan disinkronkan otomatis. Buku sudah boleh dibawa.
+            </p>
+          </div>
         )}
 
         {isLate && (

@@ -12,6 +12,7 @@ import { getErrorMessage } from '@/api/client'
 import { ArrowLeft, ArrowRight, AlertTriangle, CheckCircle2, Loader2, BookOpen, Clock, AlertCircle, X, User } from 'lucide-react'
 import type { Student, Book, Loan } from '@/types'
 import { formatDate, formatNis, formatStudentLabel } from '@/utils'
+import { outboxQueue, generateClientUuid } from '@/utils/outboxQueue'
 
 type Step = 'scan-student' | 'confirm-student' | 'active-loan-warning' | 'scan-book' | 'pick-duration' | 'photo' | 'confirm'
 
@@ -177,24 +178,59 @@ export function KioskBorrowIndividual() {
   }
 
   const borrowMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
+      const clientUuid = generateClientUuid()
       const isSlimsBook = book?.kode_buku?.startsWith('SLIMS-') || book?.kode_buku?.startsWith('BK-')
-      return loanService.create({
-        loan_type:    'individual',
-        student_id:   student!.id,
+      const payload = {
+        client_uuid:    clientUuid,
+        loan_type:      'individual' as const,
+        student_id:     student!.id,
         ...(isSlimsBook
           ? { slims_biblio_id: book!.id }
           : { book_id: book!.id }
         ),
         // Kirim barcode yang di-scan agar tersimpan di loan_items untuk keperluan audit
         slims_item_code: isSlimsBook ? (book!.kode_barcode ?? book!.kode_qr ?? undefined) : undefined,
-        due_at:       getDueAt().toISOString().slice(0, 16),
-        borrow_photo: photoPath ?? undefined,
-        station_id:   stationId,
-      })
+        due_at:         getDueAt().toISOString().slice(0, 16),
+        borrow_photo:   photoPath ?? undefined,
+        station_id:     stationId,
+      }
+
+      try {
+        await loanService.create(payload)
+        return { isOfflineQueued: false }
+      } catch (err: any) {
+        // Jika terjadi gangguan jaringan atau server error (status >= 500)
+        if (!err?.response || err?.response?.status >= 500) {
+          await outboxQueue.enqueue({
+            type: 'individual',
+            payload,
+            meta: {
+              student_name: student!.nama,
+              student_nis: student!.nis || student!.nisn || undefined,
+              student_kelas: student!.kelas || undefined,
+              book_title: book?.judul || 'Buku Perpustakaan',
+              quantity: 1,
+              due_at: getDueAt().toISOString(),
+              photo_base64: photoPreview,
+            },
+          })
+          return { isOfflineQueued: true }
+        } else {
+          // Error validasi 422
+          throw err
+        }
+      }
     },
-    onSuccess: () => navigate('/kiosk/success', { state: { type: 'borrow', book_title: book?.judul, due_at: getDueAt() } }),
-    onError:   (err) => setError(getErrorMessage(err)),
+    onSuccess: (res) => navigate('/kiosk/success', {
+      state: {
+        type: 'borrow',
+        book_title: book?.judul,
+        due_at: getDueAt(),
+        is_offline_queued: res?.isOfflineQueued ?? false,
+      },
+    }),
+    onError: (err) => setError(getErrorMessage(err)),
   })
 
   const kBtn = 'flex items-center justify-center gap-2 sm:gap-3 rounded-2xl font-bold text-base sm:text-lg lg:text-xl px-5 sm:px-8 py-3 sm:py-4 lg:py-5 min-h-[50px] sm:min-h-[58px] lg:min-h-[68px] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-4 focus:ring-offset-2'

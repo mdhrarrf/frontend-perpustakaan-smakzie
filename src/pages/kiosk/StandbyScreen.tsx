@@ -1,17 +1,21 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { loanService } from '@/api/loan.service'
 import { teacherService } from '@/api/teacher.service'
 import { studentService } from '@/api/student.service'
 import { bookService } from '@/api/book.service'
+import { outboxQueue } from '@/utils/outboxQueue'
+import { OutboxModal } from '@/components/kiosk/OutboxModal'
 import type { StandbyItem } from '@/types'
-import { BookOpen, RotateCcw, Clock, ArrowRight } from 'lucide-react'
+import { BookOpen, RotateCcw, Clock, ArrowRight, CloudOff } from 'lucide-react'
 import { cn } from '@/utils'
 import { useLiveClock } from '@/hooks/useLiveClock'
 
 export function KioskStandby() {
   const navigate = useNavigate()
+  const [isOutboxModalOpen, setIsOutboxModalOpen] = useState(false)
+  const [outboxPendingCount, setOutboxPendingCount] = useState(0)
 
   const { data: items, refetch } = useQuery({
     queryKey: ['kiosk-standby'],
@@ -21,6 +25,17 @@ export function KioskStandby() {
 
   // Jam & tanggal yang terus berjalan setiap detik
   const { timeStr, dateStr } = useLiveClock()
+
+  // Listener antrean Outbox
+  useEffect(() => {
+    const unsubscribe = outboxQueue.subscribe((outboxItems) => {
+      const pending = outboxItems.filter(
+        (x) => x.status === 'pending' || x.status === 'syncing' || x.status === 'failed'
+      ).length
+      setOutboxPendingCount(pending)
+    })
+    return () => unsubscribe()
+  }, [])
 
   // Prewarm cache master data di background (Guru, Kelas, Kategori Buku)
   useEffect(() => {
@@ -55,6 +70,23 @@ export function KioskStandby() {
 
       {/* Main CTA Buttons (Centered in whole screen) */}
       <div className="flex-1 flex flex-col items-center justify-center gap-5 sm:gap-8 px-6 sm:px-10 z-0 pt-16 pb-20">
+        {/* Outbox Sync Notification Pill */}
+        {outboxPendingCount > 0 && (
+          <div className="mb-1 sm:mb-2">
+            <button
+              type="button"
+              onClick={() => setIsOutboxModalOpen(true)}
+              className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 border-2 border-amber-300 px-4 py-2 rounded-2xl inline-flex items-center gap-2.5 text-xs sm:text-sm font-bold shadow-sm transition-all animate-pulse cursor-pointer"
+            >
+              <CloudOff size={16} className="text-amber-600" />
+              <span>{outboxPendingCount} Transaksi Menunggu Sinkronisasi</span>
+              <span className="bg-amber-600 text-white text-[10px] px-2 py-0.5 rounded-full font-extrabold uppercase">
+                Lihat Detail
+              </span>
+            </button>
+          </div>
+        )}
+
         <div className="text-center">
           <span className="inline-block bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold uppercase tracking-widest px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full mb-2 sm:mb-3 border border-blue-200/60">
             Layanan Mandiri
@@ -97,6 +129,12 @@ export function KioskStandby() {
           <LoanTicker items={items} />
         </div>
       )}
+
+      {/* Modal Antrean Outbox (Offline Queue) */}
+      <OutboxModal
+        isOpen={isOutboxModalOpen}
+        onClose={() => setIsOutboxModalOpen(false)}
+      />
     </div>
   )
 }
